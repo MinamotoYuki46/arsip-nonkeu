@@ -1,4 +1,4 @@
-package com.bpkpad.arsip.ui.theme
+package com.bpkpad.arsipnonkeu.ui.theme
 
 import androidx.compose.material3.Typography
 import androidx.compose.ui.text.TextStyle

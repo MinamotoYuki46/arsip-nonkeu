@@ -1,6 +1,5 @@
-package com.bpkpad.arsip.ui.theme
+package com.bpkpad.arsipnonkeu.ui.theme
 
-import android.app.Activity
 import android.os.Build
 import androidx.compose.foundation.isSystemInDarkTheme
 import androidx.compose.material3.MaterialTheme
@@ -10,6 +9,31 @@ import androidx.compose.material3.dynamicLightColorScheme
 import androidx.compose.material3.lightColorScheme
 import androidx.compose.runtime.Composable
 import androidx.compose.ui.platform.LocalContext
+import androidx.compose.ui.graphics.Color
+
+
+val PrimaryGreen = Color(0xFF2E7D32)
+val DarkGreen = Color(0xFF1B5E20)
+val LightGreen = Color(0xFFCBFFC2)
+val AccentGreen = Color(0xFF388E3C)
+val BackgroundGray = Color(0xFFF3F8FC)
+val CardWhite = Color(0xFFFFFFFF)
+val StagingCard = Color(0xFFD3E4F3)
+val TextPrimary = Color(0xFF0D2535)
+val TextSecondary = Color(0xFF5A6A75)
+val BadgeGreen = Color(0xFFCBFFC2)
+val BadgeGreenText = Color(0xFF2E7D32)
+val FinalizedDot = Color(0xFF2E7D32)
+val RestrictedDot = Color(0xFFC62828)
+val BottomBarBg = Color(0xFFFFFFFF)
+val BottomBarSelected = Color(0xFF2E7D32)
+val BottomBarUnselected = Color(0xFF9CA3AF)
+val StagingBg = Color(0xFFF0F7FF)
+val FileIconBg = Color(0xFFCBFFC2)
+val FileIconColor = Color(0xFF2E7D32)
+val PushButtonBg = Color(0xFF2E7D32)
+val ProgressBarBg = Color(0xFFDEEAF5)
+val ProgressBarFill = Color(0xFF2E7D32)
 
 private val DarkColorScheme = darkColorScheme(
     primary = Purple80,
