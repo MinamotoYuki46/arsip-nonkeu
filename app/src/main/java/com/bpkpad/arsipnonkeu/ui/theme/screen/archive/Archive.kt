@@ -151,9 +151,7 @@ fun ArchiveScreen(
     selectedYear: Int = 2025,
     onBackClick: () -> Unit = {},
     onDocumentClick: (ArchiveDocument) -> Unit = {},
-    onCreateClick: () -> Unit = {},
-    onScanClick: () -> Unit = {},
-    onUploadClick: () -> Unit = {}
+    onAddClick: () -> Unit = {}
 ) {
     var showExportDialog by remember { mutableStateOf(false) }
     var selectedClassification by remember { mutableStateOf<String?>(null) }
@@ -172,11 +170,14 @@ fun ArchiveScreen(
             )
         },
         floatingActionButton = {
-            QuickActionFab(
-                onCreateClick = onCreateClick,
-                onScanClick = onScanClick,
-                onUploadClick = onUploadClick
-            )
+            FloatingActionButton(
+                onClick = onAddClick,
+                containerColor = Color(0xFF0D631B),
+                contentColor = Color.White,
+                shape = CircleShape
+            ) {
+                Icon(Icons.Default.Add, contentDescription = "Add New")
+            }
         },
         containerColor = BackgroundGray
     ) { innerPadding ->

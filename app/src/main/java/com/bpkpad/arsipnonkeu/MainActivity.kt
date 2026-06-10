@@ -11,6 +11,7 @@ import com.bpkpad.arsipnonkeu.ui.theme.screen.archive.ArchiveScreen
 import com.bpkpad.arsipnonkeu.ui.theme.screen.dashboard.DashboardScreen
 import com.bpkpad.arsipnonkeu.ui.theme.screen.detail.DocumentDetailScreen
 import com.bpkpad.arsipnonkeu.ui.theme.screen.search.SearchScreen
+import com.bpkpad.arsipnonkeu.ui.theme.screen.staging.StagingScreen
 
 /**
  * MainActivity - Entry point of the BPKPAD Balangan application.
@@ -42,9 +43,15 @@ class MainActivity : ComponentActivity() {
                             lastRoute = "archive"
                             currentRoute = "document_detail"
                         },
-                        onCreateClick = { currentRoute = "new_record" },
-                        onScanClick = { currentRoute = "new_record" },
-                        onUploadClick = { currentRoute = "new_record" }
+                        onAddClick = { currentRoute = "staging" }
+                    )
+                    "staging" -> StagingScreen(
+                        onBackClick = { currentRoute = "archive" },
+                        onAddNewClick = { currentRoute = "new_record" },
+                        onPushAllClick = {
+                            // After push, maybe go back to dashboard or archive
+                            currentRoute = "dashboard"
+                        }
                     )
                     "search" -> SearchScreen(
                         onBackClick = { currentRoute = "dashboard" },
@@ -54,7 +61,8 @@ class MainActivity : ComponentActivity() {
                         }
                     )
                     "new_record" -> NewRecordScreen(
-                        onBackClick = { currentRoute = "dashboard" }
+                        onBackClick = { currentRoute = "staging" },
+                        onSave = { currentRoute = "staging" }
                     )
                     "profile" -> {
                         // Profile screen placeholder
