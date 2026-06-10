@@ -9,6 +9,7 @@ import androidx.compose.foundation.shape.CircleShape
 import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.foundation.verticalScroll
 import androidx.compose.material.icons.Icons
+import androidx.compose.material.icons.filled.Add
 import androidx.compose.material.icons.filled.Search
 import androidx.compose.material3.*
 import androidx.compose.runtime.*
@@ -42,21 +43,9 @@ fun DashboardScreen(
 
     Scaffold(
         topBar = {
-            // Menggunakan TopBar asli dari package com.bpkpad.arsip.ui.theme.component
             TopBar(
                 title = "BPKPAD Balangan",
                 onProfileClick = onProfileClick
-            )
-        },
-        bottomBar = {
-            // Menggunakan BottomBar asli dari package com.bpkpad.arsip.ui.theme.component
-            BottomBar(
-                selectedRoute = selectedRoute,
-                onItemSelected = { route ->
-                    if (route != selectedRoute) {
-                        onNavItemSelected(route)
-                    }
-                }
             )
         },
         containerColor = BackgroundGray

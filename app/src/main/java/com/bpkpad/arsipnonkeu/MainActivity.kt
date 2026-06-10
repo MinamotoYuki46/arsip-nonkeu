@@ -25,32 +25,40 @@ class MainActivity : ComponentActivity() {
             ArsipBPKADTheme {
                 var currentRoute by remember { mutableStateOf("dashboard") }
                 var lastRoute by remember { mutableStateOf("dashboard") }
+                var selectedYear by remember { mutableIntStateOf(2025) }
 
                 when (currentRoute) {
                     "dashboard" -> DashboardScreen(
                         onNavItemSelected = { currentRoute = it },
-                        onArchiveYearClick = { currentRoute = "archive" }
+                        onArchiveYearClick = { year ->
+                            selectedYear = year
+                            currentRoute = "archive"
+                        }
                     )
                     "archive" -> ArchiveScreen(
-                        onNavItemSelected = { currentRoute = it },
+                        selectedYear = selectedYear,
+                        onBackClick = { currentRoute = "dashboard" },
                         onDocumentClick = {
                             lastRoute = "archive"
                             currentRoute = "document_detail"
-                        }
+                        },
+                        onCreateClick = { currentRoute = "new_record" },
+                        onScanClick = { currentRoute = "new_record" },
+                        onUploadClick = { currentRoute = "new_record" }
                     )
                     "search" -> SearchScreen(
-                        onNavItemSelected = { currentRoute = it },
+                        onBackClick = { currentRoute = "dashboard" },
                         onResultClick = {
                             lastRoute = "search"
                             currentRoute = "document_detail"
                         }
                     )
                     "new_record" -> NewRecordScreen(
-                        onNavItemSelected = { currentRoute = it }
+                        onBackClick = { currentRoute = "dashboard" }
                     )
                     "profile" -> {
-                        // Profile screen placeholder or just stay on dashboard
-                        DashboardScreen(onNavItemSelected = { currentRoute = it })
+                        // Profile screen placeholder
+                        currentRoute = "dashboard"
                     }
                     "document_detail" -> DocumentDetailScreen(
                         onBackClick = { currentRoute = lastRoute }

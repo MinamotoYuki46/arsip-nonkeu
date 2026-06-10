@@ -8,6 +8,8 @@ import androidx.compose.foundation.rememberScrollState
 import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.foundation.text.BasicTextField
 import androidx.compose.foundation.verticalScroll
+import androidx.compose.material.icons.Icons
+import androidx.compose.material.icons.filled.ArrowBack
 import androidx.compose.material3.*
 import androidx.compose.runtime.*
 import androidx.compose.ui.Alignment
@@ -45,12 +47,10 @@ import com.bpkpad.arsipnonkeu.ui.theme.*
  */
 @Composable
 fun NewRecordScreen(
-    onNavItemSelected: (String) -> Unit = {},
+    onBackClick: () -> Unit = {},
     onClear: () -> Unit = {},
     onSave: () -> Unit = {}
 ) {
-    var selectedRoute by remember { mutableStateOf("new_record") }
-
     // Form state
     var tipeDokumen by remember { mutableStateOf("") }
     var namaDokumen by remember { mutableStateOf("") }
@@ -64,13 +64,14 @@ fun NewRecordScreen(
     var boxNo by remember { mutableStateOf("") }
 
     Scaffold(
-        topBar = { TopBar(onProfileClick = {}) },
-        bottomBar = {
-            BottomBar(
-                selectedRoute = selectedRoute,
-                onItemSelected = { route: String ->
-                    selectedRoute = route
-                    onNavItemSelected(route)
+        topBar = {
+            TopBar(
+                title = "Arsip Baru",
+                onProfileClick = {},
+                navigationIcon = {
+                    IconButton(onClick = onBackClick) {
+                        Icon(Icons.Default.ArrowBack, contentDescription = "Back")
+                    }
                 }
             )
         },

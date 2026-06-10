@@ -7,9 +7,12 @@ import androidx.compose.foundation.clickable
 import androidx.compose.foundation.horizontalScroll
 import androidx.compose.foundation.layout.*
 import androidx.compose.foundation.rememberScrollState
+import androidx.compose.foundation.shape.CircleShape
 import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.foundation.verticalScroll
 import androidx.compose.material.icons.Icons
+import androidx.compose.material.icons.filled.Add
+import androidx.compose.material.icons.filled.ArrowBack
 import androidx.compose.material.icons.filled.CalendarToday
 import androidx.compose.material.icons.filled.Search
 import androidx.compose.material.icons.outlined.FileDownload
@@ -36,6 +39,7 @@ import androidx.compose.ui.window.DialogProperties
 import com.bpkpad.arsipnonkeu.ui.theme.BackgroundGray
 import com.bpkpad.arsipnonkeu.ui.theme.PrimaryGreen
 import com.bpkpad.arsipnonkeu.ui.theme.component.BottomBar
+import com.bpkpad.arsipnonkeu.ui.theme.component.QuickActionFab
 import com.bpkpad.arsipnonkeu.ui.theme.component.TopBar
 
 // Fallback font definition
@@ -44,6 +48,20 @@ val PoppinsFont = FontFamily.Default
 // ─────────────────────────────────────────────────────────────────────────────
 // Data Models
 // ─────────────────────────────────────────────────────────────────────────────
+
+data class Classification(val code: String, val label: String)
+
+val archivalClassifications = listOf(
+    Classification("000", "Umum"),
+    Classification("100", "Pemerintahan"),
+    Classification("200", "Politik"),
+    Classification("300", "Keamanan"),
+    Classification("400", "Kesra"),
+    Classification("500", "Perekonomian"),
+    Classification("600", "PU & K"),
+    Classification("700", "Pengawasan"),
+    Classification("800", "Kepegawaian")
+)
 
 enum class DocumentStatus(val label: String, val color: Color, val textColor: Color) {
     VERIFIED("Verified", Color(0xFFE8F5E9), Color(0xFF1B5E20)),
@@ -58,6 +76,8 @@ data class ArchiveDocument(
     val noRak: String,
     val tipe: String,
     val status: DocumentStatus,
+    val year: Int,
+    val classificationCode: String,
     val thumbnailColor: Color = Color(0xFFCFE6F2)
 )
 
@@ -71,42 +91,54 @@ private val sampleDocuments = listOf(
         title = "Laporan Realisasi Anggaran Triwulan I -…",
         noRak = "RAK-04-B",
         tipe = "Laporan",
-        status = DocumentStatus.VERIFIED
+        status = DocumentStatus.VERIFIED,
+        year = 2023,
+        classificationCode = "000"
     ),
     ArchiveDocument(
         id = "#2023-B12",
         title = "Surat Keputusan Bupati No. 45/2023 -…",
         noRak = "RAK-01-A",
         tipe = "SK Resmi",
-        status = DocumentStatus.PENDING
+        status = DocumentStatus.PENDING,
+        year = 2023,
+        classificationCode = "100"
     ),
     ArchiveDocument(
-        id = "#2023-C88",
-        title = "Proposal Pengadaan Alat Kantor BPKPAD TA 2023",
+        id = "#2024-C88",
+        title = "Proposal Pengadaan Alat Kantor BPKPAD TA 2024",
         noRak = "RAK-09-C",
         tipe = "Proposal",
-        status = DocumentStatus.ARCHIVED
+        status = DocumentStatus.ARCHIVED,
+        year = 2024,
+        classificationCode = "500"
     ),
     ArchiveDocument(
-        id = "#2023-M05",
+        id = "#2025-M05",
         title = "Berita Acara Serah Terima Aset Daerah - Kendaraan…",
         noRak = "RAK-02-B",
         tipe = "Berita Acara",
-        status = DocumentStatus.VERIFIED
+        status = DocumentStatus.VERIFIED,
+        year = 2025,
+        classificationCode = "000"
     ),
     ArchiveDocument(
-        id = "#2023-S09",
+        id = "#2022-S09",
         title = "Daftar Inventaris Kantor Semester II - Ruang Rapat",
         noRak = "RAK-12-A",
         tipe = "Inventaris",
-        status = DocumentStatus.VERIFIED
+        status = DocumentStatus.VERIFIED,
+        year = 2022,
+        classificationCode = "000"
     ),
     ArchiveDocument(
-        id = "#2023-X99",
+        id = "#2025-X99",
         title = "Evaluasi Kinerja Tahunan Tenaga Kontrak Daerah",
         noRak = "RAK-SAFE-1",
         tipe = "Confidential",
-        status = DocumentStatus.RESTRICTED
+        status = DocumentStatus.RESTRICTED,
+        year = 2025,
+        classificationCode = "800"
     )
 )
 
@@ -116,23 +148,34 @@ private val sampleDocuments = listOf(
 
 @Composable
 fun ArchiveScreen(
-    onNavItemSelected: (String) -> Unit = {},
-    onDocumentClick: (ArchiveDocument) -> Unit = {}
+    selectedYear: Int = 2025,
+    onBackClick: () -> Unit = {},
+    onDocumentClick: (ArchiveDocument) -> Unit = {},
+    onCreateClick: () -> Unit = {},
+    onScanClick: () -> Unit = {},
+    onUploadClick: () -> Unit = {}
 ) {
-    var selectedRoute by remember { mutableStateOf("archive") }
     var showExportDialog by remember { mutableStateOf(false) }
+    var selectedClassification by remember { mutableStateOf<String?>(null) }
+
+    val filteredDocuments = remember(selectedYear, selectedClassification) {
+        sampleDocuments.filter { doc ->
+            doc.year == selectedYear && (selectedClassification == null || doc.classificationCode == selectedClassification)
+        }
+    }
 
     Scaffold(
         topBar = {
-            TopBar(onProfileClick = {})
+            TopBar(
+                title = "Arsip Dokumen",
+                onProfileClick = {}
+            )
         },
-        bottomBar = {
-            BottomBar(
-                selectedRoute = selectedRoute,
-                onItemSelected = { route ->
-                    selectedRoute = route
-                    onNavItemSelected(route)
-                }
+        floatingActionButton = {
+            QuickActionFab(
+                onCreateClick = onCreateClick,
+                onScanClick = onScanClick,
+                onUploadClick = onUploadClick
             )
         },
         containerColor = BackgroundGray
@@ -146,23 +189,39 @@ fun ArchiveScreen(
             verticalArrangement = Arrangement.spacedBy(24.dp)
         ) {
             // ── Header Section ────────────────────────────────────────
-            ArchiveHeader(onExportClick = { showExportDialog = true })
+            ArchiveHeader(
+                selectedYear = selectedYear,
+                onYearChangeClick = onBackClick,
+                onExportClick = { showExportDialog = true }
+            )
 
             // ── Search & Filter Controls ──────────────────────────────
-            SearchFilterSection()
+            SearchFilterSection(
+                selectedClassification = selectedClassification,
+                onClassificationSelected = { selectedClassification = it }
+            )
 
             // ── Archive Grid ──────────────────────────────────────────
             Column(verticalArrangement = Arrangement.spacedBy(16.dp)) {
-                sampleDocuments.forEach { doc ->
-                    DocumentCard(
-                        document = doc,
-                        onDetailClick = { onDocumentClick(doc) }
+                if (filteredDocuments.isEmpty()) {
+                    Text(
+                        text = "Tidak ada dokumen untuk tahun $selectedYear",
+                        modifier = Modifier.fillMaxWidth().padding(vertical = 32.dp),
+                        textAlign = TextAlign.Center,
+                        color = Color.Gray
                     )
+                } else {
+                    filteredDocuments.forEach { doc ->
+                        DocumentCard(
+                            document = doc,
+                            onDetailClick = { onDocumentClick(doc) }
+                        )
+                    }
                 }
             }
 
             // ── Pagination Section ────────────────────────────────────
-            PaginationSection()
+            PaginationSection(totalFound = filteredDocuments.size)
 
             Spacer(modifier = Modifier.height(16.dp))
         }
@@ -178,7 +237,11 @@ fun ArchiveScreen(
 // ─────────────────────────────────────────────────────────────────────────────
 
 @Composable
-private fun ArchiveHeader(onExportClick: () -> Unit) {
+private fun ArchiveHeader(
+    selectedYear: Int,
+    onYearChangeClick: () -> Unit,
+    onExportClick: () -> Unit
+) {
     Column(verticalArrangement = Arrangement.spacedBy(16.dp)) {
         Column(verticalArrangement = Arrangement.spacedBy(4.dp)) {
             Text(
@@ -193,7 +256,7 @@ private fun ArchiveHeader(onExportClick: () -> Unit) {
                 text = buildAnnotatedString {
                     append("Menampilkan arsip dokumen resmi\nuntuk periode anggaran ")
                     withStyle(style = SpanStyle(color = Color(0xFF0D631B), fontWeight = FontWeight.Bold)) {
-                        append("2025")
+                        append(selectedYear.toString())
                     }
                 },
                 fontSize = 18.sp,
@@ -207,7 +270,7 @@ private fun ArchiveHeader(onExportClick: () -> Unit) {
             ActionButton(
                 text = "Ganti Tahun",
                 icon = Icons.Default.CalendarToday,
-                onClick = {}
+                onClick = onYearChangeClick
             )
             ActionButton(
                 text = "Ekspor Data",
@@ -244,7 +307,10 @@ private fun ActionButton(
 }
 
 @Composable
-private fun SearchFilterSection() {
+private fun SearchFilterSection(
+    selectedClassification: String?,
+    onClassificationSelected: (String?) -> Unit
+) {
     Column(
         modifier = Modifier
             .fillMaxWidth()
@@ -282,23 +348,40 @@ private fun SearchFilterSection() {
             )
         }
 
-        // Filter Tabs
-        Row(
-            modifier = Modifier
-                .fillMaxWidth()
-                .horizontalScroll(rememberScrollState()),
-            horizontalArrangement = Arrangement.spacedBy(8.dp)
-        ) {
-            FilterChip(label = "Semua Tipe", isSelected = true)
-            FilterChip(label = "Surat Masuk", isSelected = false)
-            FilterChip(label = "Surat Keluar", isSelected = false)
-            FilterChip(label = "Laporan Keuangan", isSelected = false)
+        // Classification Filter Chips
+        Column(verticalArrangement = Arrangement.spacedBy(8.dp)) {
+            Text(
+                text = "KLASIFIKASI DOKUMEN",
+                fontSize = 10.sp,
+                fontWeight = FontWeight.Bold,
+                color = Color(0xFF40493D),
+                letterSpacing = 1.sp
+            )
+            Row(
+                modifier = Modifier
+                    .fillMaxWidth()
+                    .horizontalScroll(rememberScrollState()),
+                horizontalArrangement = Arrangement.spacedBy(8.dp)
+            ) {
+                FilterChip(
+                    label = "Semua",
+                    isSelected = selectedClassification == null,
+                    onClick = { onClassificationSelected(null) }
+                )
+                archivalClassifications.forEach { classification ->
+                    FilterChip(
+                        label = "${classification.code} ${classification.label}",
+                        isSelected = selectedClassification == classification.code,
+                        onClick = { onClassificationSelected(classification.code) }
+                    )
+                }
+            }
         }
     }
 }
 
 @Composable
-private fun FilterChip(label: String, isSelected: Boolean) {
+private fun FilterChip(label: String, isSelected: Boolean, onClick: () -> Unit) {
     Box(
         modifier = Modifier
             .clip(RoundedCornerShape(9999.dp))
@@ -307,8 +390,8 @@ private fun FilterChip(label: String, isSelected: Boolean) {
                 if (!isSelected) Modifier.border(1.dp, Color(0xFFBFCABA), RoundedCornerShape(9999.dp))
                 else Modifier
             )
-            .clickable {}
-            .padding(horizontal = 24.dp, vertical = 8.dp)
+            .clickable(onClick = onClick)
+            .padding(horizontal = 20.dp, vertical = 8.dp)
     ) {
         Text(
             text = label,
@@ -472,7 +555,7 @@ private fun StatusBadge(status: DocumentStatus) {
 }
 
 @Composable
-private fun PaginationSection() {
+private fun PaginationSection(totalFound: Int) {
     Column(
         modifier = Modifier.fillMaxWidth(),
         horizontalAlignment = Alignment.CenterHorizontally,
@@ -496,7 +579,7 @@ private fun PaginationSection() {
             )
         }
         Text(
-            text = "Menampilkan 6 dari 482 dokumen ditemukan",
+            text = "Menampilkan $totalFound dari $totalFound dokumen ditemukan",
             fontSize = 14.sp,
             fontWeight = FontWeight.Normal,
             fontFamily = PoppinsFont,
@@ -561,5 +644,5 @@ private fun ExportDataDialog(onDismiss: () -> Unit) {
 )
 @Composable
 fun ArchiveScreenPreview() {
-    ArchiveScreen()
+    ArchiveScreen(selectedYear = 2023)
 }

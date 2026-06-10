@@ -9,6 +9,8 @@ import androidx.compose.foundation.lazy.items
 import androidx.compose.foundation.shape.CircleShape
 import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.foundation.text.BasicTextField
+import androidx.compose.material.icons.Icons
+import androidx.compose.material.icons.filled.ArrowBack
 import androidx.compose.material3.*
 import androidx.compose.runtime.*
 import androidx.compose.ui.Alignment
@@ -37,11 +39,10 @@ data class SearchResult(
 
 @Composable
 fun SearchScreen(
-    onNavItemSelected: (String) -> Unit = {},
+    onBackClick: () -> Unit = {},
     onResultClick: (SearchResult) -> Unit = {}
 ) {
     var searchQuery by remember { mutableStateOf("") }
-    var selectedRoute by remember { mutableStateOf("search") }
 
     val results = listOf(
         SearchResult(
@@ -83,13 +84,14 @@ fun SearchScreen(
     )
 
     Scaffold(
-        topBar = { TopBar(onProfileClick = {}) },
-        bottomBar = {
-            BottomBar(
-                selectedRoute = selectedRoute,
-                onItemSelected = { route ->
-                    selectedRoute = route
-                    onNavItemSelected(route)
+        topBar = {
+            TopBar(
+                title = "Pencarian",
+                onProfileClick = {},
+                navigationIcon = {
+                    IconButton(onClick = onBackClick) {
+                        Icon(Icons.Default.ArrowBack, contentDescription = "Back")
+                    }
                 }
             )
         },

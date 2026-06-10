@@ -31,7 +31,8 @@ import com.bpkpad.arsipnonkeu.R
 @Composable
 fun TopBar(
     title: String = "BPKPAD Balangan",
-    onProfileClick: () -> Unit = {}
+    onProfileClick: () -> Unit = {},
+    navigationIcon: @Composable (() -> Unit)? = null
 ) {
     Column(modifier = Modifier.fillMaxWidth()) {
         Row(
@@ -48,6 +49,11 @@ fun TopBar(
                 verticalAlignment = Alignment.CenterVertically,
                 horizontalArrangement = Arrangement.spacedBy(12.dp)
             ) {
+                // Navigation Icon (Back Button)
+                if (navigationIcon != null) {
+                    navigationIcon()
+                }
+
                 // Logo Balangan
                 Image(
                     painter = painterResource(id = R.drawable.logo_balangan),
