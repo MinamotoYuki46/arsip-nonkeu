@@ -104,11 +104,18 @@ class MainActivity : ComponentActivity() {
                     }
 
                     "document_detail" -> {
-                        DocumentDetailScreen(
-                            onBackClick = {
-                                currentRoute = lastRoute
-                            }
-                        )
+                        val documentId = selectedDocumentId
+
+                        if (documentId != null) {
+                            DocumentDetailScreen(
+                                documentId = documentId,
+                                onBackClick = {
+                                    currentRoute = lastRoute
+                                }
+                            )
+                        } else {
+                            currentRoute = lastRoute
+                        }
                     }
 
                     "profile" -> {

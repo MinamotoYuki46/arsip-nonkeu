@@ -17,4 +17,6 @@ object ArchiveModule {
 
     val getArchiveDocumentDetailUseCase =
         GetArchiveDocumentDetailUseCase(archiveRepository)
+
+    val archiveRepositoryInstance: ArchiveRepository = archiveRepository
 }

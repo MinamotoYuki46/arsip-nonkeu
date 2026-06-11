@@ -12,6 +12,10 @@ interface ArchiveRepository {
         filter: ArchiveDocumentFilter
     ): List<ArchiveDocumentListItem>
 
+    suspend fun getArchiveDocumentListItemById(
+        id: String
+    ): ArchiveDocumentListItem?
+
     suspend fun getArchiveDocumentById(
         id: String
     ): ArchiveDocument?

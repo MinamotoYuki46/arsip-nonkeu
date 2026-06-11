@@ -4,40 +4,47 @@ import androidx.lifecycle.ViewModel
 import androidx.lifecycle.viewModelScope
 import com.bpkpad.arsipnonkeu.di.ArchiveModule
 import com.bpkpad.arsipnonkeu.domain.model.ArchiveDocument
+import com.bpkpad.arsipnonkeu.domain.model.ArchiveDocumentListItem
+import com.bpkpad.arsipnonkeu.domain.repository.ArchiveRepository
 import com.bpkpad.arsipnonkeu.domain.usecase.GetArchiveDocumentDetailUseCase
 import kotlinx.coroutines.flow.MutableStateFlow
 import kotlinx.coroutines.flow.StateFlow
 import kotlinx.coroutines.flow.asStateFlow
 import kotlinx.coroutines.launch
 
-data class ArchiveDetailUiState(
+data class DocumentDetailUiState(
     val isLoading: Boolean = false,
-    val document: ArchiveDocument? = null,
-    val errorMessage: String? = null
+    val item: ArchiveDocumentListItem? = null,
+    val errorMessage: String? = null,
+    val isDeleted: Boolean = false,
+    val successMessage: String? = null
 )
-
 
 class DocumentDetailViewModel(
     private val getArchiveDocumentDetailUseCase: GetArchiveDocumentDetailUseCase =
-        ArchiveModule.getArchiveDocumentDetailUseCase
+        ArchiveModule.getArchiveDocumentDetailUseCase,
+    private val repository: ArchiveRepository =
+        ArchiveModule.archiveRepositoryInstance
 ) : ViewModel() {
-    private val _uiState = MutableStateFlow(ArchiveDetailUiState())
-    val uiState: StateFlow<ArchiveDetailUiState> = _uiState.asStateFlow()
 
-    fun loadDocument(id: String) {
+    private val _uiState = MutableStateFlow(DocumentDetailUiState())
+    val uiState: StateFlow<DocumentDetailUiState> = _uiState.asStateFlow()
+
+    fun loadDocument(documentId: String) {
         viewModelScope.launch {
             _uiState.value = _uiState.value.copy(
                 isLoading = true,
-                errorMessage = null
+                errorMessage = null,
+                successMessage = null
             )
 
             try {
-                val document = getArchiveDocumentDetailUseCase(id)
+                val item = getArchiveDocumentDetailUseCase(documentId)
 
                 _uiState.value = _uiState.value.copy(
                     isLoading = false,
-                    document = document,
-                    errorMessage = if (document == null) {
+                    item = item,
+                    errorMessage = if (item == null) {
                         "Dokumen tidak ditemukan"
                     } else {
                         null
@@ -50,5 +57,68 @@ class DocumentDetailViewModel(
                 )
             }
         }
+    }
+
+    fun updateDocument(
+        updatedDocument: ArchiveDocument
+    ) {
+        viewModelScope.launch {
+            _uiState.value = _uiState.value.copy(
+                isLoading = true,
+                errorMessage = null,
+                successMessage = null
+            )
+
+            try {
+                repository.updateArchiveDocument(updatedDocument)
+
+                val updatedItem = getArchiveDocumentDetailUseCase(updatedDocument.id)
+
+                _uiState.value = _uiState.value.copy(
+                    isLoading = false,
+                    item = updatedItem,
+                    successMessage = "Dokumen berhasil diperbarui"
+                )
+            } catch (exception: Exception) {
+                _uiState.value = _uiState.value.copy(
+                    isLoading = false,
+                    errorMessage = exception.message ?: "Gagal memperbarui dokumen"
+                )
+            }
+        }
+    }
+
+    fun deleteDocument() {
+        val documentId = _uiState.value.item?.document?.id ?: return
+
+        viewModelScope.launch {
+            _uiState.value = _uiState.value.copy(
+                isLoading = true,
+                errorMessage = null,
+                successMessage = null
+            )
+
+            try {
+                repository.deleteArchiveDocument(documentId)
+
+                _uiState.value = _uiState.value.copy(
+                    isLoading = false,
+                    isDeleted = true,
+                    successMessage = "Dokumen berhasil dihapus"
+                )
+            } catch (exception: Exception) {
+                _uiState.value = _uiState.value.copy(
+                    isLoading = false,
+                    errorMessage = exception.message ?: "Gagal menghapus dokumen"
+                )
+            }
+        }
+    }
+
+    fun clearMessage() {
+        _uiState.value = _uiState.value.copy(
+            errorMessage = null,
+            successMessage = null
+        )
     }
 }

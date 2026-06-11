@@ -291,6 +291,16 @@ class FakeArchiveRepository : ArchiveRepository {
             }
     }
 
+    override suspend fun getArchiveDocumentListItemById(
+        id: String
+    ): ArchiveDocumentListItem? {
+        val document = documents.firstOrNull { document ->
+            document.id == id && document.deletedAt == null
+        } ?: return null
+
+        return buildListItem(document)
+    }
+
     override suspend fun getArchiveDocumentById(
         id: String
     ): ArchiveDocument? {

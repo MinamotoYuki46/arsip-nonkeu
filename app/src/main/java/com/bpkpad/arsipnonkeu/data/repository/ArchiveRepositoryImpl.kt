@@ -44,4 +44,11 @@ class ArchiveRepositoryImpl : ArchiveRepository {
     ) {
         // TODO: implement soft delete later
     }
+
+    override suspend fun getArchiveDocumentListItemById(
+        id: String
+    ): ArchiveDocumentListItem? {
+        // TODO: implement database/API query later
+        return null
+    }
 }
