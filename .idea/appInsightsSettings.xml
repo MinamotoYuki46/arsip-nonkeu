@@ -8,10 +8,10 @@
             <InsightsFilterSettings>
               <option name="connection">
                 <ConnectionSetting>
-                  <option name="appId" value="PLACEHOLDER" />
-                  <option name="mobileSdkAppId" value="" />
-                  <option name="projectId" value="" />
-                  <option name="projectNumber" value="" />
+                  <option name="appId" value="com.bpkpad.arsip" />
+                  <option name="mobileSdkAppId" value="1:1055253101423:android:53221346cdae13652dc69a" />
+                  <option name="projectId" value="arsipbpkad-33aa0" />
+                  <option name="projectNumber" value="1055253101423" />
                 </ConnectionSetting>
               </option>
               <option name="signal" value="SIGNAL_UNSPECIFIED" />
