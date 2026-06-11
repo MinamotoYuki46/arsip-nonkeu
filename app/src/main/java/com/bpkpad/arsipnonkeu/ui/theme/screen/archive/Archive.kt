@@ -6,6 +6,8 @@ import androidx.compose.foundation.border
 import androidx.compose.foundation.clickable
 import androidx.compose.foundation.horizontalScroll
 import androidx.compose.foundation.layout.*
+import androidx.compose.foundation.lazy.LazyColumn
+import androidx.compose.foundation.lazy.items
 import androidx.compose.foundation.rememberScrollState
 import androidx.compose.foundation.shape.CircleShape
 import androidx.compose.foundation.shape.RoundedCornerShape
@@ -181,50 +183,59 @@ fun ArchiveScreen(
         },
         containerColor = BackgroundGray
     ) { innerPadding ->
-        Column(
+        LazyColumn(
             modifier = Modifier
                 .fillMaxSize()
-                .padding(innerPadding)
-                .verticalScroll(rememberScrollState())
-                .padding(horizontal = 32.dp, vertical = 24.dp),
+                .padding(innerPadding),
+            contentPadding = PaddingValues(horizontal = 32.dp, vertical = 24.dp),
             verticalArrangement = Arrangement.spacedBy(24.dp)
         ) {
             // ── Header Section ────────────────────────────────────────
-            ArchiveHeader(
-                selectedYear = selectedYear,
-                onYearChangeClick = onBackClick,
-                onExportClick = { showExportDialog = true }
-            )
+            item {
+                ArchiveHeader(
+                    selectedYear = selectedYear,
+                    onYearChangeClick = onBackClick,
+                    onExportClick = { showExportDialog = true }
+                )
+            }
 
             // ── Search & Filter Controls ──────────────────────────────
-            SearchFilterSection(
-                selectedClassification = selectedClassification,
-                onClassificationSelected = { selectedClassification = it }
-            )
+            item {
+                SearchFilterSection(
+                    selectedClassification = selectedClassification,
+                    onClassificationSelected = { selectedClassification = it }
+                )
+            }
 
-            // ── Archive Grid ──────────────────────────────────────────
-            Column(verticalArrangement = Arrangement.spacedBy(16.dp)) {
-                if (filteredDocuments.isEmpty()) {
+            // ── Archive List ──────────────────────────────────────────
+            if (filteredDocuments.isEmpty()) {
+                item {
                     Text(
                         text = "Tidak ada dokumen untuk tahun $selectedYear",
-                        modifier = Modifier.fillMaxWidth().padding(vertical = 32.dp),
+                        modifier = Modifier
+                            .fillMaxWidth()
+                            .padding(vertical = 32.dp),
                         textAlign = TextAlign.Center,
                         color = Color.Gray
                     )
-                } else {
-                    filteredDocuments.forEach { doc ->
-                        DocumentCard(
-                            document = doc,
-                            onDetailClick = { onDocumentClick(doc) }
-                        )
-                    }
+                }
+            } else {
+                items(filteredDocuments) { doc ->
+                    DocumentCard(
+                        document = doc,
+                        onDetailClick = { onDocumentClick(doc) }
+                    )
                 }
             }
 
             // ── Pagination Section ────────────────────────────────────
-            PaginationSection(totalFound = filteredDocuments.size)
+            item {
+                PaginationSection(totalFound = filteredDocuments.size)
+            }
 
-            Spacer(modifier = Modifier.height(16.dp))
+            item {
+                Spacer(modifier = Modifier.height(16.dp))
+            }
         }
     }
 

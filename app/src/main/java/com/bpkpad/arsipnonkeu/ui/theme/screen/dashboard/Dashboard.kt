@@ -4,6 +4,7 @@ import androidx.compose.foundation.background
 import androidx.compose.foundation.border
 import androidx.compose.foundation.clickable
 import androidx.compose.foundation.layout.*
+import androidx.compose.foundation.lazy.LazyColumn
 import androidx.compose.foundation.rememberScrollState
 import androidx.compose.foundation.shape.CircleShape
 import androidx.compose.foundation.shape.RoundedCornerShape
@@ -50,24 +51,23 @@ fun DashboardScreen(
         },
         containerColor = BackgroundGray
     ) { innerPadding ->
-        Column(
+        LazyColumn(
             modifier = Modifier
                 .fillMaxSize()
-                .padding(innerPadding)
-                .verticalScroll(rememberScrollState())
-                .padding(horizontal = 32.dp, vertical = 16.dp), // Konsisten dengan left: 32px dari HTML
+                .padding(innerPadding),
+            contentPadding = PaddingValues(horizontal = 32.dp, vertical = 16.dp),
             verticalArrangement = Arrangement.spacedBy(24.dp)
         ) {
             // ── Hero Search Section ──────────────────────────────────
-            HeroSearchSection()
+            item { HeroSearchSection() }
 
             // ── Annual Archives Section (Bento Style) ────────────────
-            AnnualArchivesSection(onYearClick = onArchiveYearClick)
+            item { AnnualArchivesSection(onYearClick = onArchiveYearClick) }
 
             // ── Staging Status Section ───────────────────────────────
-            StagingStatusSection(onPushAllClick = onPushAllClick)
+            item { StagingStatusSection(onPushAllClick = onPushAllClick) }
 
-            Spacer(modifier = Modifier.height(16.dp))
+            item { Spacer(modifier = Modifier.height(16.dp)) }
         }
     }
 }

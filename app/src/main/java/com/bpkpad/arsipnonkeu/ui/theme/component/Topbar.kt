@@ -34,7 +34,11 @@ fun TopBar(
     onProfileClick: () -> Unit = {},
     navigationIcon: @Composable (() -> Unit)? = null
 ) {
-    Column(modifier = Modifier.fillMaxWidth()) {
+    Column(
+        modifier = Modifier
+            .fillMaxWidth()
+            .statusBarsPadding()
+    ) {
         Row(
             modifier = Modifier
                 .fillMaxWidth()

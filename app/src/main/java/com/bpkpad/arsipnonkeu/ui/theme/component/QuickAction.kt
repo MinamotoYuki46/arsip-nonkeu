@@ -9,10 +9,12 @@ import androidx.compose.foundation.background
 import androidx.compose.foundation.clickable
 import androidx.compose.foundation.layout.*
 import androidx.compose.foundation.shape.CircleShape
+import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.filled.Add
-import androidx.compose.material.icons.filled.CameraAlt
-import androidx.compose.material.icons.filled.UploadFile
+import androidx.compose.material.icons.filled.DocumentScanner
+import androidx.compose.material.icons.filled.Edit
+import androidx.compose.material.icons.filled.FileUpload
 import androidx.compose.material3.FloatingActionButton
 import androidx.compose.material3.Icon
 import androidx.compose.material3.Text
@@ -35,21 +37,21 @@ data class QuickAction(
 
 @Composable
 fun QuickActionFab(
+    onManualClick: () -> Unit = {},
     onScanClick: () -> Unit = {},
-    onUploadClick: () -> Unit = {},
-    onCreateClick: () -> Unit = {}
+    onImportClick: () -> Unit = {}
 ) {
     var expanded by remember { mutableStateOf(false) }
 
     val actions = listOf(
-        QuickAction("Scan", Icons.Default.CameraAlt, Color(0xFFACF4A4), onScanClick),
-        QuickAction("Upload", Icons.Default.UploadFile, Color(0xFFD5ECF8), onUploadClick),
-        QuickAction("Baru", Icons.Default.Add, Color(0xFFE8F5E9), onCreateClick)
+        QuickAction("Manual Form", Icons.Default.Edit, Color(0xFFF1E6FF), onManualClick),
+        QuickAction("Scan Document", Icons.Default.DocumentScanner, Color(0xFFE8F5E9), onScanClick),
+        QuickAction("Import Excel", Icons.Default.FileUpload, Color(0xFFE3F2FD), onImportClick)
     )
 
     Column(
         horizontalAlignment = Alignment.End,
-        verticalArrangement = Arrangement.spacedBy(12.dp)
+        verticalArrangement = Arrangement.spacedBy(16.dp)
     ) {
         // Sub-buttons (Speed Dial)
         AnimatedVisibility(
@@ -61,7 +63,7 @@ fun QuickActionFab(
                 horizontalAlignment = Alignment.End,
                 verticalArrangement = Arrangement.spacedBy(12.dp)
             ) {
-                actions.reversed().forEach { action ->
+                actions.forEach { action ->
                     SpeedDialItem(action = action) {
                         expanded = false
                         action.onClick()
@@ -73,9 +75,10 @@ fun QuickActionFab(
         // Main FAB
         FloatingActionButton(
             onClick = { expanded = !expanded },
-            containerColor = Color(0xFF0D631B),
+            containerColor = Color(0xFF5C59E8), // Purplish blue color from image
             contentColor = Color.White,
-            shape = CircleShape
+            shape = CircleShape,
+            modifier = Modifier.size(56.dp)
         ) {
             Icon(
                 imageVector = Icons.Default.Add,
@@ -87,39 +90,28 @@ fun QuickActionFab(
 
 @Composable
 private fun SpeedDialItem(action: QuickAction, onClick: () -> Unit) {
-    Row(
-        verticalAlignment = Alignment.CenterVertically,
-        horizontalArrangement = Arrangement.spacedBy(8.dp),
-        modifier = Modifier.clickable(onClick = onClick)
+    Box(
+        modifier = Modifier
+            .clip(RoundedCornerShape(12.dp))
+            .background(action.color)
+            .clickable(onClick = onClick)
+            .padding(horizontal = 16.dp, vertical = 10.dp)
     ) {
-        // Label
-        Box(
-            modifier = Modifier
-                .clip(CircleShape)
-                .background(Color.White.copy(alpha = 0.9f))
-                .padding(horizontal = 12.dp, vertical = 6.dp)
+        Row(
+            verticalAlignment = Alignment.CenterVertically,
+            horizontalArrangement = Arrangement.spacedBy(10.dp)
         ) {
             Text(
                 text = action.label,
-                fontSize = 12.sp,
-                fontWeight = FontWeight.Bold,
+                fontSize = 14.sp,
+                fontWeight = FontWeight.SemiBold,
                 color = Color(0xFF40493D)
             )
-        }
-
-        // Action Circle
-        Box(
-            modifier = Modifier
-                .size(44.dp)
-                .clip(CircleShape)
-                .background(action.color),
-            contentAlignment = Alignment.Center
-        ) {
             Icon(
                 imageVector = action.icon,
-                contentDescription = action.label,
-                tint = Color(0xFF0D631B),
-                modifier = Modifier.size(20.dp)
+                contentDescription = null,
+                tint = Color(0xFF40493D),
+                modifier = Modifier.size(18.dp)
             )
         }
     }

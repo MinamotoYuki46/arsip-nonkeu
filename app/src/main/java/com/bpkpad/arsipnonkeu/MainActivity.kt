@@ -47,7 +47,9 @@ class MainActivity : ComponentActivity() {
                     )
                     "staging" -> StagingScreen(
                         onBackClick = { currentRoute = "archive" },
-                        onAddNewClick = { currentRoute = "new_record" },
+                        onManualClick = { currentRoute = "new_record" },
+                        onScanClick = { currentRoute = "new_record" },
+                        onImportClick = { currentRoute = "new_record" },
                         onPushAllClick = {
                             // After push, maybe go back to dashboard or archive
                             currentRoute = "dashboard"

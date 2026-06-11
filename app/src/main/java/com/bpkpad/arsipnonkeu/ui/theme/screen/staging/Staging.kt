@@ -4,6 +4,8 @@ import androidx.compose.foundation.background
 import androidx.compose.foundation.border
 import androidx.compose.foundation.clickable
 import androidx.compose.foundation.layout.*
+import androidx.compose.foundation.lazy.LazyColumn
+import androidx.compose.foundation.lazy.items
 import androidx.compose.foundation.rememberScrollState
 import androidx.compose.foundation.shape.CircleShape
 import androidx.compose.foundation.shape.RoundedCornerShape
@@ -39,7 +41,9 @@ data class StagedDocument(
 @Composable
 fun StagingScreen(
     onBackClick: () -> Unit = {},
-    onAddNewClick: () -> Unit = {},
+    onManualClick: () -> Unit = {},
+    onScanClick: () -> Unit = {},
+    onImportClick: () -> Unit = {},
     onPushAllClick: () -> Unit = {}
 ) {
     val stagedItems = listOf(
@@ -62,54 +66,57 @@ fun StagingScreen(
         },
         floatingActionButton = {
             QuickActionFab(
-                onScanClick = onAddNewClick,
-                onUploadClick = onAddNewClick,
-                onCreateClick = onAddNewClick
+                onManualClick = onManualClick,
+                onScanClick = onScanClick,
+                onImportClick = onImportClick
             )
         },
         containerColor = BackgroundGray
     ) { innerPadding ->
-        Column(
+        LazyColumn(
             modifier = Modifier
                 .fillMaxSize()
-                .padding(innerPadding)
-                .verticalScroll(rememberScrollState())
-                .padding(24.dp),
+                .padding(innerPadding),
+            contentPadding = PaddingValues(24.dp),
             verticalArrangement = Arrangement.spacedBy(24.dp)
         ) {
             // ── Header Section ────────────────────────────────────────
-            Column(verticalArrangement = Arrangement.spacedBy(8.dp)) {
-                Text(
-                    text = "Antrean Unggahan",
-                    fontSize = 28.sp,
-                    fontWeight = FontWeight.Bold,
-                    fontFamily = PoppinsFont,
-                    color = Color(0xFF071E27)
-                )
-                Text(
-                    text = "Dokumen di bawah ini belum tersimpan ke database utama. Lakukan validasi sebelum melakukan sinkronisasi.",
-                    fontSize = 14.sp,
-                    fontFamily = PoppinsFont,
-                    color = Color(0xFF40493D),
-                    lineHeight = 20.sp
-                )
+            item {
+                Column(verticalArrangement = Arrangement.spacedBy(8.dp)) {
+                    Text(
+                        text = "Antrean Unggahan",
+                        fontSize = 28.sp,
+                        fontWeight = FontWeight.Bold,
+                        fontFamily = PoppinsFont,
+                        color = Color(0xFF071E27)
+                    )
+                    Text(
+                        text = "Dokumen di bawah ini belum tersimpan ke database utama. Lakukan validasi sebelum melakukan sinkronisasi.",
+                        fontSize = 14.sp,
+                        fontFamily = PoppinsFont,
+                        color = Color(0xFF40493D),
+                        lineHeight = 20.sp
+                    )
+                }
             }
 
             // ── Push Action Card ──────────────────────────────────────
-            PushActionCard(
-                itemCount = stagedItems.size,
-                totalSize = "6.5 MB",
-                onPushClick = onPushAllClick
-            )
+            item {
+                PushActionCard(
+                    itemCount = stagedItems.size,
+                    totalSize = "6.5 MB",
+                    onPushClick = onPushAllClick
+                )
+            }
 
             // ── Staged Items List ─────────────────────────────────────
-            Column(verticalArrangement = Arrangement.spacedBy(12.dp)) {
-                stagedItems.forEach { item ->
-                    StagingItemRow(item)
-                }
+            items(stagedItems) { item ->
+                StagingItemRow(item)
             }
-            
-            Spacer(modifier = Modifier.height(80.dp))
+
+            item {
+                Spacer(modifier = Modifier.height(80.dp))
+            }
         }
     }
 }
@@ -149,7 +156,7 @@ private fun PushActionCard(
                     fontFamily = PoppinsFont
                 )
             }
-            
+
             Button(
                 onClick = onPushClick,
                 colors = ButtonDefaults.buttonColors(containerColor = Color(0xFF0D631B)),
@@ -158,7 +165,7 @@ private fun PushActionCard(
                 Text("Sync All", fontWeight = FontWeight.Bold)
             }
         }
-        
+
         // Progress bar simulation
         LinearProgressIndicator(
             progress = 0.4f,
@@ -214,7 +221,7 @@ private fun StagingItemRow(item: StagedDocument) {
                 color = if (item.status == "Ready to Sync") Color(0xFF1B5E20) else Color(0xFFBA1A1A)
             )
         }
-        
+
         IconButton(onClick = { /* Delete/Edit from staging */ }) {
             Text("⋮", fontSize = 20.sp, color = Color.Gray)
         }
