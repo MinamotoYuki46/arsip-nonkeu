@@ -2,11 +2,14 @@ package com.bpkpad.arsipnonkeu.data.repository
 
 import com.bpkpad.arsipnonkeu.domain.model.ArchiveDocument
 import com.bpkpad.arsipnonkeu.domain.model.ArchiveDocumentFilter
+import com.bpkpad.arsipnonkeu.domain.model.ArchiveDocumentListItem
 import com.bpkpad.arsipnonkeu.domain.model.ArchiveYearSummary
 import com.bpkpad.arsipnonkeu.domain.model.DocumentCondition
+import com.bpkpad.arsipnonkeu.domain.model.DocumentPlacement
 import com.bpkpad.arsipnonkeu.domain.model.DocumentStatus
 import com.bpkpad.arsipnonkeu.domain.model.DocumentType
 import com.bpkpad.arsipnonkeu.domain.model.PhysicalForm
+import com.bpkpad.arsipnonkeu.domain.model.StorageLocation
 import com.bpkpad.arsipnonkeu.domain.repository.ArchiveRepository
 
 class FakeArchiveRepository : ArchiveRepository {
@@ -128,6 +131,96 @@ class FakeArchiveRepository : ArchiveRepository {
         )
     )
 
+    private val storageLocations = listOf(
+        StorageLocation(
+            id = "loc-001",
+            room = "Ruang Arsip",
+            shelf = "Rak 04-B",
+            boxNumber = "01"
+        ),
+        StorageLocation(
+            id = "loc-002",
+            room = "Ruang Arsip",
+            shelf = "Rak 01-A",
+            boxNumber = "02"
+        ),
+        StorageLocation(
+            id = "loc-003",
+            room = "Ruang Arsip",
+            shelf = "Rak 02-C",
+            boxNumber = "03"
+        ),
+        StorageLocation(
+            id = "loc-004",
+            room = "Ruang Arsip",
+            shelf = "Rak 03-A",
+            boxNumber = "04"
+        ),
+        StorageLocation(
+            id = "loc-005",
+            room = "Gudang Arsip",
+            shelf = "Rak 06-B",
+            boxNumber = "01"
+        ),
+        StorageLocation(
+            id = "loc-006",
+            room = "Gudang Arsip",
+            shelf = "Rak 07-D",
+            boxNumber = "05"
+        )
+    )
+
+    private val placements = mutableListOf(
+        DocumentPlacement(
+            id = "place-001",
+            archiveDocumentId = "doc-001",
+            storageLocationId = "loc-001",
+            placedAt = "2025-01-10",
+            removedAt = null,
+            userId = null,
+        ),
+        DocumentPlacement(
+            id = "place-002",
+            archiveDocumentId = "doc-002",
+            storageLocationId = "loc-002",
+            placedAt = "2025-02-14",
+            removedAt = null,
+            userId = null,
+        ),
+        DocumentPlacement(
+            id = "place-003",
+            archiveDocumentId = "doc-003",
+            storageLocationId = "loc-003",
+            placedAt = "2024-03-20",
+            removedAt = null,
+            userId = null,
+        ),
+        DocumentPlacement(
+            id = "place-004",
+            archiveDocumentId = "doc-004",
+            storageLocationId = "loc-004",
+            placedAt = "2024-05-12",
+            removedAt = null,
+            userId = null,
+        ),
+        DocumentPlacement(
+            id = "place-005",
+            archiveDocumentId = "doc-005",
+            storageLocationId = "loc-005",
+            placedAt = "2023-08-01",
+            removedAt = null,
+            userId = null,
+        ),
+        DocumentPlacement(
+            id = "place-006",
+            archiveDocumentId = "doc-006",
+            storageLocationId = "loc-006",
+            placedAt = "2023-10-18",
+            removedAt = null,
+            userId = null,
+        )
+    )
+
     override suspend fun getArchiveYearSummaries(): List<ArchiveYearSummary> {
         return documents
             .filter { it.deletedAt == null }
@@ -141,9 +234,9 @@ class FakeArchiveRepository : ArchiveRepository {
             .sortedByDescending { it.year }
     }
 
-    override suspend fun getArchiveDocuments(
+    override suspend fun getArchiveDocumentListItems(
         filter: ArchiveDocumentFilter
-    ): List<ArchiveDocument> {
+    ): List<ArchiveDocumentListItem> {
         var result = documents
             .filter { it.deletedAt == null }
             .filter { it.year == filter.year }
@@ -177,15 +270,25 @@ class FakeArchiveRepository : ArchiveRepository {
             ?.takeIf { it.isNotBlank() }
             ?.let { keyword ->
                 result = result.filter { document ->
+                    val listItem = buildListItem(document)
+
                     document.title.contains(keyword, ignoreCase = true) ||
                             document.description.orEmpty().contains(keyword, ignoreCase = true) ||
                             document.documentNumber.orEmpty().contains(keyword, ignoreCase = true) ||
                             document.documentCode.orEmpty().contains(keyword, ignoreCase = true) ||
-                            document.originInstance.orEmpty().contains(keyword, ignoreCase = true)
+                            document.originInstance.orEmpty().contains(keyword, ignoreCase = true) ||
+                            listItem.locationLabel.contains(keyword, ignoreCase = true)
                 }
             }
 
-        return result.sortedByDescending { it.createdAt }
+        return result
+            .sortedWith(
+                compareByDescending<ArchiveDocument> { it.createdAt }
+                    .thenBy { it.title }
+            )
+            .map { document ->
+                buildListItem(document)
+            }
     }
 
     override suspend fun getArchiveDocumentById(
@@ -230,7 +333,27 @@ class FakeArchiveRepository : ArchiveRepository {
         }
     }
 
+    private fun buildListItem(
+        document: ArchiveDocument
+    ): ArchiveDocumentListItem {
+        val currentPlacement = placements.firstOrNull { placement ->
+            placement.archiveDocumentId == document.id &&
+                    placement.removedAt == null
+        }
+
+        val storageLocation = storageLocations.firstOrNull { location ->
+            location.id == currentPlacement?.storageLocationId
+        }
+
+        return ArchiveDocumentListItem(
+            document = document,
+            currentPlacement = currentPlacement,
+            storageLocation = storageLocation
+        )
+    }
+
     private fun generateDocumentId(): String {
-        return "doc-${documents.size + 1}"
+        val nextNumber = documents.size + 1
+        return "doc-${nextNumber.toString().padStart(3, '0')}"
     }
 }

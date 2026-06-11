@@ -2,14 +2,15 @@ package com.bpkpad.arsipnonkeu.domain.repository
 
 import com.bpkpad.arsipnonkeu.domain.model.ArchiveDocument
 import com.bpkpad.arsipnonkeu.domain.model.ArchiveDocumentFilter
+import com.bpkpad.arsipnonkeu.domain.model.ArchiveDocumentListItem
 import com.bpkpad.arsipnonkeu.domain.model.ArchiveYearSummary
 
 interface ArchiveRepository {
     suspend fun getArchiveYearSummaries(): List<ArchiveYearSummary>
 
-    suspend fun getArchiveDocuments(
+    suspend fun getArchiveDocumentListItems(
         filter: ArchiveDocumentFilter
-    ): List<ArchiveDocument>
+    ): List<ArchiveDocumentListItem>
 
     suspend fun getArchiveDocumentById(
         id: String

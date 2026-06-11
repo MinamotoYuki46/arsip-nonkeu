@@ -3,13 +3,13 @@ package com.bpkpad.arsipnonkeu.ui.screen.archive
 import androidx.lifecycle.ViewModel
 import androidx.lifecycle.viewModelScope
 import com.bpkpad.arsipnonkeu.di.ArchiveModule
-import com.bpkpad.arsipnonkeu.domain.model.ArchiveDocument
 import com.bpkpad.arsipnonkeu.domain.model.ArchiveDocumentFilter
+import com.bpkpad.arsipnonkeu.domain.model.ArchiveDocumentListItem
 import com.bpkpad.arsipnonkeu.domain.model.DocumentCondition
-import com.bpkpad.arsipnonkeu.domain.model.DocumentType
 import com.bpkpad.arsipnonkeu.domain.model.DocumentStatus
+import com.bpkpad.arsipnonkeu.domain.model.DocumentType
 import com.bpkpad.arsipnonkeu.domain.model.PhysicalForm
-import com.bpkpad.arsipnonkeu.domain.usecase.GetArchiveDocumentsUseCase
+import com.bpkpad.arsipnonkeu.domain.usecase.GetArchiveDocumentListItemsUseCase
 import kotlinx.coroutines.flow.MutableStateFlow
 import kotlinx.coroutines.flow.StateFlow
 import kotlinx.coroutines.flow.asStateFlow
@@ -18,50 +18,106 @@ import kotlinx.coroutines.launch
 data class ArchiveListUiState(
     val isLoading: Boolean = false,
     val selectedYear: Int? = null,
-    val documents: List<ArchiveDocument> = emptyList(),
+    val documents: List<ArchiveDocumentListItem> = emptyList(),
     val filter: ArchiveDocumentFilter? = null,
     val errorMessage: String? = null
 )
 
 class ArchiveViewModel(
-    private val getArchiveDocumentsUseCase: GetArchiveDocumentsUseCase =
-        ArchiveModule.getArchiveDocumentsUseCase
+    private val getArchiveDocumentListItemsUseCase: GetArchiveDocumentListItemsUseCase =
+        ArchiveModule.getArchiveDocumentListItemsUseCase
 ) : ViewModel() {
 
     private val _uiState = MutableStateFlow(ArchiveListUiState())
     val uiState: StateFlow<ArchiveListUiState> = _uiState.asStateFlow()
 
     fun loadDocumentsByYear(year: Int) {
-        val filter = ArchiveDocumentFilter(year = year)
+        val currentFilter = _uiState.value.filter
+
+        val filter = if (currentFilter?.year == year) {
+            currentFilter
+        } else {
+            ArchiveDocumentFilter(year = year)
+        }
+
         loadDocuments(filter)
     }
 
-    fun applyFilter(
-        documentType: DocumentType? = null,
-        status: DocumentStatus? = null,
-        physicalForm: PhysicalForm? = null,
-        condition: DocumentCondition? = null,
-        originInstance: String? = null,
-        keyword: String? = null
-    ) {
-        val currentYear = _uiState.value.selectedYear ?: return
+    fun updateKeyword(keyword: String) {
+        val currentFilter = currentFilterOrNull() ?: return
 
-        val filter = ArchiveDocumentFilter(
-            year = currentYear,
-            documentType = documentType,
-            status = status,
-            physicalForm = physicalForm,
-            condition = condition,
-            originInstance = originInstance,
-            keyword = keyword
+        loadDocuments(
+            currentFilter.copy(
+                keyword = keyword.takeIf { it.isNotBlank() }
+            )
         )
+    }
 
-        loadDocuments(filter)
+    fun updateDocumentType(documentType: DocumentType?) {
+        val currentFilter = currentFilterOrNull() ?: return
+
+        loadDocuments(
+            currentFilter.copy(
+                documentType = documentType
+            )
+        )
+    }
+
+    fun updateStatus(status: DocumentStatus?) {
+        val currentFilter = currentFilterOrNull() ?: return
+
+        loadDocuments(
+            currentFilter.copy(
+                status = status
+            )
+        )
+    }
+
+    fun updatePhysicalForm(physicalForm: PhysicalForm?) {
+        val currentFilter = currentFilterOrNull() ?: return
+
+        loadDocuments(
+            currentFilter.copy(
+                physicalForm = physicalForm
+            )
+        )
+    }
+
+    fun updateCondition(condition: DocumentCondition?) {
+        val currentFilter = currentFilterOrNull() ?: return
+
+        loadDocuments(
+            currentFilter.copy(
+                condition = condition
+            )
+        )
+    }
+
+    fun updateOriginInstance(originInstance: String?) {
+        val currentFilter = currentFilterOrNull() ?: return
+
+        loadDocuments(
+            currentFilter.copy(
+                originInstance = originInstance?.takeIf { it.isNotBlank() }
+            )
+        )
     }
 
     fun resetFilter() {
         val currentYear = _uiState.value.selectedYear ?: return
-        loadDocumentsByYear(currentYear)
+
+        loadDocuments(
+            ArchiveDocumentFilter(year = currentYear)
+        )
+    }
+
+    private fun currentFilterOrNull(): ArchiveDocumentFilter? {
+        val currentState = _uiState.value
+
+        return currentState.filter
+            ?: currentState.selectedYear?.let { year ->
+                ArchiveDocumentFilter(year = year)
+            }
     }
 
     private fun loadDocuments(filter: ArchiveDocumentFilter) {
@@ -74,7 +130,7 @@ class ArchiveViewModel(
             )
 
             try {
-                val documents = getArchiveDocumentsUseCase(filter)
+                val documents = getArchiveDocumentListItemsUseCase(filter)
 
                 _uiState.value = _uiState.value.copy(
                     isLoading = false,
