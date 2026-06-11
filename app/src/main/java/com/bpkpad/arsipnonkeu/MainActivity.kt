@@ -30,7 +30,6 @@ class MainActivity : ComponentActivity() {
 
                 when (currentRoute) {
                     "dashboard" -> DashboardScreen(
-                        onNavItemSelected = { currentRoute = it },
                         onArchiveYearClick = { year ->
                             selectedYear = year
                             currentRoute = "archive"
@@ -73,7 +72,12 @@ class MainActivity : ComponentActivity() {
                     "document_detail" -> DocumentDetailScreen(
                         onBackClick = { currentRoute = lastRoute }
                     )
-                    else -> DashboardScreen(onNavItemSelected = { currentRoute = it })
+                    else -> DashboardScreen(
+                        onArchiveYearClick = { year ->
+                            selectedYear = year
+                            currentRoute = "archive"
+                        }
+                    )
                 }
             }
         }
