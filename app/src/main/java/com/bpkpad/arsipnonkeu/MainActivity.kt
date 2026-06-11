@@ -2,6 +2,7 @@ package com.bpkpad.arsipnonkeu
 
 import android.os.Bundle
 import androidx.activity.ComponentActivity
+import androidx.activity.compose.BackHandler
 import androidx.activity.compose.setContent
 import androidx.activity.enableEdgeToEdge
 import androidx.compose.runtime.getValue
@@ -20,7 +21,8 @@ import com.bpkpad.arsipnonkeu.ui.theme.ArsipBPKADTheme
 /**
  * MainActivity - Entry point of the BPKPAD Balangan application.
  *
- * Sets up Compose content and handles temporary manual navigation between screens.
+ * This version still uses simple manual navigation with route state.
+ * Android system back is handled using BackHandler.
  */
 class MainActivity : ComponentActivity() {
     override fun onCreate(savedInstanceState: Bundle?) {
@@ -35,6 +37,34 @@ class MainActivity : ComponentActivity() {
 
                 var selectedYear by remember { mutableIntStateOf(2025) }
                 var selectedDocumentId by remember { mutableStateOf<String?>(null) }
+
+                BackHandler(enabled = currentRoute != "dashboard") {
+                    currentRoute = when (currentRoute) {
+                        "archive" -> {
+                            "dashboard"
+                        }
+
+                        "staging" -> {
+                            "archive"
+                        }
+
+                        "new_record" -> {
+                            "staging"
+                        }
+
+                        "search" -> {
+                            "dashboard"
+                        }
+
+                        "document_detail" -> {
+                            lastRoute
+                        }
+
+                        else -> {
+                            "dashboard"
+                        }
+                    }
+                }
 
                 when (currentRoute) {
                     "dashboard" -> {
@@ -86,6 +116,7 @@ class MainActivity : ComponentActivity() {
                                 currentRoute = "dashboard"
                             },
                             onResultClick = {
+                                selectedDocumentId = "doc-001"
                                 lastRoute = "search"
                                 currentRoute = "document_detail"
                             }
