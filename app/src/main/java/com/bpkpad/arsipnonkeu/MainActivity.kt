@@ -6,12 +6,12 @@ import androidx.activity.compose.setContent
 import androidx.activity.enableEdgeToEdge
 import androidx.compose.runtime.*
 import com.bpkpad.arsipnonkeu.ui.theme.ArsipBPKADTheme
-import com.bpkpad.arsipnonkeu.ui.theme.screen.add.NewRecordScreen
-import com.bpkpad.arsipnonkeu.ui.theme.screen.archive.ArchiveScreen
-import com.bpkpad.arsipnonkeu.ui.theme.screen.dashboard.DashboardScreen
-import com.bpkpad.arsipnonkeu.ui.theme.screen.detail.DocumentDetailScreen
-import com.bpkpad.arsipnonkeu.ui.theme.screen.search.SearchScreen
-import com.bpkpad.arsipnonkeu.ui.theme.screen.staging.StagingScreen
+import com.bpkpad.arsipnonkeu.ui.screen.add.NewRecordScreen
+import com.bpkpad.arsipnonkeu.ui.screen.archive.ArchiveScreen
+import com.bpkpad.arsipnonkeu.ui.screen.dashboard.DashboardScreen
+import com.bpkpad.arsipnonkeu.ui.screen.detail.DocumentDetailScreen
+import com.bpkpad.arsipnonkeu.ui.screen.search.SearchScreen
+import com.bpkpad.arsipnonkeu.ui.screen.staging.StagingScreen
 
 /**
  * MainActivity - Entry point of the BPKPAD Balangan application.
