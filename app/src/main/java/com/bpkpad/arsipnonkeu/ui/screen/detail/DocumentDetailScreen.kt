@@ -399,6 +399,11 @@ private fun DocumentInformationCard(
             DetailRow("Tahun", document.year.toString())
             DetailRow("Bentuk Fisik", document.physicalForm.label)
             DetailRow("Kondisi", document.condition?.label ?: "Tidak diketahui")
+            DetailRow("Status Keaslian", when(document.isCopy) {
+                true -> "Kopi"
+                false -> "Asli"
+                null -> "Tidak diketahui"
+            })
             DetailRow("Jumlah Salinan", document.copyCount.toString())
             DetailRow("Status", document.status.label)
             DetailRow("Asal Instansi", document.originInstance ?: "-")
@@ -704,6 +709,7 @@ fun DocumentDetailContentPreview() {
         physicalForm = PhysicalForm.BOOK,
         condition = DocumentCondition.GOOD,
         copyCount = 1,
+        isCopy = false,
         status = DocumentStatus.BORROWED,
         originInstance = "Bagian Hukum",
         createdBy = "user-002",

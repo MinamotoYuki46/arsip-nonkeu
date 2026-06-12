@@ -29,6 +29,7 @@ data class StagingDocument(
     val physicalForm: PhysicalForm,
     val condition: DocumentCondition?,
     val copyCount: Int,
+    val isCopy: Boolean?,
     val status: DocumentStatus,
     val originInstance: String?,
     val source: StagingDocumentSource
@@ -85,6 +86,7 @@ class StagingViewModel : ViewModel() {
                     physicalForm = PhysicalForm.SHEET,
                     condition = DocumentCondition.GOOD,
                     copyCount = 1,
+                    isCopy = false,
                     status = DocumentStatus.AVAILABLE,
                     originInstance = "Bagian Umum",
                     source = StagingDocumentSource.MANUAL
@@ -100,6 +102,7 @@ class StagingViewModel : ViewModel() {
                     physicalForm = PhysicalForm.BOOK,
                     condition = DocumentCondition.GOOD,
                     copyCount = 1,
+                    isCopy = false,
                     status = DocumentStatus.AVAILABLE,
                     originInstance = "Bagian Hukum",
                     source = StagingDocumentSource.SCAN
@@ -115,6 +118,7 @@ class StagingViewModel : ViewModel() {
                     physicalForm = PhysicalForm.BOOK,
                     condition = DocumentCondition.GOOD,
                     copyCount = 2,
+                    isCopy = true,
                     status = DocumentStatus.AVAILABLE,
                     originInstance = "Sekretariat Daerah",
                     source = StagingDocumentSource.IMPORT
@@ -161,6 +165,7 @@ class StagingViewModel : ViewModel() {
         physicalForm: PhysicalForm,
         condition: DocumentCondition?,
         copyCount: Int,
+        isCopy: Boolean?,
         status: DocumentStatus,
         originInstance: String?
     ) {
@@ -176,6 +181,7 @@ class StagingViewModel : ViewModel() {
             physicalForm = physicalForm,
             condition = condition,
             copyCount = copyCount,
+            isCopy = isCopy,
             status = status,
             originInstance = originInstance
         )
@@ -218,6 +224,7 @@ class StagingViewModel : ViewModel() {
             physicalForm = PhysicalForm.SHEET,
             condition = DocumentCondition.GOOD,
             copyCount = 1,
+            isCopy = false,
             status = DocumentStatus.AVAILABLE,
             originInstance = "Import Excel",
             source = StagingDocumentSource.IMPORT
@@ -241,6 +248,7 @@ class StagingViewModel : ViewModel() {
             physicalForm = PhysicalForm.SHEET,
             condition = null,
             copyCount = 1,
+            isCopy = null,
             status = DocumentStatus.AVAILABLE,
             originInstance = "Hasil Scan",
             source = StagingDocumentSource.SCAN
@@ -302,6 +310,7 @@ class StagingViewModel : ViewModel() {
         physicalForm: PhysicalForm,
         condition: DocumentCondition?,
         copyCount: Int,
+        isCopy: Boolean?,
         status: DocumentStatus,
         originInstance: String?
     ) {
@@ -316,6 +325,7 @@ class StagingViewModel : ViewModel() {
             physicalForm = physicalForm,
             condition = condition,
             copyCount = copyCount,
+            isCopy = isCopy,
             status = status,
             originInstance = originInstance,
             source = StagingDocumentSource.MANUAL
@@ -341,6 +351,7 @@ class StagingViewModel : ViewModel() {
             physicalForm = PhysicalForm.SHEET,
             condition = null,
             copyCount = 1,
+            isCopy = null,
             status = DocumentStatus.AVAILABLE,
             originInstance = "Hasil Scan",
             source = StagingDocumentSource.SCAN
@@ -369,6 +380,7 @@ class StagingViewModel : ViewModel() {
             physicalForm = parsedDocument.physicalForm,
             condition = parsedDocument.condition,
             copyCount = parsedDocument.copyCount,
+            isCopy = parsedDocument.isCopy,
             status = parsedDocument.status,
             originInstance = parsedDocument.originInstance,
             source = StagingDocumentSource.SCAN

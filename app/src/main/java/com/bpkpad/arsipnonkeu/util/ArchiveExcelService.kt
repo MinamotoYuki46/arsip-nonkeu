@@ -29,6 +29,7 @@ object ArchiveExcelService {
         "Bentuk Fisik",
         "Kondisi",
         "Jumlah Salinan",
+        "Keaslian",
         "Status",
         "Asal Instansi",
         "Lokasi"
@@ -60,9 +61,14 @@ object ArchiveExcelService {
                 sheet.value(row, 6, document.physicalForm.label)
                 sheet.value(row, 7, document.condition?.label.orEmpty())
                 sheet.value(row, 8, document.copyCount)
-                sheet.value(row, 9, document.status.label)
-                sheet.value(row, 10, document.originInstance.orEmpty())
-                sheet.value(row, 11, item.locationLabel)
+                sheet.value(row, 9, when (document.isCopy) {
+                    true -> "Kopi"
+                    false -> "Asli"
+                    null -> "Tidak diketahui"
+                })
+                sheet.value(row, 10, document.status.label)
+                sheet.value(row, 11, document.originInstance.orEmpty())
+                sheet.value(row, 12, item.locationLabel)
             }
 
             workbook.finish()
@@ -128,8 +134,9 @@ object ArchiveExcelService {
                         physicalForm = parsePhysicalForm(row[6].orEmpty()),
                         condition = parseDocumentCondition(row[7].orEmpty()),
                         copyCount = parseIntCell(row[8].orEmpty(), 1).coerceAtLeast(1),
-                        status = parseDocumentStatus(row[9].orEmpty()),
-                        originInstance = row[10].orEmpty().takeIf { it.isNotBlank() },
+                        isCopy = parseIsCopy(row[9].orEmpty()),
+                        status = parseDocumentStatus(row[10].orEmpty()),
+                        originInstance = row[11].orEmpty().takeIf { it.isNotBlank() },
                         source = StagingDocumentSource.IMPORT
                     )
                 }
@@ -364,5 +371,15 @@ object ArchiveExcelService {
             value.equals(status.name, ignoreCase = true) ||
                     value.equals(status.label, ignoreCase = true)
         } ?: DocumentStatus.AVAILABLE
+    }
+
+    private fun parseIsCopy(value: String): Boolean? {
+        if (value.isBlank() || value.contains("diketahui", ignoreCase = true)) return null
+
+        return when {
+            value.equals("Kopi", ignoreCase = true) -> true
+            value.equals("Asli", ignoreCase = true) -> false
+            else -> null
+        }
     }
 }

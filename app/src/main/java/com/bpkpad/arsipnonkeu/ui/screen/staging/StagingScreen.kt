@@ -206,6 +206,7 @@ fun StagingScreen(
                        physicalForm,
                        condition,
                        copyCount,
+                       isCopy,
                        status,
                        originInstance ->
                 viewModel.updateSelectedDocument(
@@ -218,6 +219,7 @@ fun StagingScreen(
                     physicalForm = physicalForm,
                     condition = condition,
                     copyCount = copyCount,
+                    isCopy = isCopy,
                     status = status,
                     originInstance = originInstance
                 )
@@ -543,6 +545,7 @@ private fun StagingDocumentDetailSheet(
         physicalForm: PhysicalForm,
         condition: DocumentCondition?,
         copyCount: Int,
+        isCopy: Boolean?,
         status: DocumentStatus,
         originInstance: String?
     ) -> Unit,
@@ -560,6 +563,7 @@ private fun StagingDocumentDetailSheet(
     var description by remember(document.id) { mutableStateOf(document.description.orEmpty()) }
     var year by remember(document.id) { mutableStateOf(document.year.toString()) }
     var copyCount by remember(document.id) { mutableStateOf(document.copyCount.toString()) }
+    var isCopy by remember(document.id) { mutableStateOf(document.isCopy) }
     var originInstance by remember(document.id) { mutableStateOf(document.originInstance.orEmpty()) }
 
     var selectedType by remember(document.id) { mutableStateOf(document.documentType) }
@@ -682,6 +686,20 @@ private fun StagingDocumentDetailSheet(
                 }
 
                 item {
+                    EnumChipSelector(
+                        title = "Keaslian",
+                        selected = isCopy,
+                        values = listOf(false, true),
+                        label = { if (it == true) "Kopi" else "Asli" },
+                        allowNull = true,
+                        nullLabel = "Tidak diketahui",
+                        onSelected = { selected ->
+                            isCopy = selected
+                        }
+                    )
+                }
+
+                item {
                     DetailTextField(
                         label = "Jumlah Salinan",
                         value = copyCount,
@@ -723,6 +741,13 @@ private fun StagingDocumentDetailSheet(
                 item { DetailRow("Tahun", document.year.toString()) }
                 item { DetailRow("Bentuk Fisik", document.physicalForm.label) }
                 item { DetailRow("Kondisi", document.condition?.label ?: "Tidak diketahui") }
+                item {
+                    DetailRow("Keaslian", when (document.isCopy) {
+                        true -> "Kopi"
+                        false -> "Asli"
+                        null -> "Tidak diketahui"
+                    })
+                }
                 item { DetailRow("Jumlah Salinan", document.copyCount.toString()) }
                 item { DetailRow("Status", document.status.label) }
                 item { DetailRow("Asal Instansi", document.originInstance ?: "-") }
@@ -745,6 +770,7 @@ private fun StagingDocumentDetailSheet(
                                 description = document.description.orEmpty()
                                 year = document.year.toString()
                                 copyCount = document.copyCount.toString()
+                                isCopy = document.isCopy
                                 originInstance = document.originInstance.orEmpty()
                                 selectedType = document.documentType
                                 selectedPhysicalForm = document.physicalForm
@@ -841,6 +867,7 @@ private fun StagingDocumentDetailSheet(
                             selectedPhysicalForm,
                             selectedCondition,
                             copyCount.toIntOrNull() ?: document.copyCount,
+                            isCopy,
                             selectedStatus,
                             originInstance.takeIf { it.isNotBlank() }
                         )

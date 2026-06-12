@@ -697,6 +697,27 @@ private fun ArchiveDocumentCard(
                 modifier = Modifier.weight(1f)
             )
         }
+
+        Row(
+            modifier = Modifier.fillMaxWidth(),
+            horizontalArrangement = Arrangement.spacedBy(16.dp)
+        ) {
+            MetadataItem(
+                label = "KEASLIAN",
+                value = when(document.isCopy) {
+                    true -> "Kopi"
+                    false -> "Asli"
+                    null -> "Tidak diketahui"
+                },
+                modifier = Modifier.weight(1f)
+            )
+
+            MetadataItem(
+                label = "SALINAN",
+                value = "${document.copyCount} berkas",
+                modifier = Modifier.weight(1f)
+            )
+        }
     }
 }
 

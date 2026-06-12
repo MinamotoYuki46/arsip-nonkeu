@@ -56,6 +56,7 @@ object AiOcrParserService {
             },
             condition = null,
             copyCount = 1,
+            isCopy = null,
             status = DocumentStatus.AVAILABLE,
             originInstance = null
         )
@@ -280,6 +281,7 @@ object AiOcrParserService {
             physicalForm = physicalForm,
             condition = condition,
             copyCount = json.optInt("copyCount", 1).coerceAtLeast(1),
+            isCopy = if (json.has("isCopy") && !json.isNull("isCopy")) json.optBoolean("isCopy") else null,
             status = status,
             originInstance = json.optNullableString("originInstance")
         )

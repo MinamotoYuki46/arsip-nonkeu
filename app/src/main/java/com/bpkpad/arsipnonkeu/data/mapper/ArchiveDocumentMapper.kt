@@ -19,6 +19,7 @@ fun ArchiveDocumentDto.toDomain(): ArchiveDocument {
         physicalForm = physicalForm.toPhysicalForm(),
         condition = condition.toDocumentConditionOrNull(),
         copyCount = copyCount ?: 1,
+        isCopy = isCopy,
         status = status.toDocumentStatus(),
         originInstance = originInstance,
         createdBy = createdBy,

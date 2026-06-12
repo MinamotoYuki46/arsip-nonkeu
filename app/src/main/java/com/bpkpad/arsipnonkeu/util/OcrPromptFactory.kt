@@ -33,8 +33,9 @@ object OcrPromptFactory {
               "description": string|null,
               "year": number,
               "physicalForm": "SHEET|BOOK",
-              "condition": "GOOD|DAMAGED|null,
+              "condition": "GOOD|DAMAGED|null",
               "copyCount": number,
+              "isCopy": boolean|null,
               "status": "AVAILABLE|BORROWED|DISPOSED",
               "originInstance": string|null
             }
@@ -47,6 +48,7 @@ object OcrPromptFactory {
             - Jika tahun tidak ditemukan, gunakan $currentYear.
             - physicalForm default SHEET untuk surat.
             - physicalForm default BOOK untuk perda/perkab/kepbup/kepgub.
+            - isCopy: true jika ada indikasi salinan/copy/tembusan/legalisir, false jika asli, null jika ragu.
             - condition default null.
             - copyCount default 1.
             - status default AVAILABLE.

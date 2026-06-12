@@ -15,6 +15,7 @@ data class ParsedOcrDocument(
     val physicalForm: PhysicalForm,
     val condition: DocumentCondition?,
     val copyCount: Int,
+    val isCopy: Boolean?,
     val status: DocumentStatus,
     val originInstance: String?
 )

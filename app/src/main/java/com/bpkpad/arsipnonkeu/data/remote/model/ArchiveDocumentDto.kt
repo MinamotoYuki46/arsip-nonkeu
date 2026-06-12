@@ -35,6 +35,9 @@ data class ArchiveDocumentDto(
     @SerialName("copy_count")
     val copyCount: Int? = null,
 
+    @SerialName("is_copy")
+    val isCopy: Boolean? = null,
+
     @SerialName("status")
     val status: String? = null,
 
