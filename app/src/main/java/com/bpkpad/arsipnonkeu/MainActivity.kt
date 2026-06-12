@@ -16,7 +16,9 @@ import com.bpkpad.arsipnonkeu.ui.screen.dashboard.DashboardScreen
 import com.bpkpad.arsipnonkeu.ui.screen.detail.DocumentDetailScreen
 import com.bpkpad.arsipnonkeu.ui.screen.search.SearchScreen
 import com.bpkpad.arsipnonkeu.ui.screen.staging.StagingScreen
+import com.bpkpad.arsipnonkeu.ui.screen.staging.StagingViewModel
 import com.bpkpad.arsipnonkeu.ui.theme.ArsipBPKADTheme
+import com.bpkpad.arsipnonkeu.ui.screen.scan.ScanScreen
 
 /**
  * MainActivity - Entry point of the BPKPAD Balangan application.
@@ -38,6 +40,8 @@ class MainActivity : ComponentActivity() {
                 var selectedYear by remember { mutableIntStateOf(2025) }
                 var selectedDocumentId by remember { mutableStateOf<String?>(null) }
 
+                val stagingViewModel = remember { StagingViewModel() }
+
                 BackHandler(enabled = currentRoute != "dashboard") {
                     currentRoute = when (currentRoute) {
                         "archive" -> {
@@ -58,6 +62,10 @@ class MainActivity : ComponentActivity() {
 
                         "document_detail" -> {
                             lastRoute
+                        }
+
+                        "scan" -> {
+                            "staging"
                         }
 
                         else -> {
@@ -99,14 +107,16 @@ class MainActivity : ComponentActivity() {
                                 currentRoute = "new_record"
                             },
                             onScanClick = {
-                                currentRoute = "new_record"
+                                currentRoute = "scan"
                             },
                             onImportClick = {
-                                currentRoute = "new_record"
+                                // Sementara import langsung ditangani di StagingScreen.
+                                // Tidak perlu pindah halaman dulu.
                             },
                             onPushAllClick = {
                                 currentRoute = "dashboard"
-                            }
+                            },
+                            viewModel = stagingViewModel
                         )
                     }
 
@@ -130,7 +140,20 @@ class MainActivity : ComponentActivity() {
                             },
                             onSave = {
                                 currentRoute = "staging"
-                            }
+                            },
+                            viewModel = stagingViewModel
+                        )
+                    }
+
+                    "scan" -> {
+                        ScanScreen(
+                            onBackClick = {
+                                currentRoute = "staging"
+                            },
+                            onScanCompleted = {
+                                currentRoute = "staging"
+                            },
+                            stagingViewModel = stagingViewModel
                         )
                     }
 

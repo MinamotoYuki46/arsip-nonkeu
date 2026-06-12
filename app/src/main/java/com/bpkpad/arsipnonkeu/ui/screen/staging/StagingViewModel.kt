@@ -285,4 +285,67 @@ class StagingViewModel : ViewModel() {
     fun clearMessage() {
         _uiState.value = _uiState.value.copy(errorMessage = null)
     }
+
+    fun addManualDocument(
+        documentType: DocumentType,
+        documentNumber: String?,
+        documentCode: String?,
+        title: String,
+        description: String?,
+        year: Int,
+        physicalForm: PhysicalForm,
+        condition: DocumentCondition?,
+        copyCount: Int,
+        status: DocumentStatus,
+        originInstance: String?
+    ) {
+        val newDocument = StagingDocument(
+            id = UUID.randomUUID().toString(),
+            documentType = documentType,
+            documentNumber = documentNumber,
+            documentCode = documentCode,
+            title = title,
+            description = description,
+            year = year,
+            physicalForm = physicalForm,
+            condition = condition,
+            copyCount = copyCount,
+            status = status,
+            originInstance = originInstance,
+            source = StagingDocumentSource.MANUAL
+        )
+
+        _uiState.value = _uiState.value.copy(
+            documents = _uiState.value.documents + newDocument,
+            errorMessage = null
+        )
+    }
+
+    fun addScannedDocument(
+        documentType: DocumentType
+    ): String {
+        val newDocument = StagingDocument(
+            id = UUID.randomUUID().toString(),
+            documentType = documentType,
+            documentNumber = "SCAN-${System.currentTimeMillis()}",
+            documentCode = "STG-SCAN-${_uiState.value.documents.size + 1}",
+            title = "Dokumen Hasil Scan",
+            description = "Dokumen sementara hasil OCR dan AI parsing. Silakan cek dan edit hasilnya.",
+            year = 2025,
+            physicalForm = PhysicalForm.SHEET,
+            condition = null,
+            copyCount = 1,
+            status = DocumentStatus.AVAILABLE,
+            originInstance = "Hasil Scan",
+            source = StagingDocumentSource.SCAN
+        )
+
+        _uiState.value = _uiState.value.copy(
+            documents = _uiState.value.documents + newDocument,
+            selectedDocument = newDocument,
+            errorMessage = null
+        )
+
+        return newDocument.id
+    }
 }
