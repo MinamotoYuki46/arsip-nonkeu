@@ -1,18 +1,19 @@
 package com.bpkpad.arsipnonkeu.ui.screen.scan
 
 import android.Manifest
+import android.content.Context
 import android.content.Intent
 import android.content.pm.PackageManager
 import android.net.Uri
 import android.provider.Settings
 import android.util.Log
 import android.view.ViewGroup
+import android.widget.Toast
 import androidx.activity.compose.rememberLauncherForActivityResult
 import androidx.activity.result.contract.ActivityResultContracts
 import androidx.camera.core.CameraSelector
 import androidx.camera.core.ImageCapture
 import androidx.camera.core.ImageCaptureException
-import androidx.camera.core.ImageProxy
 import androidx.camera.lifecycle.ProcessCameraProvider
 import androidx.camera.view.PreviewView
 import androidx.compose.foundation.BorderStroke
@@ -37,7 +38,6 @@ import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.filled.CameraAlt
 import androidx.compose.material.icons.filled.Close
-import androidx.compose.material3.AlertDialog
 import androidx.compose.material3.Button
 import androidx.compose.material3.ButtonDefaults
 import androidx.compose.material3.CircularProgressIndicator
@@ -45,7 +45,6 @@ import androidx.compose.material3.Icon
 import androidx.compose.material3.OutlinedButton
 import androidx.compose.material3.Scaffold
 import androidx.compose.material3.Text
-import androidx.compose.material3.TextButton
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.DisposableEffect
 import androidx.compose.runtime.LaunchedEffect
@@ -59,6 +58,7 @@ import androidx.compose.ui.Modifier
 import androidx.compose.ui.draw.clip
 import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.platform.LocalContext
+import androidx.compose.ui.platform.LocalInspectionMode
 import androidx.compose.ui.platform.LocalLifecycleOwner
 import androidx.compose.ui.text.font.FontFamily
 import androidx.compose.ui.text.font.FontWeight
@@ -68,9 +68,11 @@ import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
 import androidx.compose.ui.viewinterop.AndroidView
 import androidx.core.content.ContextCompat
-import androidx.lifecycle.compose.LocalLifecycleOwner
 import com.bpkpad.arsipnonkeu.domain.model.DocumentType
 import com.bpkpad.arsipnonkeu.ui.screen.staging.StagingViewModel
+import java.io.File
+import java.util.concurrent.ExecutorService
+import java.util.concurrent.Executors
 
 private val PoppinsFont = FontFamily.Default
 
@@ -115,8 +117,8 @@ fun ScanScreen(
             onImageCaptured = { imageBytes ->
                 viewModel.processCapturedImage(
                     imageBytes = imageBytes,
-                    onParsed = { documentType ->
-                        stagingViewModel.addScannedDocument(documentType)
+                    onParsed = { parsedDocument ->
+                        stagingViewModel.addScannedParsedDocument(parsedDocument)
                         onScanCompleted()
                     }
                 )
@@ -129,6 +131,7 @@ fun ScanScreen(
                 val intent = Intent(Settings.ACTION_APPLICATION_DETAILS_SETTINGS).apply {
                     data = Uri.fromParts("package", context.packageName, null)
                 }
+
                 context.startActivity(intent)
             },
             onBackClick = onBackClick
@@ -146,7 +149,18 @@ private fun ScanCameraContent(
     onDismissError: () -> Unit
 ) {
     val context = LocalContext.current
-    val lifecycleOwner = androidx.lifecycle.compose.LocalLifecycleOwner.current
+    val lifecycleOwner = LocalLifecycleOwner.current
+    val isPreviewMode = LocalInspectionMode.current
+
+    val cameraExecutor = remember {
+        Executors.newSingleThreadExecutor()
+    }
+
+    DisposableEffect(Unit) {
+        onDispose {
+            cameraExecutor.shutdown()
+        }
+    }
 
     val previewView = remember {
         PreviewView(context).apply {
@@ -164,49 +178,66 @@ private fun ScanCameraContent(
             .build()
     }
 
-    DisposableEffect(Unit) {
-        val cameraProviderFuture = ProcessCameraProvider.getInstance(context)
+    if (!isPreviewMode) {
+        DisposableEffect(Unit) {
+            val cameraProviderFuture = ProcessCameraProvider.getInstance(context)
 
-        val listener = Runnable {
-            val cameraProvider = cameraProviderFuture.get()
+            val listener = Runnable {
+                val cameraProvider = cameraProviderFuture.get()
 
-            val preview = androidx.camera.core.Preview.Builder()
-                .build()
-                .also { preview ->
-                    preview.setSurfaceProvider(previewView.surfaceProvider)
+                val preview = androidx.camera.core.Preview.Builder()
+                    .build()
+                    .also { cameraPreview ->
+                        cameraPreview.setSurfaceProvider(previewView.surfaceProvider)
+                    }
+
+                try {
+                    cameraProvider.unbindAll()
+                    cameraProvider.bindToLifecycle(
+                        lifecycleOwner,
+                        CameraSelector.DEFAULT_BACK_CAMERA,
+                        preview,
+                        imageCapture
+                    )
+                } catch (exception: Exception) {
+                    Log.e("ScanScreen", "Camera binding failed", exception)
+                    Toast.makeText(
+                        context,
+                        exception.message ?: "Gagal membuka kamera",
+                        Toast.LENGTH_LONG
+                    ).show()
                 }
-
-            try {
-                cameraProvider.unbindAll()
-                cameraProvider.bindToLifecycle(
-                    lifecycleOwner,
-                    CameraSelector.DEFAULT_BACK_CAMERA,
-                    preview,
-                    imageCapture
-                )
-            } catch (exception: Exception) {
-                Log.e("ScanScreen", "Camera binding failed", exception)
             }
-        }
 
-        cameraProviderFuture.addListener(
-            listener,
-            ContextCompat.getMainExecutor(context)
-        )
+            cameraProviderFuture.addListener(
+                listener,
+                ContextCompat.getMainExecutor(context)
+            )
 
-        onDispose {
-            try {
-                cameraProviderFuture.get().unbindAll()
-            } catch (_: Exception) {
+            onDispose {
+                try {
+                    cameraProviderFuture.get().unbindAll()
+                } catch (_: Exception) {
+                }
             }
         }
     }
 
-    Box(modifier = Modifier.fillMaxSize()) {
-        AndroidView(
-            factory = { previewView },
-            modifier = Modifier.fillMaxSize()
-        )
+    Box(
+        modifier = Modifier.fillMaxSize()
+    ) {
+        if (isPreviewMode) {
+            Box(
+                modifier = Modifier
+                    .fillMaxSize()
+                    .background(Color.DarkGray)
+            )
+        } else {
+            AndroidView(
+                factory = { previewView },
+                modifier = Modifier.fillMaxSize()
+            )
+        }
 
         ScanOverlayTopBar(
             selectedDocumentType = selectedDocumentType,
@@ -227,18 +258,17 @@ private fun ScanCameraContent(
         CaptureButton(
             enabled = !uiState.isProcessing,
             onCaptureClick = {
-                imageCapture.takePicture(
-                    ContextCompat.getMainExecutor(context),
-                    object : ImageCapture.OnImageCapturedCallback() {
-                        override fun onCaptureSuccess(image: ImageProxy) {
-                            val bytes = imageProxyToByteArray(image)
-                            image.close()
-                            onImageCaptured(bytes)
-                        }
-
-                        override fun onError(exception: ImageCaptureException) {
-                            Log.e("ScanScreen", "Image capture failed", exception)
-                        }
+                capturePhotoToJpegBytes(
+                    context = context,
+                    imageCapture = imageCapture,
+                    cameraExecutor = cameraExecutor,
+                    onSuccess = onImageCaptured,
+                    onError = { message ->
+                        Toast.makeText(
+                            context,
+                            message,
+                            Toast.LENGTH_LONG
+                        ).show()
                     }
                 )
             },
@@ -270,7 +300,12 @@ private fun ScanOverlayTopBar(
         modifier = Modifier
             .fillMaxWidth()
             .background(Color.Black.copy(alpha = 0.45f))
-            .padding(top = 48.dp, start = 20.dp, end = 20.dp, bottom = 16.dp),
+            .padding(
+                top = 48.dp,
+                start = 20.dp,
+                end = 20.dp,
+                bottom = 16.dp
+            ),
         verticalArrangement = Arrangement.spacedBy(12.dp)
     ) {
         Row(
@@ -278,7 +313,9 @@ private fun ScanOverlayTopBar(
             horizontalArrangement = Arrangement.SpaceBetween,
             verticalAlignment = Alignment.CenterVertically
         ) {
-            Column(verticalArrangement = Arrangement.spacedBy(2.dp)) {
+            Column(
+                verticalArrangement = Arrangement.spacedBy(2.dp)
+            ) {
                 Text(
                     text = "Scan Dokumen",
                     fontSize = 20.sp,
@@ -323,7 +360,9 @@ private fun DocumentTypeScanSelector(
     selectedType: DocumentType,
     onSelected: (DocumentType) -> Unit
 ) {
-    Column(verticalArrangement = Arrangement.spacedBy(8.dp)) {
+    Column(
+        verticalArrangement = Arrangement.spacedBy(8.dp)
+    ) {
         Text(
             text = "Jenis dokumen untuk prompt AI",
             fontSize = 12.sp,
@@ -338,30 +377,46 @@ private fun DocumentTypeScanSelector(
                 .horizontalScroll(rememberScrollState()),
             horizontalArrangement = Arrangement.spacedBy(8.dp)
         ) {
-            DocumentType.values().forEach { type ->
+            DocumentType.entries.forEach { type ->
                 val isSelected = selectedType == type
 
                 Box(
                     modifier = Modifier
                         .clip(RoundedCornerShape(9999.dp))
                         .background(
-                            if (isSelected) Color(0xFF2E7D32)
-                            else Color.White.copy(alpha = 0.18f)
+                            if (isSelected) {
+                                Color(0xFF2E7D32)
+                            } else {
+                                Color.White.copy(alpha = 0.18f)
+                            }
                         )
                         .border(
                             width = 1.dp,
-                            color = if (isSelected) Color(0xFFCBFFC2) else Color.White.copy(alpha = 0.5f),
+                            color = if (isSelected) {
+                                Color(0xFFCBFFC2)
+                            } else {
+                                Color.White.copy(alpha = 0.5f)
+                            },
                             shape = RoundedCornerShape(9999.dp)
                         )
-                        .clickable { onSelected(type) }
-                        .padding(horizontal = 14.dp, vertical = 8.dp)
+                        .clickable {
+                            onSelected(type)
+                        }
+                        .padding(
+                            horizontal = 14.dp,
+                            vertical = 8.dp
+                        )
                 ) {
                     Text(
                         text = type.label,
                         fontSize = 13.sp,
                         fontWeight = FontWeight.SemiBold,
                         fontFamily = PoppinsFont,
-                        color = if (isSelected) Color(0xFFCBFFC2) else Color.White
+                        color = if (isSelected) {
+                            Color(0xFFCBFFC2)
+                        } else {
+                            Color.White
+                        }
                     )
                 }
             }
@@ -388,8 +443,14 @@ private fun ScanGuideFrame(
             modifier = Modifier
                 .align(Alignment.TopCenter)
                 .padding(top = 16.dp)
-                .background(Color.Black.copy(alpha = 0.42f), RoundedCornerShape(9999.dp))
-                .padding(horizontal = 14.dp, vertical = 6.dp),
+                .background(
+                    color = Color.Black.copy(alpha = 0.42f),
+                    shape = RoundedCornerShape(9999.dp)
+                )
+                .padding(
+                    horizontal = 14.dp,
+                    vertical = 6.dp
+                ),
             fontSize = 12.sp,
             fontWeight = FontWeight.Medium,
             fontFamily = PoppinsFont,
@@ -409,12 +470,24 @@ private fun CaptureButton(
             .size(88.dp)
             .clip(CircleShape)
             .background(Color.White.copy(alpha = 0.25f))
-            .clickable(enabled = enabled, onClick = onCaptureClick)
+            .clickable(
+                enabled = enabled,
+                onClick = onCaptureClick
+            )
             .padding(6.dp)
-            .border(BorderStroke(2.dp, Color.White), CircleShape)
+            .border(
+                border = BorderStroke(2.dp, Color.White),
+                shape = CircleShape
+            )
             .padding(6.dp)
             .clip(CircleShape)
-            .background(if (enabled) Color.White else Color.LightGray),
+            .background(
+                if (enabled) {
+                    Color.White
+                } else {
+                    Color.LightGray
+                }
+            ),
         contentAlignment = Alignment.Center
     ) {
         Icon(
@@ -434,11 +507,16 @@ private fun ProcessingOverlay(
         modifier = modifier
             .clip(RoundedCornerShape(24.dp))
             .background(Color.Black.copy(alpha = 0.68f))
-            .padding(horizontal = 24.dp, vertical = 20.dp),
+            .padding(
+                horizontal = 24.dp,
+                vertical = 20.dp
+            ),
         horizontalAlignment = Alignment.CenterHorizontally,
         verticalArrangement = Arrangement.spacedBy(12.dp)
     ) {
-        CircularProgressIndicator(color = Color.White)
+        CircularProgressIndicator(
+            color = Color.White
+        )
 
         Text(
             text = "Memproses OCR dan AI...",
@@ -462,7 +540,9 @@ private fun ErrorMessageBox(
             .background(Color(0xFFFEE2E2))
             .padding(16.dp)
     ) {
-        Column(verticalArrangement = Arrangement.spacedBy(8.dp)) {
+        Column(
+            verticalArrangement = Arrangement.spacedBy(8.dp)
+        ) {
             Text(
                 text = message,
                 fontSize = 13.sp,
@@ -521,14 +601,19 @@ private fun CameraPermissionDeniedContent(
 
                 Button(
                     onClick = onOpenSettings,
-                    colors = ButtonDefaults.buttonColors(containerColor = Color(0xFF0D631B))
+                    colors = ButtonDefaults.buttonColors(
+                        containerColor = Color(0xFF0D631B)
+                    )
                 ) {
                     Text("Buka Pengaturan")
                 }
 
                 OutlinedButton(
                     onClick = onBackClick,
-                    border = BorderStroke(1.dp, Color.White)
+                    border = BorderStroke(
+                        width = 1.dp,
+                        color = Color.White
+                    )
                 ) {
                     Text(
                         text = "Kembali",
@@ -540,11 +625,47 @@ private fun CameraPermissionDeniedContent(
     }
 }
 
-private fun imageProxyToByteArray(image: ImageProxy): ByteArray {
-    val buffer = image.planes.first().buffer
-    val bytes = ByteArray(buffer.remaining())
-    buffer.get(bytes)
-    return bytes
+private fun capturePhotoToJpegBytes(
+    context: Context,
+    imageCapture: ImageCapture,
+    cameraExecutor: ExecutorService,
+    onSuccess: (ByteArray) -> Unit,
+    onError: (String) -> Unit
+) {
+    val photoFile = File(
+        context.cacheDir,
+        "ocr_capture_${System.currentTimeMillis()}.jpg"
+    )
+
+    val outputOptions = ImageCapture.OutputFileOptions
+        .Builder(photoFile)
+        .build()
+
+    imageCapture.takePicture(
+        outputOptions,
+        cameraExecutor,
+        object : ImageCapture.OnImageSavedCallback {
+            override fun onImageSaved(
+                outputFileResults: ImageCapture.OutputFileResults
+            ) {
+                try {
+                    val bytes = photoFile.readBytes()
+                    photoFile.delete()
+                    onSuccess(bytes)
+                } catch (exception: Exception) {
+                    photoFile.delete()
+                    onError(exception.message ?: "Gagal membaca file hasil kamera")
+                }
+            }
+
+            override fun onError(
+                exception: ImageCaptureException
+            ) {
+                photoFile.delete()
+                onError(exception.message ?: "Gagal mengambil gambar")
+            }
+        }
+    )
 }
 
 @Preview(
@@ -553,12 +674,41 @@ private fun imageProxyToByteArray(image: ImageProxy): ByteArray {
     device = "spec:width=390dp,height=844dp,dpi=420"
 )
 @Composable
-fun ScanCameraContentPreview() {
-    ScanPreviewOnly()
+private fun ScanCameraContentPreview() {
+    ScanPreviewOnly(
+        isProcessing = false
+    )
+}
+
+@Preview(
+    showBackground = true,
+    showSystemUi = true,
+    device = "spec:width=390dp,height=844dp,dpi=420"
+)
+@Composable
+private fun ScanCameraProcessingPreview() {
+    ScanPreviewOnly(
+        isProcessing = true
+    )
+}
+
+@Preview(
+    showBackground = true,
+    showSystemUi = true,
+    device = "spec:width=390dp,height=844dp,dpi=420"
+)
+@Composable
+private fun CameraPermissionDeniedPreview() {
+    CameraPermissionDeniedContent(
+        onOpenSettings = {},
+        onBackClick = {}
+    )
 }
 
 @Composable
-private fun ScanPreviewOnly() {
+private fun ScanPreviewOnly(
+    isProcessing: Boolean
+) {
     Box(
         modifier = Modifier
             .fillMaxSize()
@@ -574,8 +724,14 @@ private fun ScanPreviewOnly() {
             modifier = Modifier.align(Alignment.Center)
         )
 
+        if (isProcessing) {
+            ProcessingOverlay(
+                modifier = Modifier.align(Alignment.Center)
+            )
+        }
+
         CaptureButton(
-            enabled = true,
+            enabled = !isProcessing,
             onCaptureClick = {},
             modifier = Modifier
                 .align(Alignment.BottomCenter)

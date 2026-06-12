@@ -13,6 +13,7 @@ import kotlinx.coroutines.launch
 import java.util.UUID
 import android.content.Context
 import android.net.Uri
+import com.bpkpad.arsipnonkeu.ui.screen.scan.ParsedOcrDocument
 import com.bpkpad.arsipnonkeu.util.ArchiveExcelService
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.withContext
@@ -342,6 +343,34 @@ class StagingViewModel : ViewModel() {
             copyCount = 1,
             status = DocumentStatus.AVAILABLE,
             originInstance = "Hasil Scan",
+            source = StagingDocumentSource.SCAN
+        )
+
+        _uiState.value = _uiState.value.copy(
+            documents = _uiState.value.documents + newDocument,
+            selectedDocument = newDocument,
+            errorMessage = null
+        )
+
+        return newDocument.id
+    }
+
+    fun addScannedParsedDocument(
+        parsedDocument: ParsedOcrDocument
+    ): String {
+        val newDocument = StagingDocument(
+            id = UUID.randomUUID().toString(),
+            documentType = parsedDocument.documentType,
+            documentNumber = parsedDocument.documentNumber,
+            documentCode = parsedDocument.documentCode,
+            title = parsedDocument.title,
+            description = parsedDocument.description,
+            year = parsedDocument.year,
+            physicalForm = parsedDocument.physicalForm,
+            condition = parsedDocument.condition,
+            copyCount = parsedDocument.copyCount,
+            status = parsedDocument.status,
+            originInstance = parsedDocument.originInstance,
             source = StagingDocumentSource.SCAN
         )
 

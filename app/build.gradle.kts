@@ -1,6 +1,36 @@
+import java.util.Properties
+
 plugins {
     alias(libs.plugins.android.application)
     alias(libs.plugins.kotlin.compose)
+}
+
+val localProperties = Properties().apply {
+    val localPropertiesFile = rootProject.file("local.properties")
+    if (localPropertiesFile.exists()) {
+        localPropertiesFile.inputStream().use { inputStream ->
+            load(inputStream)
+        }
+    }
+}
+
+fun localProperty(
+    name: String,
+    defaultValue: String = ""
+): String {
+    return localProperties.getProperty(name)
+        ?: project.findProperty(name) as? String
+        ?: defaultValue
+}
+
+fun buildConfigString(
+    value: String
+): String {
+    val escapedValue = value
+        .replace("\\", "\\\\")
+        .replace("\"", "\\\"")
+
+    return "\"$escapedValue\""
 }
 
 android {
@@ -20,11 +50,54 @@ android {
         versionName = "1.0"
 
         testInstrumentationRunner = "androidx.test.runner.AndroidJUnitRunner"
+
+        val ocrAiProvider = localProperty(
+            name = "OCR_AI_PROVIDER",
+            defaultValue = "groq"
+        )
+
+        val ocrAiModel = localProperty(
+            name = "OCR_AI_MODEL",
+            defaultValue = "llama-3.1-8b-instant"
+        )
+
+        val groqApiKey = localProperty(
+            name = "GROQ_API_KEY"
+        )
+
+        val geminiApiKey = localProperty(
+            name = "GEMINI_API_KEY"
+        )
+
+        buildConfigField(
+            type = "String",
+            name = "OCR_AI_PROVIDER",
+            value = buildConfigString(ocrAiProvider)
+        )
+
+        buildConfigField(
+            type = "String",
+            name = "OCR_AI_MODEL",
+            value = buildConfigString(ocrAiModel)
+        )
+
+        buildConfigField(
+            type = "String",
+            name = "GROQ_API_KEY",
+            value = buildConfigString(groqApiKey)
+        )
+
+        buildConfigField(
+            type = "String",
+            name = "GEMINI_API_KEY",
+            value = buildConfigString(geminiApiKey)
+        )
     }
 
     buildTypes {
         release {
             isMinifyEnabled = false
+
             proguardFiles(
                 getDefaultProguardFile("proguard-android-optimize.txt"),
                 "proguard-rules.pro"
@@ -37,8 +110,10 @@ android {
         targetCompatibility = JavaVersion.VERSION_17
         isCoreLibraryDesugaringEnabled = true
     }
+
     buildFeatures {
         compose = true
+        buildConfig = true
     }
 }
 
@@ -57,6 +132,8 @@ dependencies {
     implementation("androidx.lifecycle:lifecycle-viewmodel-compose:2.8.7")
     implementation("androidx.compose.material:material-icons-extended:1.7.0")
 
+    implementation("org.jetbrains.kotlinx:kotlinx-coroutines-play-services:1.9.0")
+
     // CameraX & ML Kit
     implementation(libs.camerax.core)
     implementation(libs.camerax.camera2)
@@ -68,7 +145,7 @@ dependencies {
     implementation("org.dhatim:fastexcel:0.20.1")
 
     // Import Excel sekarang dibaca manual dari ZIP/XML,
-    // jadi reader ini tidak wajib. Boleh dihapus untuk mengurangi potensi konflik.
+    // jadi fastexcel-reader tidak wajib.
     // implementation("org.dhatim:fastexcel-reader:0.20.1")
 
     coreLibraryDesugaring("com.android.tools:desugar_jdk_libs:2.1.5")
