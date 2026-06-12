@@ -78,6 +78,10 @@ import com.bpkpad.arsipnonkeu.domain.model.PhysicalForm
 import com.bpkpad.arsipnonkeu.ui.component.TopBar
 import com.bpkpad.arsipnonkeu.ui.theme.BackgroundGray
 
+import androidx.activity.compose.rememberLauncherForActivityResult
+import androidx.activity.result.contract.ActivityResultContracts
+import androidx.compose.ui.platform.LocalContext
+
 private val PoppinsFont = FontFamily.Default
 
 @Composable
@@ -90,6 +94,17 @@ fun StagingScreen(
     viewModel: StagingViewModel = remember { StagingViewModel() }
 ) {
     val uiState by viewModel.uiState.collectAsState()
+
+    val context = LocalContext.current
+
+    val excelImportLauncher = rememberLauncherForActivityResult(
+        contract = ActivityResultContracts.OpenDocument(),
+        onResult = { uri ->
+            if (uri != null) {
+                viewModel.importFromExcel(context, uri)
+            }
+        }
+    )
 
     var isFabExpanded by remember { mutableStateOf(false) }
     var isLocationExpanded by remember { mutableStateOf(false) }
@@ -123,7 +138,11 @@ fun StagingScreen(
                 },
                 onImportClick = {
                     isFabExpanded = false
-                    viewModel.addDummyImportDocument()
+                    excelImportLauncher.launch(
+                        arrayOf(
+                            "application/vnd.openxmlformats-officedocument.spreadsheetml.sheet"
+                        )
+                    )
                     onImportClick()
                 }
             )

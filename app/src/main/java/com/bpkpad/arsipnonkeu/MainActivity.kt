@@ -14,7 +14,6 @@ import com.bpkpad.arsipnonkeu.ui.screen.add.NewRecordScreen
 import com.bpkpad.arsipnonkeu.ui.screen.archive.ArchiveScreen
 import com.bpkpad.arsipnonkeu.ui.screen.dashboard.DashboardScreen
 import com.bpkpad.arsipnonkeu.ui.screen.detail.DocumentDetailScreen
-import com.bpkpad.arsipnonkeu.ui.screen.search.SearchScreen
 import com.bpkpad.arsipnonkeu.ui.screen.staging.StagingScreen
 import com.bpkpad.arsipnonkeu.ui.screen.staging.StagingViewModel
 import com.bpkpad.arsipnonkeu.ui.theme.ArsipBPKADTheme
@@ -56,9 +55,7 @@ class MainActivity : ComponentActivity() {
                             "staging"
                         }
 
-                        "search" -> {
-                            "dashboard"
-                        }
+
 
                         "document_detail" -> {
                             lastRoute
@@ -120,18 +117,7 @@ class MainActivity : ComponentActivity() {
                         )
                     }
 
-                    "search" -> {
-                        SearchScreen(
-                            onBackClick = {
-                                currentRoute = "dashboard"
-                            },
-                            onResultClick = {
-                                selectedDocumentId = "doc-001"
-                                lastRoute = "search"
-                                currentRoute = "document_detail"
-                            }
-                        )
-                    }
+
 
                     "new_record" -> {
                         NewRecordScreen(
@@ -172,9 +158,9 @@ class MainActivity : ComponentActivity() {
                         }
                     }
 
-                    "profile" -> {
-                        currentRoute = "dashboard"
-                    }
+//                    "profile" -> {
+//                        currentRoute = "dashboard"
+//                    }
 
                     else -> {
                         DashboardScreen(

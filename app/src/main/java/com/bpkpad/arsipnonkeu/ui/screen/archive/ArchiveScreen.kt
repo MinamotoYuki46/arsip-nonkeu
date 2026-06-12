@@ -72,6 +72,12 @@ import com.bpkpad.arsipnonkeu.domain.model.PhysicalForm
 import com.bpkpad.arsipnonkeu.ui.component.TopBar
 import com.bpkpad.arsipnonkeu.ui.theme.BackgroundGray
 
+import android.widget.Toast
+import androidx.activity.compose.rememberLauncherForActivityResult
+import androidx.activity.result.contract.ActivityResultContracts
+import androidx.compose.ui.platform.LocalContext
+import com.bpkpad.arsipnonkeu.util.ArchiveExcelService
+
 private val PoppinsFont = FontFamily.Default
 
 @Composable
@@ -82,6 +88,37 @@ fun ArchiveScreen(
     viewModel: ArchiveViewModel = remember { ArchiveViewModel() }
 ) {
     val uiState by viewModel.uiState.collectAsState()
+
+    val context = LocalContext.current
+
+    val excelExportLauncher = rememberLauncherForActivityResult(
+        contract = ActivityResultContracts.CreateDocument(
+            "application/vnd.openxmlformats-officedocument.spreadsheetml.sheet"
+        ),
+        onResult = { uri ->
+            if (uri != null) {
+                try {
+                    ArchiveExcelService.exportArchiveDocuments(
+                        context = context,
+                        uri = uri,
+                        documents = uiState.documents
+                    )
+
+                    Toast.makeText(
+                        context,
+                        "Data arsip berhasil diekspor",
+                        Toast.LENGTH_SHORT
+                    ).show()
+                } catch (exception: Exception) {
+                    Toast.makeText(
+                        context,
+                        exception.message ?: "Gagal mengekspor data arsip",
+                        Toast.LENGTH_SHORT
+                    ).show()
+                }
+            }
+        }
+    )
 
     var showExportDialog by remember { mutableStateOf(false) }
     var showFilterSheet by remember { mutableStateOf(false) }
@@ -123,7 +160,9 @@ fun ArchiveScreen(
                 resultCount = uiState.documents.size,
                 onKeywordChange = viewModel::updateKeyword,
                 onFilterClick = { showFilterSheet = true },
-                onExportClick = { showExportDialog = true }
+                onExportClick = {
+                    excelExportLauncher.launch("arsip-$selectedYear.xlsx")
+                }
             )
 
             ArchiveContentSection(

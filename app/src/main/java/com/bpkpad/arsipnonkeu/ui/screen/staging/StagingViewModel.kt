@@ -11,6 +11,11 @@ import kotlinx.coroutines.flow.StateFlow
 import kotlinx.coroutines.flow.asStateFlow
 import kotlinx.coroutines.launch
 import java.util.UUID
+import android.content.Context
+import android.net.Uri
+import com.bpkpad.arsipnonkeu.util.ArchiveExcelService
+import kotlinx.coroutines.Dispatchers
+import kotlinx.coroutines.withContext
 
 data class StagingDocument(
     val id: String,
@@ -347,5 +352,41 @@ class StagingViewModel : ViewModel() {
         )
 
         return newDocument.id
+    }
+
+    fun importFromExcel(
+        context: Context,
+        uri: Uri
+    ) {
+        viewModelScope.launch {
+            _uiState.value = _uiState.value.copy(
+                isLoading = true,
+                errorMessage = null
+            )
+
+            try {
+                val importedDocuments = kotlinx.coroutines.withContext(kotlinx.coroutines.Dispatchers.IO) {
+                    ArchiveExcelService.importStagingDocuments(
+                        context = context,
+                        uri = uri
+                    )
+                }
+
+                _uiState.value = _uiState.value.copy(
+                    documents = _uiState.value.documents + importedDocuments,
+                    isLoading = false,
+                    errorMessage = if (importedDocuments.isEmpty()) {
+                        "File Excel berhasil dibaca, tetapi tidak ada data dokumen yang ditemukan."
+                    } else {
+                        null
+                    }
+                )
+            } catch (throwable: Throwable) {
+                _uiState.value = _uiState.value.copy(
+                    isLoading = false,
+                    errorMessage = throwable.message ?: "Gagal mengimpor file Excel"
+                )
+            }
+        }
     }
 }
