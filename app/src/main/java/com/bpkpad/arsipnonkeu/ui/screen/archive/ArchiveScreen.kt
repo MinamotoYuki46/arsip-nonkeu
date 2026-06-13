@@ -613,6 +613,7 @@ private fun ArchiveDocumentCard(
     onDetailClick: () -> Unit
 ) {
     val document = item.document
+    val location = item.storageLocation
 
     Column(
         modifier = Modifier
@@ -641,7 +642,7 @@ private fun ArchiveDocumentCard(
                     fontFamily = PoppinsFont,
                     color = Color(0xFF071E27),
                     lineHeight = 22.sp,
-                    maxLines = 2,
+                    maxLines = 3,
                     overflow = TextOverflow.Ellipsis
                 )
 
@@ -661,6 +662,20 @@ private fun ArchiveDocumentCard(
             StatusBadge(status = document.status)
         }
 
+        if (!document.description.isNullOrBlank()) {
+            Text(
+                text = document.description,
+                fontSize = 13.sp,
+                fontWeight = FontWeight.Normal,
+                fontFamily = PoppinsFont,
+                color = Color(0xFF40493D),
+                lineHeight = 18.sp,
+                maxLines = 2,
+                overflow = TextOverflow.Ellipsis,
+                modifier = Modifier.padding(bottom = 4.dp)
+            )
+        }
+
         HorizontalDivider(color = Color(0x4DBFCABA), thickness = 1.dp)
 
         Row(
@@ -668,52 +683,20 @@ private fun ArchiveDocumentCard(
             horizontalArrangement = Arrangement.spacedBy(16.dp)
         ) {
             MetadataItem(
-                label = "LOKASI / RAK",
-                value = item.locationLabel,
+                label = "RUANGAN",
+                value = location?.room ?: "-",
                 modifier = Modifier.weight(1f)
             )
 
             MetadataItem(
-                label = "JENIS",
-                value = document.documentType.label,
-                modifier = Modifier.weight(1f)
-            )
-        }
-
-        Row(
-            modifier = Modifier.fillMaxWidth(),
-            horizontalArrangement = Arrangement.spacedBy(16.dp)
-        ) {
-            MetadataItem(
-                label = "BENTUK",
-                value = document.physicalForm.label,
+                label = "RAK",
+                value = location?.shelf ?: "-",
                 modifier = Modifier.weight(1f)
             )
 
             MetadataItem(
-                label = "KONDISI",
-                value = document.condition?.label ?: "Tidak diketahui",
-                modifier = Modifier.weight(1f)
-            )
-        }
-
-        Row(
-            modifier = Modifier.fillMaxWidth(),
-            horizontalArrangement = Arrangement.spacedBy(16.dp)
-        ) {
-            MetadataItem(
-                label = "KEASLIAN",
-                value = when(document.isCopy) {
-                    true -> "Kopi"
-                    false -> "Asli"
-                    null -> "Tidak diketahui"
-                },
-                modifier = Modifier.weight(1f)
-            )
-
-            MetadataItem(
-                label = "SALINAN",
-                value = "${document.copyCount} berkas",
+                label = "NOMOR BOX",
+                value = location?.boxNumber ?: "-",
                 modifier = Modifier.weight(1f)
             )
         }
