@@ -1,5 +1,7 @@
 package com.bpkpad.arsipnonkeu.ui.screen.staging
 
+import androidx.activity.compose.rememberLauncherForActivityResult
+import androidx.activity.result.contract.ActivityResultContracts
 import androidx.compose.animation.AnimatedVisibility
 import androidx.compose.animation.expandVertically
 import androidx.compose.animation.fadeIn
@@ -49,7 +51,6 @@ import androidx.compose.material3.Icon
 import androidx.compose.material3.ModalBottomSheet
 import androidx.compose.material3.OutlinedButton
 import androidx.compose.material3.OutlinedTextField
-import androidx.compose.material3.OutlinedTextFieldDefaults
 import androidx.compose.material3.Scaffold
 import androidx.compose.material3.Text
 import androidx.compose.material3.TextButton
@@ -60,11 +61,13 @@ import androidx.compose.runtime.collectAsState
 import androidx.compose.runtime.getValue
 import androidx.compose.runtime.mutableStateOf
 import androidx.compose.runtime.remember
+import androidx.compose.runtime.saveable.rememberSaveable
 import androidx.compose.runtime.setValue
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.draw.clip
 import androidx.compose.ui.graphics.Color
+import androidx.compose.ui.platform.LocalContext
 import androidx.compose.ui.text.font.FontFamily
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.text.style.TextOverflow
@@ -75,12 +78,10 @@ import com.bpkpad.arsipnonkeu.domain.model.DocumentCondition
 import com.bpkpad.arsipnonkeu.domain.model.DocumentStatus
 import com.bpkpad.arsipnonkeu.domain.model.DocumentType
 import com.bpkpad.arsipnonkeu.domain.model.PhysicalForm
+import com.bpkpad.arsipnonkeu.ui.component.ArchiveClassificationField
+import com.bpkpad.arsipnonkeu.ui.component.ArchiveClassificationSelectorSheet
 import com.bpkpad.arsipnonkeu.ui.component.TopBar
 import com.bpkpad.arsipnonkeu.ui.theme.BackgroundGray
-
-import androidx.activity.compose.rememberLauncherForActivityResult
-import androidx.activity.result.contract.ActivityResultContracts
-import androidx.compose.ui.platform.LocalContext
 
 private val PoppinsFont = FontFamily.Default
 
@@ -197,6 +198,7 @@ fun StagingScreen(
         StagingDocumentDetailSheet(
             document = uiState.selectedDocument!!,
             onDismiss = viewModel::clearSelectedDocument,
+            viewModel = viewModel,
             onSave = { documentType,
                        documentNumber,
                        documentCode,
@@ -212,7 +214,7 @@ fun StagingScreen(
                 viewModel.updateSelectedDocument(
                     documentType = documentType,
                     documentNumber = documentNumber,
-                    documentCode = documentCode,
+                    classificationCode = documentCode,
                     title = title,
                     description = description,
                     year = year,
@@ -465,7 +467,7 @@ private fun StagingDocumentCard(
             )
 
             Text(
-                text = document.documentNumber ?: document.documentCode ?: "-",
+                text = document.documentNumber ?: document.classificationCode ?: "-",
                 fontSize = 13.sp,
                 fontWeight = FontWeight.Medium,
                 fontFamily = PoppinsFont,
@@ -535,6 +537,7 @@ private fun StagingDocumentCard(
 private fun StagingDocumentDetailSheet(
     document: StagingDocument,
     onDismiss: () -> Unit,
+    viewModel: StagingViewModel,
     onSave: (
         documentType: DocumentType,
         documentNumber: String?,
@@ -551,15 +554,18 @@ private fun StagingDocumentDetailSheet(
     ) -> Unit,
     onDelete: () -> Unit
 ) {
+    val uiState by viewModel.uiState.collectAsState()
     val sheetState = rememberModalBottomSheetState(skipPartiallyExpanded = true)
 
     var isEditMode by remember(document.id) { mutableStateOf(false) }
     var showDeleteDialog by remember { mutableStateOf(false) }
     var showSaveConfirmDialog by remember { mutableStateOf(false) }
+    var showClassificationSheet by rememberSaveable(document.id) { mutableStateOf(false) }
+    var classificationKeyword by rememberSaveable(document.id) { mutableStateOf("") }
 
     var title by remember(document.id) { mutableStateOf(document.title) }
     var documentNumber by remember(document.id) { mutableStateOf(document.documentNumber.orEmpty()) }
-    var documentCode by remember(document.id) { mutableStateOf(document.documentCode.orEmpty()) }
+    var documentCode by remember(document.id) { mutableStateOf(document.classificationCode.orEmpty()) }
     var description by remember(document.id) { mutableStateOf(document.description.orEmpty()) }
     var year by remember(document.id) { mutableStateOf(document.year.toString()) }
     var copyCount by remember(document.id) { mutableStateOf(document.copyCount.toString()) }
@@ -577,8 +583,7 @@ private fun StagingDocumentDetailSheet(
         containerColor = Color.White
     ) {
         LazyColumn(
-            modifier = Modifier
-                .fillMaxWidth(),
+            modifier = Modifier.fillMaxWidth(),
             contentPadding = PaddingValues(
                 start = 24.dp,
                 end = 24.dp,
@@ -616,11 +621,13 @@ private fun StagingDocumentDetailSheet(
                 }
 
                 item {
-                    DetailTextField(
-                        label = "Kode Dokumen",
-                        value = documentCode,
-                        onValueChange = { documentCode = it },
-                        placeholder = "Kode dokumen"
+                    ArchiveClassificationField(
+                        selectedCode = documentCode,
+                        selectedLabel = viewModel.getLoadedArchiveClassificationLabel(documentCode),
+                        isRequired = false,
+                        onClick = {
+                            showClassificationSheet = true
+                        }
                     )
                 }
 
@@ -735,18 +742,27 @@ private fun StagingDocumentDetailSheet(
             } else {
                 item { DetailRow("Judul", document.title) }
                 item { DetailRow("Nomor Dokumen", document.documentNumber ?: "-") }
-                item { DetailRow("Kode Dokumen", document.documentCode ?: "-") }
+                item {
+                    DetailRow(
+                        label = "Kode Klasifikasi Dokumen",
+                        value = viewModel.getLoadedArchiveClassificationLabel(document.classificationCode)
+                            .ifBlank { document.classificationCode ?: "-" }
+                    )
+                }
                 item { DetailRow("Deskripsi", document.description ?: "-") }
                 item { DetailRow("Jenis Dokumen", document.documentType.label) }
                 item { DetailRow("Tahun", document.year.toString()) }
                 item { DetailRow("Bentuk Fisik", document.physicalForm.label) }
                 item { DetailRow("Kondisi", document.condition?.label ?: "Tidak diketahui") }
                 item {
-                    DetailRow("Keaslian", when (document.isCopy) {
-                        true -> "Kopi"
-                        false -> "Asli"
-                        null -> "Tidak diketahui"
-                    })
+                    DetailRow(
+                        "Keaslian",
+                        when (document.isCopy) {
+                            true -> "Kopi"
+                            false -> "Asli"
+                            null -> "Tidak diketahui"
+                        }
+                    )
                 }
                 item { DetailRow("Jumlah Salinan", document.copyCount.toString()) }
                 item { DetailRow("Status", document.status.label) }
@@ -766,7 +782,7 @@ private fun StagingDocumentDetailSheet(
                                 isEditMode = false
                                 title = document.title
                                 documentNumber = document.documentNumber.orEmpty()
-                                documentCode = document.documentCode.orEmpty()
+                                documentCode = document.classificationCode.orEmpty()
                                 description = document.description.orEmpty()
                                 year = document.year.toString()
                                 copyCount = document.copyCount.toString()
@@ -776,6 +792,8 @@ private fun StagingDocumentDetailSheet(
                                 selectedPhysicalForm = document.physicalForm
                                 selectedCondition = document.condition
                                 selectedStatus = document.status
+                                showClassificationSheet = false
+                                classificationKeyword = ""
                             },
                             modifier = Modifier
                                 .weight(1f)
@@ -842,6 +860,26 @@ private fun StagingDocumentDetailSheet(
             }
         }
     }
+
+    ArchiveClassificationSelectorSheet(
+        visible = showClassificationSheet,
+        classifications = uiState.archiveClassifications,
+        selectedCode = documentCode,
+        keyword = classificationKeyword,
+        isLoading = uiState.isClassificationLoading,
+        onKeywordChange = { keyword ->
+            classificationKeyword = keyword
+            viewModel.loadArchiveClassifications(keyword)
+        },
+        onSelect = { classification ->
+            documentCode = classification.code
+            classificationKeyword = ""
+            showClassificationSheet = false
+        },
+        onDismiss = {
+            showClassificationSheet = false
+        }
+    )
 
     if (showSaveConfirmDialog) {
         AlertDialog(
@@ -1117,13 +1155,6 @@ private fun StagingBottomBar(
             )
         }
 
-        Text(
-            text = "$documentCount dokumen siap disimpan",
-            fontSize = 13.sp,
-            fontWeight = FontWeight.Medium,
-            fontFamily = PoppinsFont,
-            color = Color(0xFF40493D)
-        )
 
         Button(
             onClick = onPushAllClick,

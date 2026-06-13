@@ -19,7 +19,7 @@ class FakeArchiveRepository : ArchiveRepository {
             id = "doc-001",
             documentType = DocumentType.SURAT,
             documentNumber = "001/UMUM/2025",
-            documentCode = "ARS-2025-001",
+            classificationCode = "ARS-2025-001",
             title = "Surat Undangan Rapat Koordinasi",
             description = "Surat undangan rapat koordinasi internal BPKPAD.",
             year = 2025,
@@ -39,7 +39,7 @@ class FakeArchiveRepository : ArchiveRepository {
             id = "doc-002",
             documentType = DocumentType.PERDA,
             documentNumber = "12 Tahun 2025",
-            documentCode = "ARS-2025-002",
+            classificationCode = "ARS-2025-002",
             title = "Peraturan Daerah Tentang Pengelolaan Keuangan Daerah",
             description = "Dokumen Peraturan Daerah terkait pengelolaan keuangan daerah.",
             year = 2025,
@@ -59,7 +59,7 @@ class FakeArchiveRepository : ArchiveRepository {
             id = "doc-003",
             documentType = DocumentType.KEPBUP,
             documentNumber = "188.45/25/KUM/2024",
-            documentCode = "ARS-2024-001",
+            classificationCode = "ARS-2024-001",
             title = "Keputusan Bupati Tentang Pembentukan Tim Kerja",
             description = "Dokumen keputusan bupati tentang pembentukan tim kerja daerah.",
             year = 2024,
@@ -79,7 +79,7 @@ class FakeArchiveRepository : ArchiveRepository {
             id = "doc-004",
             documentType = DocumentType.PERKAB,
             documentNumber = "05 Tahun 2024",
-            documentCode = "ARS-2024-002",
+            classificationCode = "ARS-2024-002",
             title = "Peraturan Kabupaten Tentang Tata Naskah Dinas",
             description = "Dokumen peraturan kabupaten terkait tata naskah dinas.",
             year = 2024,
@@ -99,7 +99,7 @@ class FakeArchiveRepository : ArchiveRepository {
             id = "doc-005",
             documentType = DocumentType.KEPGUB,
             documentNumber = "100.3.3.1/77/2023",
-            documentCode = "ARS-2023-001",
+            classificationCode = "ARS-2023-001",
             title = "Keputusan Gubernur Tentang Evaluasi Anggaran",
             description = "Dokumen keputusan gubernur terkait hasil evaluasi anggaran daerah.",
             year = 2023,
@@ -119,7 +119,7 @@ class FakeArchiveRepository : ArchiveRepository {
             id = "doc-006",
             documentType = DocumentType.SURAT,
             documentNumber = "045/ARSIP/2023",
-            documentCode = "ARS-2023-002",
+            classificationCode = "ARS-2023-002",
             title = "Surat Keterangan Pemindahan Arsip",
             description = "Surat keterangan terkait pemindahan arsip fisik ke ruang penyimpanan.",
             year = 2023,
@@ -281,7 +281,7 @@ class FakeArchiveRepository : ArchiveRepository {
                     document.title.contains(keyword, ignoreCase = true) ||
                             document.description.orEmpty().contains(keyword, ignoreCase = true) ||
                             document.documentNumber.orEmpty().contains(keyword, ignoreCase = true) ||
-                            document.documentCode.orEmpty().contains(keyword, ignoreCase = true) ||
+                            document.classificationCode.orEmpty().contains(keyword, ignoreCase = true) ||
                             document.originInstance.orEmpty().contains(keyword, ignoreCase = true) ||
                             listItem.locationLabel.contains(keyword, ignoreCase = true)
                 }

@@ -27,7 +27,6 @@ import androidx.compose.material.icons.filled.Add
 import androidx.compose.material.icons.filled.FilterList
 import androidx.compose.material.icons.filled.Search
 import androidx.compose.material.icons.outlined.FileDownload
-import androidx.compose.material.icons.outlined.Visibility
 import androidx.compose.material3.Button
 import androidx.compose.material3.ButtonDefaults
 import androidx.compose.material3.CircularProgressIndicator
@@ -647,7 +646,7 @@ private fun ArchiveDocumentCard(
                 )
 
                 Text(
-                    text = document.documentNumber ?: document.documentCode ?: "-",
+                    text = document.documentNumber ?: document.classificationCode ?: "-",
                     fontSize = 13.sp,
                     fontWeight = FontWeight.Medium,
                     fontFamily = PoppinsFont,

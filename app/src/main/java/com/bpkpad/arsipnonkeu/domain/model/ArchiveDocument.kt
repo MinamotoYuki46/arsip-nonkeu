@@ -4,7 +4,7 @@ data class ArchiveDocument(
     val id: String,
     val documentType: DocumentType,
     val documentNumber: String?,
-    val documentCode: String?,
+    val classificationCode: String?,
     val title: String,
     val description: String?,
     val year: Int,

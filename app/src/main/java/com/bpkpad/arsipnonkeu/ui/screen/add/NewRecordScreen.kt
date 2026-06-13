@@ -33,10 +33,12 @@ import androidx.compose.material3.Scaffold
 import androidx.compose.material3.Text
 import androidx.compose.material3.TextButton
 import androidx.compose.runtime.Composable
+import androidx.compose.runtime.collectAsState
 import androidx.compose.runtime.derivedStateOf
 import androidx.compose.runtime.getValue
 import androidx.compose.runtime.mutableStateOf
 import androidx.compose.runtime.remember
+import androidx.compose.runtime.saveable.rememberSaveable
 import androidx.compose.runtime.setValue
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.draw.clip
@@ -51,6 +53,8 @@ import com.bpkpad.arsipnonkeu.domain.model.DocumentCondition
 import com.bpkpad.arsipnonkeu.domain.model.DocumentStatus
 import com.bpkpad.arsipnonkeu.domain.model.DocumentType
 import com.bpkpad.arsipnonkeu.domain.model.PhysicalForm
+import com.bpkpad.arsipnonkeu.ui.component.ArchiveClassificationField
+import com.bpkpad.arsipnonkeu.ui.component.ArchiveClassificationSelectorSheet
 import com.bpkpad.arsipnonkeu.ui.component.TopBar
 import com.bpkpad.arsipnonkeu.ui.screen.staging.StagingViewModel
 import com.bpkpad.arsipnonkeu.ui.theme.BackgroundGray
@@ -65,7 +69,7 @@ fun NewRecordScreen(
 ) {
     var documentType by remember { mutableStateOf(DocumentType.SURAT) }
     var documentNumber by remember { mutableStateOf("") }
-    var documentCode by remember { mutableStateOf("") }
+    var classificationCode by remember { mutableStateOf("") }
     var title by remember { mutableStateOf("") }
     var description by remember { mutableStateOf("") }
     var year by remember { mutableStateOf("") }
@@ -77,6 +81,9 @@ fun NewRecordScreen(
 
     var showSaveConfirmDialog by remember { mutableStateOf(false) }
     var showCancelConfirmDialog by remember { mutableStateOf(false) }
+
+    var showClassificationSheet by rememberSaveable { mutableStateOf(false) }
+    var classificationKeyword by rememberSaveable { mutableStateOf("") }
 
     val isFormValid by remember(
         title,
@@ -146,11 +153,13 @@ fun NewRecordScreen(
                         placeholder = "Contoh: 001/UMUM/2025"
                     )
 
-                    DetailTextField(
-                        label = "Kode Dokumen",
-                        value = documentCode,
-                        onValueChange = { documentCode = it },
-                        placeholder = "Contoh: ARS-2025-001"
+                    ArchiveClassificationField(
+                        selectedCode = classificationCode,
+                        selectedLabel = viewModel.getLoadedArchiveClassificationLabel(classificationCode),
+                        isRequired = false,
+                        onClick = {
+                            showClassificationSheet = true
+                        }
                     )
 
                     DetailTextField(
@@ -256,6 +265,28 @@ fun NewRecordScreen(
         }
     }
 
+    val uiState by viewModel.uiState.collectAsState()
+
+    ArchiveClassificationSelectorSheet(
+        visible = showClassificationSheet,
+        classifications = uiState.archiveClassifications,
+        selectedCode = classificationCode,
+        keyword = classificationKeyword,
+        isLoading = uiState.isClassificationLoading,
+        onKeywordChange = { keyword ->
+            classificationKeyword = keyword
+            viewModel.loadArchiveClassifications(keyword)
+        },
+        onSelect = { classification ->
+            classificationCode = classification.code
+            classificationKeyword = ""
+            showClassificationSheet = false
+        },
+        onDismiss = {
+            showClassificationSheet = false
+        }
+    )
+
     if (showSaveConfirmDialog) {
         AlertDialog(
             onDismissRequest = {
@@ -273,7 +304,7 @@ fun NewRecordScreen(
                         viewModel.addManualDocument(
                             documentType = documentType,
                             documentNumber = documentNumber.takeIf { it.isNotBlank() },
-                            documentCode = documentCode.takeIf { it.isNotBlank() },
+                            classificationCode = classificationCode.takeIf { it.isNotBlank() },
                             title = title,
                             description = description.takeIf { it.isNotBlank() },
                             year = year.toIntOrNull() ?: 0,
@@ -281,6 +312,7 @@ fun NewRecordScreen(
                             condition = condition,
                             copyCount = copyCount.toIntOrNull() ?: 1,
                             status = status,
+                            isCopy = false,
                             originInstance = originInstance.takeIf { it.isNotBlank() }
                         )
 
@@ -442,7 +474,7 @@ private fun ManualInputBottomBar(
                     contentDescription = null
                 )
 
-                Spacer(modifier = Modifier.padding(4.dp))
+                Spacer(modifier = Modifier.padding(horizontal = 4.dp))
 
                 Text(
                     text = "Simpan",

@@ -55,7 +55,6 @@ import com.bpkpad.arsipnonkeu.ui.component.TopBar
 import com.bpkpad.arsipnonkeu.ui.theme.BackgroundGray
 
 //import androidx.compose.ui.tooling.preview.Preview
-import androidx.compose.foundation.lazy.LazyColumn
 //import androidx.compose.foundation.layout.PaddingValues
 //import com.bpkpad.arsipnonkeu.domain.model.ArchiveDocument
 //import com.bpkpad.arsipnonkeu.domain.model.ArchiveDocumentListItem
@@ -96,7 +95,7 @@ fun DocumentDetailScreen(
         editedTitle = document.title
         editedDescription = document.description.orEmpty()
         editedDocumentNumber = document.documentNumber.orEmpty()
-        editedDocumentCode = document.documentCode.orEmpty()
+        editedDocumentCode = document.classificationCode.orEmpty()
         editedOriginInstance = document.originInstance.orEmpty()
         editedCopyCount = document.copyCount.toString()
     }
@@ -225,7 +224,7 @@ fun DocumentDetailScreen(
                                     editedTitle = document.title
                                     editedDescription = document.description.orEmpty()
                                     editedDocumentNumber = document.documentNumber.orEmpty()
-                                    editedDocumentCode = document.documentCode.orEmpty()
+                                    editedDocumentCode = document.classificationCode.orEmpty()
                                     editedOriginInstance = document.originInstance.orEmpty()
                                     editedCopyCount = document.copyCount.toString()
                                 }
@@ -258,7 +257,7 @@ fun DocumentDetailScreen(
                             title = editedTitle,
                             description = editedDescription.takeIf { it.isNotBlank() },
                             documentNumber = editedDocumentNumber.takeIf { it.isNotBlank() },
-                            documentCode = editedDocumentCode.takeIf { it.isNotBlank() },
+                            classificationCode = editedDocumentCode.takeIf { it.isNotBlank() },
                             originInstance = editedOriginInstance.takeIf { it.isNotBlank() },
                             copyCount = editedCopyCount.toIntOrNull() ?: currentDocument.copyCount,
                             updatedAt = "UPDATED"
@@ -330,7 +329,7 @@ private fun DocumentHeaderCard(
             Spacer(modifier = Modifier.height(8.dp))
 
             Text(
-                text = document.documentNumber ?: document.documentCode ?: "-",
+                text = document.documentNumber ?: document.classificationCode ?: "-",
                 fontSize = 14.sp,
                 fontWeight = FontWeight.Medium,
                 fontFamily = PoppinsFont,
@@ -393,7 +392,7 @@ private fun DocumentInformationCard(
             DetailRow("ID", document.id)
             DetailRow("Jenis Dokumen", document.documentType.label)
             DetailRow("Nomor Dokumen", document.documentNumber ?: "-")
-            DetailRow("Kode Dokumen", document.documentCode ?: "-")
+            DetailRow("Kode Klasifikasi", document.classificationCode ?: "-")
             DetailRow("Judul", document.title)
             DetailRow("Deskripsi", document.description ?: "-")
             DetailRow("Tahun", document.year.toString())
@@ -702,7 +701,7 @@ fun DocumentDetailContentPreview() {
         id = "doc-003",
         documentType = DocumentType.KEPBUP,
         documentNumber = "188.45/25/KUM/2024",
-        documentCode = "ARS-2024-001",
+        classificationCode = "ARS-2024-001",
         title = "Keputusan Bupati Tentang Pembentukan Tim Kerja",
         description = "Dokumen keputusan bupati tentang pembentukan tim kerja daerah.",
         year = 2024,
@@ -779,7 +778,7 @@ fun DocumentDetailContentPreview() {
                     isEditMode = false,
                     editedDescription = document.description.orEmpty(),
                     onDescriptionChange = {},
-                    editedDocumentCode = document.documentCode.orEmpty(),
+                    editedDocumentCode = document.classificationCode.orEmpty(),
                     onDocumentCodeChange = {},
                     editedOriginInstance = document.originInstance.orEmpty(),
                     onOriginInstanceChange = {},

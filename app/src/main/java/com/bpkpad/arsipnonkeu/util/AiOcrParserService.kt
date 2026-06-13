@@ -45,7 +45,7 @@ object AiOcrParserService {
         return ParsedOcrDocument(
             documentType = documentType,
             documentNumber = null,
-            documentCode = null,
+            classificationCode = null,
             title = "Dokumen Hasil Scan",
             description = rawOcrText.ifBlank { null },
             year = LocalDate.now().year,
@@ -274,7 +274,7 @@ object AiOcrParserService {
         return ParsedOcrDocument(
             documentType = documentType,
             documentNumber = json.optNullableString("documentNumber"),
-            documentCode = json.optNullableString("documentCode"),
+            classificationCode = json.optNullableString("documentCode"),
             title = json.optString("title").ifBlank { "Dokumen Hasil Scan" },
             description = json.optNullableString("description") ?: fallbackRawOcrText.ifBlank { null },
             year = json.optInt("year", LocalDate.now().year),

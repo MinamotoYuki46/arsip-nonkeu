@@ -12,7 +12,7 @@ fun ArchiveDocumentDto.toDomain(): ArchiveDocument {
         id = id.orEmpty(),
         documentType = documentType.toDocumentType(),
         documentNumber = documentNumber,
-        documentCode = documentCode,
+        classificationCode = documentCode,
         title = title.orEmpty(),
         description = description,
         year = year,

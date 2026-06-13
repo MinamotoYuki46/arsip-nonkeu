@@ -13,7 +13,6 @@ import com.bpkpad.arsipnonkeu.ui.screen.staging.StagingDocumentSource
 import org.dhatim.fastexcel.Workbook
 import org.xmlpull.v1.XmlPullParser
 import java.io.ByteArrayInputStream
-import java.io.InputStream
 import java.util.UUID
 import java.util.zip.ZipInputStream
 
@@ -22,7 +21,7 @@ object ArchiveExcelService {
     private val headers = listOf(
         "Jenis Dokumen",
         "Nomor Dokumen",
-        "Kode Dokumen",
+        "Kode Klasifikasi",
         "Judul",
         "Deskripsi",
         "Tahun",
@@ -54,7 +53,7 @@ object ArchiveExcelService {
 
                 sheet.value(row, 0, document.documentType.label)
                 sheet.value(row, 1, document.documentNumber.orEmpty())
-                sheet.value(row, 2, document.documentCode.orEmpty())
+                sheet.value(row, 2, document.classificationCode.orEmpty())
                 sheet.value(row, 3, document.title)
                 sheet.value(row, 4, document.description.orEmpty())
                 sheet.value(row, 5, document.year)
@@ -127,7 +126,7 @@ object ArchiveExcelService {
                         id = UUID.randomUUID().toString(),
                         documentType = parseDocumentType(row[0].orEmpty()),
                         documentNumber = row[1].orEmpty().takeIf { it.isNotBlank() },
-                        documentCode = row[2].orEmpty().takeIf { it.isNotBlank() },
+                        classificationCode = row[2].orEmpty().takeIf { it.isNotBlank() },
                         title = title.ifBlank { "Dokumen Tanpa Judul" },
                         description = row[4].orEmpty().takeIf { it.isNotBlank() },
                         year = parseIntCell(row[5].orEmpty(), 2025),

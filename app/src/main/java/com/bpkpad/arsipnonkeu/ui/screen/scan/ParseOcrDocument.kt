@@ -8,7 +8,7 @@ import com.bpkpad.arsipnonkeu.domain.model.PhysicalForm
 data class ParsedOcrDocument(
     val documentType: DocumentType,
     val documentNumber: String?,
-    val documentCode: String?,
+    val classificationCode: String?,
     val title: String,
     val description: String?,
     val year: Int,

@@ -28,7 +28,7 @@ object OcrPromptFactory {
             {
               "documentType": "SURAT|PERDA|PERKAB|KEPBUP|KEPGUB",
               "documentNumber": string|null,
-              "documentCode": string|null,
+              "classificationCode": string|null,
               "title": string,
               "description": string|null,
               "year": number,

@@ -1,28 +1,30 @@
 package com.bpkpad.arsipnonkeu.ui.screen.staging
 
+import android.content.Context
+import android.net.Uri
 import androidx.lifecycle.ViewModel
 import androidx.lifecycle.viewModelScope
+import com.bpkpad.arsipnonkeu.di.ArchiveModule
+import com.bpkpad.arsipnonkeu.domain.model.ArchiveClassification
 import com.bpkpad.arsipnonkeu.domain.model.DocumentCondition
 import com.bpkpad.arsipnonkeu.domain.model.DocumentStatus
 import com.bpkpad.arsipnonkeu.domain.model.DocumentType
 import com.bpkpad.arsipnonkeu.domain.model.PhysicalForm
+import com.bpkpad.arsipnonkeu.ui.screen.scan.ParsedOcrDocument
+import com.bpkpad.arsipnonkeu.util.ArchiveExcelService
+import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.flow.MutableStateFlow
 import kotlinx.coroutines.flow.StateFlow
 import kotlinx.coroutines.flow.asStateFlow
 import kotlinx.coroutines.launch
-import java.util.UUID
-import android.content.Context
-import android.net.Uri
-import com.bpkpad.arsipnonkeu.ui.screen.scan.ParsedOcrDocument
-import com.bpkpad.arsipnonkeu.util.ArchiveExcelService
-import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.withContext
+import java.util.UUID
 
 data class StagingDocument(
     val id: String,
     val documentType: DocumentType,
     val documentNumber: String?,
-    val documentCode: String?,
+    val classificationCode: String?,
     val title: String,
     val description: String?,
     val year: Int,
@@ -43,11 +45,18 @@ enum class StagingDocumentSource(val label: String) {
 
 data class StagingUiState(
     val documents: List<StagingDocument> = emptyList(),
+
     val room: String = "",
     val shelf: String = "",
     val boxNumber: String = "",
+
     val selectedDocument: StagingDocument? = null,
+
+    val archiveClassifications: List<ArchiveClassification> = emptyList(),
+    val classificationKeyword: String = "",
+
     val isLoading: Boolean = false,
+    val isClassificationLoading: Boolean = false,
     val isSuccess: Boolean = false,
     val errorMessage: String? = null
 ) {
@@ -72,6 +81,9 @@ data class StagingUiState(
 
 class StagingViewModel : ViewModel() {
 
+    private val getArchiveClassificationsUseCase =
+        ArchiveModule.getArchiveClassificationsUseCase
+
     private val _uiState = MutableStateFlow(
         StagingUiState(
             documents = listOf(
@@ -79,7 +91,7 @@ class StagingViewModel : ViewModel() {
                     id = "stage-001",
                     documentType = DocumentType.SURAT,
                     documentNumber = "001/UMUM/2025",
-                    documentCode = "STG-2025-001",
+                    classificationCode = "000.1.5",
                     title = "Surat Undangan Rapat Koordinasi",
                     description = "Surat undangan rapat koordinasi internal BPKPAD.",
                     year = 2025,
@@ -95,7 +107,7 @@ class StagingViewModel : ViewModel() {
                     id = "stage-002",
                     documentType = DocumentType.KEPBUP,
                     documentNumber = "188.45/25/KUM/2024",
-                    documentCode = "STG-2024-001",
+                    classificationCode = "100.3.3",
                     title = "Keputusan Bupati Tentang Pembentukan Tim Kerja",
                     description = "Dokumen keputusan bupati tentang pembentukan tim kerja daerah.",
                     year = 2024,
@@ -111,7 +123,7 @@ class StagingViewModel : ViewModel() {
                     id = "stage-003",
                     documentType = DocumentType.PERDA,
                     documentNumber = "12 Tahun 2025",
-                    documentCode = "STG-2025-002",
+                    classificationCode = "100.3.2",
                     title = "Peraturan Daerah Tentang Pengelolaan Keuangan Daerah",
                     description = "Dokumen Peraturan Daerah terkait pengelolaan keuangan daerah.",
                     year = 2025,
@@ -129,20 +141,35 @@ class StagingViewModel : ViewModel() {
 
     val uiState: StateFlow<StagingUiState> = _uiState.asStateFlow()
 
+    init {
+        loadArchiveClassifications()
+    }
+
     fun onRoomChange(value: String) {
-        _uiState.value = _uiState.value.copy(room = value)
+        _uiState.value = _uiState.value.copy(
+            room = value,
+            isSuccess = false
+        )
     }
 
     fun onShelfChange(value: String) {
-        _uiState.value = _uiState.value.copy(shelf = value)
+        _uiState.value = _uiState.value.copy(
+            shelf = value,
+            isSuccess = false
+        )
     }
 
     fun onBoxNumberChange(value: String) {
-        _uiState.value = _uiState.value.copy(boxNumber = value)
+        _uiState.value = _uiState.value.copy(
+            boxNumber = value,
+            isSuccess = false
+        )
     }
 
     fun selectDocument(documentId: String) {
-        val document = _uiState.value.documents.firstOrNull { it.id == documentId }
+        val document = _uiState.value.documents.firstOrNull { document ->
+            document.id == documentId
+        }
 
         _uiState.value = _uiState.value.copy(
             selectedDocument = document
@@ -155,10 +182,27 @@ class StagingViewModel : ViewModel() {
         )
     }
 
+    fun getFilteredArchiveClassifications(
+        keyword: String
+    ): List<ArchiveClassification> {
+        val normalizedKeyword = keyword.trim().lowercase()
+        val classifications = _uiState.value.archiveClassifications
+
+        if (normalizedKeyword.isBlank()) {
+            return classifications
+        }
+
+        return classifications.filter { classification ->
+            classification.code.lowercase().contains(normalizedKeyword) ||
+                    classification.name.lowercase().contains(normalizedKeyword) ||
+                    classification.parentCode.orEmpty().lowercase().contains(normalizedKeyword)
+        }
+    }
+
     fun updateSelectedDocument(
         documentType: DocumentType,
         documentNumber: String?,
-        documentCode: String?,
+        classificationCode: String?,
         title: String,
         description: String?,
         year: Int,
@@ -173,25 +217,30 @@ class StagingViewModel : ViewModel() {
 
         val updatedDocument = selectedDocument.copy(
             documentType = documentType,
-            documentNumber = documentNumber,
-            documentCode = documentCode,
-            title = title,
-            description = description,
+            documentNumber = documentNumber.cleanTextOrNull(),
+            classificationCode = classificationCode.cleanTextOrNull(),
+            title = title.trim(),
+            description = description.cleanTextOrNull(),
             year = year,
             physicalForm = physicalForm,
             condition = condition,
-            copyCount = copyCount,
+            copyCount = copyCount.coerceAtLeast(1),
             isCopy = isCopy,
             status = status,
-            originInstance = originInstance
+            originInstance = originInstance.cleanTextOrNull()
         )
 
         _uiState.value = _uiState.value.copy(
             documents = _uiState.value.documents.map { document ->
-                if (document.id == selectedDocument.id) updatedDocument else document
+                if (document.id == selectedDocument.id) {
+                    updatedDocument
+                } else {
+                    document
+                }
             },
             selectedDocument = updatedDocument,
-            errorMessage = null
+            errorMessage = null,
+            isSuccess = false
         )
     }
 
@@ -199,17 +248,134 @@ class StagingViewModel : ViewModel() {
         val selectedDocument = _uiState.value.selectedDocument ?: return
 
         _uiState.value = _uiState.value.copy(
-            documents = _uiState.value.documents.filterNot { it.id == selectedDocument.id },
+            documents = _uiState.value.documents.filterNot { document ->
+                document.id == selectedDocument.id
+            },
             selectedDocument = null,
-            errorMessage = null
+            errorMessage = null,
+            isSuccess = false
         )
     }
 
     fun deleteDocument(id: String) {
         _uiState.value = _uiState.value.copy(
-            documents = _uiState.value.documents.filterNot { it.id == id },
-            errorMessage = null
+            documents = _uiState.value.documents.filterNot { document ->
+                document.id == id
+            },
+            selectedDocument = if (_uiState.value.selectedDocument?.id == id) {
+                null
+            } else {
+                _uiState.value.selectedDocument
+            },
+            errorMessage = null,
+            isSuccess = false
         )
+    }
+
+    fun addManualDocument(
+        documentType: DocumentType,
+        documentNumber: String?,
+        classificationCode: String?,
+        title: String,
+        description: String?,
+        year: Int,
+        physicalForm: PhysicalForm,
+        condition: DocumentCondition?,
+        copyCount: Int,
+        isCopy: Boolean?,
+        status: DocumentStatus,
+        originInstance: String?
+    ) {
+        val newDocument = StagingDocument(
+            id = UUID.randomUUID().toString(),
+            documentType = documentType,
+            documentNumber = documentNumber.cleanTextOrNull(),
+            classificationCode = classificationCode.cleanTextOrNull(),
+            title = title.trim(),
+            description = description.cleanTextOrNull(),
+            year = year,
+            physicalForm = physicalForm,
+            condition = condition,
+            copyCount = copyCount.coerceAtLeast(1),
+            isCopy = isCopy,
+            status = status,
+            originInstance = originInstance.cleanTextOrNull(),
+            source = StagingDocumentSource.MANUAL
+        )
+
+        _uiState.value = _uiState.value.copy(
+            documents = _uiState.value.documents + newDocument,
+            errorMessage = null,
+            isSuccess = false
+        )
+    }
+
+    fun addScannedDocument(
+        documentType: DocumentType
+    ): String {
+        val newDocument = StagingDocument(
+            id = UUID.randomUUID().toString(),
+            documentType = documentType,
+            documentNumber = "SCAN-${System.currentTimeMillis()}",
+            classificationCode = null,
+            title = "Dokumen Hasil Scan",
+            description = "Dokumen sementara hasil OCR dan AI parsing. Silakan cek dan edit hasilnya.",
+            year = 2025,
+            physicalForm = if (documentType == DocumentType.SURAT) {
+                PhysicalForm.SHEET
+            } else {
+                PhysicalForm.BOOK
+            },
+            condition = null,
+            copyCount = 1,
+            isCopy = null,
+            status = DocumentStatus.AVAILABLE,
+            originInstance = "Hasil Scan",
+            source = StagingDocumentSource.SCAN
+        )
+
+        _uiState.value = _uiState.value.copy(
+            documents = _uiState.value.documents + newDocument,
+            selectedDocument = newDocument,
+            errorMessage = null,
+            isSuccess = false
+        )
+
+        return newDocument.id
+    }
+
+    fun addScannedParsedDocument(
+        parsedDocument: ParsedOcrDocument
+    ): String {
+        val validClassificationCode = normalizeClassificationCode(
+            parsedDocument.classificationCode
+        )
+
+        val newDocument = StagingDocument(
+            id = UUID.randomUUID().toString(),
+            documentType = parsedDocument.documentType,
+            documentNumber = parsedDocument.documentNumber.cleanTextOrNull(),
+            classificationCode = validClassificationCode,
+            title = parsedDocument.title.trim().ifBlank { "Dokumen Hasil Scan" },
+            description = parsedDocument.description.cleanTextOrNull(),
+            year = parsedDocument.year,
+            physicalForm = parsedDocument.physicalForm,
+            condition = parsedDocument.condition,
+            copyCount = parsedDocument.copyCount.coerceAtLeast(1),
+            isCopy = parsedDocument.isCopy,
+            status = parsedDocument.status,
+            originInstance = parsedDocument.originInstance.cleanTextOrNull(),
+            source = StagingDocumentSource.SCAN
+        )
+
+        _uiState.value = _uiState.value.copy(
+            documents = _uiState.value.documents + newDocument,
+            selectedDocument = newDocument,
+            errorMessage = null,
+            isSuccess = false
+        )
+
+        return newDocument.id
     }
 
     fun addDummyImportDocument() {
@@ -217,7 +383,7 @@ class StagingViewModel : ViewModel() {
             id = UUID.randomUUID().toString(),
             documentType = DocumentType.SURAT,
             documentNumber = "IMP-${System.currentTimeMillis()}",
-            documentCode = "STG-IMP-${_uiState.value.documents.size + 1}",
+            classificationCode = "000.5.3",
             title = "Dokumen Hasil Import Excel",
             description = "Dokumen sementara hasil import Excel.",
             year = 2025,
@@ -232,7 +398,8 @@ class StagingViewModel : ViewModel() {
 
         _uiState.value = _uiState.value.copy(
             documents = _uiState.value.documents + newDocument,
-            errorMessage = null
+            errorMessage = null,
+            isSuccess = false
         )
     }
 
@@ -241,7 +408,7 @@ class StagingViewModel : ViewModel() {
             id = UUID.randomUUID().toString(),
             documentType = DocumentType.SURAT,
             documentNumber = "SCAN-${System.currentTimeMillis()}",
-            documentCode = "STG-SCAN-${_uiState.value.documents.size + 1}",
+            classificationCode = null,
             title = "Dokumen Hasil Scan",
             description = "Dokumen sementara hasil scan.",
             year = 2025,
@@ -256,143 +423,9 @@ class StagingViewModel : ViewModel() {
 
         _uiState.value = _uiState.value.copy(
             documents = _uiState.value.documents + newDocument,
-            errorMessage = null
+            errorMessage = null,
+            isSuccess = false
         )
-    }
-
-    fun pushAllToArchive() {
-        val currentState = _uiState.value
-
-        if (!currentState.isStorageLocationValid) {
-            _uiState.value = currentState.copy(
-                errorMessage = "Ruangan dan rak wajib diisi sebelum menyimpan staging."
-            )
-            return
-        }
-
-        if (currentState.documents.isEmpty()) {
-            _uiState.value = currentState.copy(
-                errorMessage = "Tidak ada dokumen staging yang bisa disimpan."
-            )
-            return
-        }
-
-        viewModelScope.launch {
-            _uiState.value = _uiState.value.copy(
-                isLoading = true,
-                errorMessage = null
-            )
-
-            // TODO: nanti insert:
-            // 1. storage_locations
-            // 2. archive_documents
-            // 3. document_placements
-            _uiState.value = _uiState.value.copy(
-                isLoading = false,
-                isSuccess = true,
-                documents = emptyList(),
-                selectedDocument = null
-            )
-        }
-    }
-
-    fun clearMessage() {
-        _uiState.value = _uiState.value.copy(errorMessage = null)
-    }
-
-    fun addManualDocument(
-        documentType: DocumentType,
-        documentNumber: String?,
-        documentCode: String?,
-        title: String,
-        description: String?,
-        year: Int,
-        physicalForm: PhysicalForm,
-        condition: DocumentCondition?,
-        copyCount: Int,
-        isCopy: Boolean?,
-        status: DocumentStatus,
-        originInstance: String?
-    ) {
-        val newDocument = StagingDocument(
-            id = UUID.randomUUID().toString(),
-            documentType = documentType,
-            documentNumber = documentNumber,
-            documentCode = documentCode,
-            title = title,
-            description = description,
-            year = year,
-            physicalForm = physicalForm,
-            condition = condition,
-            copyCount = copyCount,
-            isCopy = isCopy,
-            status = status,
-            originInstance = originInstance,
-            source = StagingDocumentSource.MANUAL
-        )
-
-        _uiState.value = _uiState.value.copy(
-            documents = _uiState.value.documents + newDocument,
-            errorMessage = null
-        )
-    }
-
-    fun addScannedDocument(
-        documentType: DocumentType
-    ): String {
-        val newDocument = StagingDocument(
-            id = UUID.randomUUID().toString(),
-            documentType = documentType,
-            documentNumber = "SCAN-${System.currentTimeMillis()}",
-            documentCode = "STG-SCAN-${_uiState.value.documents.size + 1}",
-            title = "Dokumen Hasil Scan",
-            description = "Dokumen sementara hasil OCR dan AI parsing. Silakan cek dan edit hasilnya.",
-            year = 2025,
-            physicalForm = PhysicalForm.SHEET,
-            condition = null,
-            copyCount = 1,
-            isCopy = null,
-            status = DocumentStatus.AVAILABLE,
-            originInstance = "Hasil Scan",
-            source = StagingDocumentSource.SCAN
-        )
-
-        _uiState.value = _uiState.value.copy(
-            documents = _uiState.value.documents + newDocument,
-            selectedDocument = newDocument,
-            errorMessage = null
-        )
-
-        return newDocument.id
-    }
-
-    fun addScannedParsedDocument(
-        parsedDocument: ParsedOcrDocument
-    ): String {
-        val newDocument = StagingDocument(
-            id = UUID.randomUUID().toString(),
-            documentType = parsedDocument.documentType,
-            documentNumber = parsedDocument.documentNumber,
-            documentCode = parsedDocument.documentCode,
-            title = parsedDocument.title,
-            description = parsedDocument.description,
-            year = parsedDocument.year,
-            physicalForm = parsedDocument.physicalForm,
-            condition = parsedDocument.condition,
-            copyCount = parsedDocument.copyCount,
-            isCopy = parsedDocument.isCopy,
-            status = parsedDocument.status,
-            originInstance = parsedDocument.originInstance,
-            source = StagingDocumentSource.SCAN
-        )
-
-        _uiState.value = _uiState.value.copy(
-            documents = _uiState.value.documents + newDocument,
-            selectedDocument = newDocument,
-            errorMessage = null
-        )
-
-        return newDocument.id
     }
 
     fun importFromExcel(
@@ -402,14 +435,21 @@ class StagingViewModel : ViewModel() {
         viewModelScope.launch {
             _uiState.value = _uiState.value.copy(
                 isLoading = true,
-                errorMessage = null
+                errorMessage = null,
+                isSuccess = false
             )
 
             try {
-                val importedDocuments = kotlinx.coroutines.withContext(kotlinx.coroutines.Dispatchers.IO) {
+                val importedDocuments = withContext(Dispatchers.IO) {
                     ArchiveExcelService.importStagingDocuments(
                         context = context,
                         uri = uri
+                    )
+                }.map { document ->
+                    document.copy(
+                        classificationCode = normalizeClassificationCode(
+                            document.classificationCode
+                        )
                     )
                 }
 
@@ -429,5 +469,163 @@ class StagingViewModel : ViewModel() {
                 )
             }
         }
+    }
+
+    fun pushAllToArchive() {
+        val currentState = _uiState.value
+
+        if (!currentState.isStorageLocationValid) {
+            _uiState.value = currentState.copy(
+                errorMessage = "Ruangan dan rak wajib diisi sebelum menyimpan staging."
+            )
+            return
+        }
+
+        if (currentState.documents.isEmpty()) {
+            _uiState.value = currentState.copy(
+                errorMessage = "Tidak ada dokumen staging yang bisa disimpan."
+            )
+            return
+        }
+
+        val invalidDocument = currentState.documents.firstOrNull { document ->
+            document.title.isBlank() ||
+                    document.year !in 1900..2100 ||
+                    document.copyCount <= 0
+        }
+
+        if (invalidDocument != null) {
+            _uiState.value = currentState.copy(
+                selectedDocument = invalidDocument,
+                errorMessage = "Ada dokumen staging yang belum valid. Periksa judul, tahun, dan jumlah salinan."
+            )
+            return
+        }
+
+        viewModelScope.launch {
+            _uiState.value = _uiState.value.copy(
+                isLoading = true,
+                errorMessage = null,
+                isSuccess = false
+            )
+
+            // TODO:
+            // Setelah repository arsip mendukung insert placement:
+            // 1. Insert/find storage_locations berdasarkan room, shelf, boxNumber
+            // 2. Insert archive_documents dari StagingDocument
+            // 3. Insert document_placements untuk setiap dokumen
+
+            _uiState.value = _uiState.value.copy(
+                isLoading = false,
+                isSuccess = true,
+                documents = emptyList(),
+                selectedDocument = null
+            )
+        }
+    }
+
+    fun loadArchiveClassifications(
+        keyword: String = ""
+    ) {
+        viewModelScope.launch {
+            _uiState.value = _uiState.value.copy(
+                classificationKeyword = keyword,
+                isClassificationLoading = true
+            )
+
+            try {
+                val classifications = getArchiveClassifications(keyword)
+
+                _uiState.value = _uiState.value.copy(
+                    archiveClassifications = classifications,
+                    isClassificationLoading = false
+                )
+            } catch (throwable: Throwable) {
+                _uiState.value = _uiState.value.copy(
+                    isClassificationLoading = false,
+                    errorMessage = throwable.message ?: "Gagal memuat kode klasifikasi arsip"
+                )
+            }
+        }
+    }
+
+    fun onClassificationKeywordChange(
+        keyword: String
+    ) {
+        loadArchiveClassifications(keyword)
+    }
+
+    suspend fun getArchiveClassifications(
+        keyword: String = ""
+    ): List<ArchiveClassification> {
+        return getArchiveClassificationsUseCase(keyword)
+    }
+
+    suspend fun findArchiveClassificationByCode(
+        code: String?
+    ): ArchiveClassification? {
+        if (code.isNullOrBlank()) return null
+
+        return getArchiveClassificationsUseCase.findByCode(
+            code.trim()
+        )
+    }
+
+    fun findLoadedArchiveClassificationByCode(
+        code: String?
+    ): ArchiveClassification? {
+        if (code.isNullOrBlank()) return null
+
+        return _uiState.value.archiveClassifications.firstOrNull { classification ->
+            classification.code.equals(
+                other = code.trim(),
+                ignoreCase = true
+            )
+        }
+    }
+
+    fun getLoadedArchiveClassificationLabel(
+        code: String?
+    ): String {
+        if (code.isNullOrBlank()) return ""
+
+        val classification = findLoadedArchiveClassificationByCode(code)
+
+        return classification?.displayName ?: code
+    }
+
+    fun clearMessage() {
+        _uiState.value = _uiState.value.copy(
+            errorMessage = null,
+            isSuccess = false
+        )
+    }
+
+    private fun normalizeClassificationCode(
+        code: String?
+    ): String? {
+        val cleanedCode = code.cleanTextOrNull() ?: return null
+
+        val loadedMatch = _uiState.value.archiveClassifications.firstOrNull { classification ->
+            classification.code.equals(
+                other = cleanedCode,
+                ignoreCase = true
+            )
+        }
+
+        if (loadedMatch != null) {
+            return loadedMatch.code
+        }
+
+        return cleanedCode
+    }
+
+    private fun String?.cleanTextOrNull(): String? {
+        return this
+            ?.trim()
+            ?.takeIf { value ->
+                value.isNotBlank() &&
+                        !value.equals("null", ignoreCase = true)
+            }
     }
 }
