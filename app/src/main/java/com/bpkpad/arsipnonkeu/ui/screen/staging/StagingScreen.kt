@@ -30,6 +30,7 @@ import androidx.compose.foundation.lazy.items
 import androidx.compose.foundation.rememberScrollState
 import androidx.compose.foundation.shape.CircleShape
 import androidx.compose.foundation.shape.RoundedCornerShape
+import androidx.compose.foundation.text.KeyboardOptions
 import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.filled.Add
 import androidx.compose.material.icons.filled.Close
@@ -43,14 +44,19 @@ import androidx.compose.material3.AlertDialog
 import androidx.compose.material3.Button
 import androidx.compose.material3.ButtonDefaults
 import androidx.compose.material3.CircularProgressIndicator
+import androidx.compose.material3.DropdownMenuItem
 import androidx.compose.material3.ExperimentalMaterial3Api
+import androidx.compose.material3.ExposedDropdownMenuBox
+import androidx.compose.material3.ExposedDropdownMenuDefaults
 import androidx.compose.material3.ExtendedFloatingActionButton
 import androidx.compose.material3.FloatingActionButton
 import androidx.compose.material3.HorizontalDivider
 import androidx.compose.material3.Icon
+import androidx.compose.material3.LocalTextStyle
 import androidx.compose.material3.ModalBottomSheet
 import androidx.compose.material3.OutlinedButton
 import androidx.compose.material3.OutlinedTextField
+import androidx.compose.material3.OutlinedTextFieldDefaults
 import androidx.compose.material3.Scaffold
 import androidx.compose.material3.Text
 import androidx.compose.material3.TextButton
@@ -70,6 +76,7 @@ import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.platform.LocalContext
 import androidx.compose.ui.text.font.FontFamily
 import androidx.compose.ui.text.font.FontWeight
+import androidx.compose.ui.text.input.KeyboardType
 import androidx.compose.ui.text.style.TextOverflow
 import androidx.compose.ui.tooling.preview.Preview
 import androidx.compose.ui.unit.dp
@@ -696,52 +703,52 @@ private fun StagingDocumentDetailSheet(
                 }
 
                 item {
-                    EnumChipSelector(
-                        title = "Jenis Dokumen",
-                        selected = selectedType,
-                        values = DocumentType.values().toList(),
-                        label = { it.label },
-                        onSelected = { selected ->
+                    StagingDropdownField(
+                        label = "Jenis Dokumen",
+                        value = selectedType,
+                        options = DocumentType.values().toList(),
+                        optionLabel = { it.label },
+                        onValueChange = { selected ->
                             selectedType = selected ?: selectedType
                         }
                     )
                 }
 
                 item {
-                    EnumChipSelector(
-                        title = "Bentuk Fisik",
-                        selected = selectedPhysicalForm,
-                        values = PhysicalForm.values().toList(),
-                        label = { it.label },
-                        onSelected = { selected ->
+                    StagingDropdownField(
+                        label = "Bentuk Fisik",
+                        value = selectedPhysicalForm,
+                        options = PhysicalForm.values().toList(),
+                        optionLabel = { it.label },
+                        onValueChange = { selected ->
                             selectedPhysicalForm = selected ?: selectedPhysicalForm
                         }
                     )
                 }
 
                 item {
-                    EnumChipSelector(
-                        title = "Kondisi",
-                        selected = selectedCondition,
-                        values = DocumentCondition.values().toList(),
-                        label = { it.label },
+                    StagingDropdownField(
+                        label = "Kondisi",
+                        value = selectedCondition,
+                        options = DocumentCondition.values().toList(),
+                        optionLabel = { it.label },
                         allowNull = true,
                         nullLabel = "Tidak diketahui",
-                        onSelected = { selected ->
+                        onValueChange = { selected ->
                             selectedCondition = selected
                         }
                     )
                 }
 
                 item {
-                    EnumChipSelector(
-                        title = "Keaslian",
-                        selected = isCopy,
-                        values = listOf(false, true),
-                        label = { if (it == true) "Kopi" else "Asli" },
+                    StagingDropdownField(
+                        label = "Keaslian",
+                        value = isCopy,
+                        options = listOf(false, true),
+                        optionLabel = { if (it == true) "Kopi" else "Asli" },
                         allowNull = true,
                         nullLabel = "Tidak diketahui",
-                        onSelected = { selected ->
+                        onValueChange = { selected ->
                             isCopy = selected
                         }
                     )
@@ -756,17 +763,18 @@ private fun StagingDocumentDetailSheet(
                                 copyCount = input
                             }
                         },
-                        placeholder = "1"
+                        placeholder = "1",
+                        keyboardType = KeyboardType.Number
                     )
                 }
 
                 item {
-                    EnumChipSelector(
-                        title = "Status",
-                        selected = selectedStatus,
-                        values = DocumentStatus.values().toList(),
-                        label = { it.label },
-                        onSelected = { selected ->
+                    StagingDropdownField(
+                        label = "Status",
+                        value = selectedStatus,
+                        options = DocumentStatus.values().toList(),
+                        optionLabel = { it.label },
+                        onValueChange = { selected ->
                             selectedStatus = selected ?: selectedStatus
                         }
                     )
@@ -809,7 +817,6 @@ private fun StagingDocumentDetailSheet(
                 item { DetailRow("Status", document.status.label) }
                 item { DetailRow("Asal Instansi", document.originInstance ?: "-") }
                 item { DetailRow("Sumber", document.source.label) }
-                item { DetailRow("ID Staging", document.id) }
             }
 
             item {
@@ -858,7 +865,10 @@ private fun StagingDocumentDetailSheet(
                             colors = ButtonDefaults.buttonColors(containerColor = Color(0xFF0D631B)),
                             shape = RoundedCornerShape(9999.dp)
                         ) {
-                            Text("Simpan")
+                            Text(
+                                text = "Simpan",
+                                color = Color.White
+                            )
                         }
                     } else {
                         OutlinedButton(
@@ -889,12 +899,16 @@ private fun StagingDocumentDetailSheet(
                         ) {
                             Icon(
                                 imageVector = Icons.Outlined.Edit,
-                                contentDescription = null
+                                contentDescription = null,
+                                tint = Color.White
                             )
 
                             Spacer(modifier = Modifier.width(6.dp))
 
-                            Text("Edit")
+                            Text(
+                                text = "Edit",
+                                color = Color.White
+                            )
                         }
                     }
                 }
@@ -1009,82 +1023,112 @@ private fun StagingDocumentDetailSheet(
     }
 }
 
+@OptIn(ExperimentalMaterial3Api::class)
 @Composable
-private fun <T> EnumChipSelector(
-    title: String,
-    selected: T?,
-    values: List<T>,
-    label: (T) -> String,
+private fun <T> StagingDropdownField(
+    label: String,
+    value: T?,
+    options: List<T>,
+    optionLabel: (T) -> String,
+    onValueChange: (T?) -> Unit,
     allowNull: Boolean = false,
-    nullLabel: String = "Tidak diketahui",
-    onSelected: (T?) -> Unit
+    nullLabel: String = "Tidak diketahui"
 ) {
-    Column(verticalArrangement = Arrangement.spacedBy(6.dp)) {
-        Text(
-            text = title.uppercase(),
-            fontSize = 10.sp,
-            fontWeight = FontWeight.Bold,
-            fontFamily = PoppinsFont,
-            color = Color(0xFF707A6C),
-            letterSpacing = 0.48.sp
+    var expanded by remember { mutableStateOf(false) }
+
+    ExposedDropdownMenuBox(
+        expanded = expanded,
+        onExpandedChange = {
+            expanded = !expanded
+        },
+        modifier = Modifier.fillMaxWidth()
+    ) {
+        OutlinedTextField(
+            value = value?.let { optionLabel(it) } ?: nullLabel,
+            onValueChange = {},
+            readOnly = true,
+            label = {
+                Text(
+                    text = label,
+                    color = Color.Black
+                )
+            },
+            trailingIcon = {
+                ExposedDropdownMenuDefaults.TrailingIcon(
+                    expanded = expanded
+                )
+            },
+            modifier = Modifier
+                .menuAnchor()
+                .fillMaxWidth(),
+            shape = RoundedCornerShape(16.dp),
+            textStyle = LocalTextStyle.current.copy(
+                color = Color.Black
+            ),
+            colors = OutlinedTextFieldDefaults.colors(
+                focusedTextColor = Color.Black,
+                unfocusedTextColor = Color.Black,
+                disabledTextColor = Color.Black,
+
+                focusedLabelColor = Color.Black,
+                unfocusedLabelColor = Color.Black,
+                disabledLabelColor = Color.Black,
+
+                focusedPlaceholderColor = Color.Black,
+                unfocusedPlaceholderColor = Color.Black,
+                disabledPlaceholderColor = Color.Black,
+
+                focusedBorderColor = Color.Black,
+                unfocusedBorderColor = Color.Black,
+                disabledBorderColor = Color.Black,
+
+                cursorColor = Color.Black,
+
+                focusedContainerColor = Color.Transparent,
+                unfocusedContainerColor = Color.Transparent,
+                disabledContainerColor = Color.Transparent
+            )
         )
 
-        Row(
-            modifier = Modifier
-                .fillMaxWidth()
-                .horizontalScroll(rememberScrollState()),
-            horizontalArrangement = Arrangement.spacedBy(8.dp)
+        ExposedDropdownMenu(
+            expanded = expanded,
+            onDismissRequest = {
+                expanded = false
+            },
+            containerColor = Color.White,
         ) {
             if (allowNull) {
-                EnumChip(
-                    label = nullLabel,
-                    isSelected = selected == null,
-                    onClick = { onSelected(null) }
+                DropdownMenuItem(
+                    text = {
+                        Text(
+                            text = nullLabel,
+                            color = Color.Black,
+                            fontFamily = PoppinsFont
+                        )
+                    },
+                    onClick = {
+                        onValueChange(null)
+                        expanded = false
+                    }
                 )
             }
 
-            values.forEach { value ->
-                EnumChip(
-                    label = label(value),
-                    isSelected = selected == value,
-                    onClick = { onSelected(value) }
+            options.forEach { option ->
+                DropdownMenuItem(
+                    text = {
+                        Text(
+                            text = optionLabel(option),
+                            color = Color.Black,
+                            fontFamily = PoppinsFont
+                        )
+                    },
+                    onClick = {
+                        onValueChange(option)
+                        expanded = false
+                    }
                 )
             }
         }
-    }
-}
-
-@Composable
-private fun EnumChip(
-    label: String,
-    isSelected: Boolean,
-    onClick: () -> Unit
-) {
-    Box(
-        modifier = Modifier
-            .clip(RoundedCornerShape(9999.dp))
-            .background(if (isSelected) Color(0xFF2E7D32) else Color.White)
-            .then(
-                if (!isSelected) {
-                    Modifier.border(
-                        width = 1.dp,
-                        color = Color(0xFFBFCABA),
-                        shape = RoundedCornerShape(9999.dp)
-                    )
-                } else {
-                    Modifier
-                }
-            )
-            .clickable(onClick = onClick)
-            .padding(horizontal = 14.dp, vertical = 8.dp)
-    ) {
-        Text(
-            text = label,
-            fontSize = 13.sp,
-            fontWeight = FontWeight.SemiBold,
-            fontFamily = PoppinsFont,
-            color = if (isSelected) Color(0xFFCBFFC2) else Color(0xFF40493D)
-        )
     }
 }
 
@@ -1302,26 +1346,56 @@ private fun DetailTextField(
     onValueChange: (String) -> Unit,
     placeholder: String,
     modifier: Modifier = Modifier,
-    singleLine: Boolean = true
+    singleLine: Boolean = true,
+    keyboardType: KeyboardType = KeyboardType.Text
 ) {
     OutlinedTextField(
         value = value,
         onValueChange = onValueChange,
         label = {
-            Text(label)
+            Text(
+                text = label,
+                color = Color.Black
+            )
         },
         placeholder = {
-            Text(placeholder)
+            Text(
+                text = placeholder,
+                color = Color.Black
+            )
         },
         modifier = modifier.fillMaxWidth(),
         singleLine = singleLine,
         minLines = if (singleLine) 1 else 3,
         shape = RoundedCornerShape(16.dp),
-        colors = androidx.compose.material3.OutlinedTextFieldDefaults.colors(
-            focusedContainerColor = Color.White,
-            unfocusedContainerColor = Color.White,
-            focusedBorderColor = Color(0xFF0D631B),
-            unfocusedBorderColor = Color(0xFFBFCABA)
+        textStyle = LocalTextStyle.current.copy(
+            color = Color.Black
+        ),
+        keyboardOptions = KeyboardOptions(
+            keyboardType = keyboardType
+        ),
+        colors = OutlinedTextFieldDefaults.colors(
+            focusedTextColor = Color.Black,
+            unfocusedTextColor = Color.Black,
+            disabledTextColor = Color.Black,
+
+            focusedLabelColor = Color.Black,
+            unfocusedLabelColor = Color.Black,
+            disabledLabelColor = Color.Black,
+
+            focusedPlaceholderColor = Color.Black,
+            unfocusedPlaceholderColor = Color.Black,
+            disabledPlaceholderColor = Color.Black,
+
+            focusedBorderColor = Color.Black,
+            unfocusedBorderColor = Color.Black,
+            disabledBorderColor = Color.Black,
+
+            cursorColor = Color.Black,
+
+            focusedContainerColor = Color.Transparent,
+            unfocusedContainerColor = Color.Transparent,
+            disabledContainerColor = Color.Transparent
         )
     )
 }
