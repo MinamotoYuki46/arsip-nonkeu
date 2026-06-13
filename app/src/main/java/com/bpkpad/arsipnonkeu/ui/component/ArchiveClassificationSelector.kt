@@ -76,6 +76,7 @@ fun ArchiveClassificationField(
         OutlinedTextField(
             value = displayValue,
             onValueChange = {},
+            shape = RoundedCornerShape(16.dp),
             modifier = Modifier.fillMaxWidth(),
             enabled = false, // Set to false to allow the parent Box to handle clicks
             readOnly = true,
@@ -85,7 +86,8 @@ fun ArchiveClassificationField(
                         "Kode Klasifikasi Arsip *"
                     } else {
                         "Kode Klasifikasi Arsip"
-                    }
+                    },
+                    color = Color.Black
                 )
             },
             placeholder = {
@@ -105,12 +107,12 @@ fun ArchiveClassificationField(
             },
             singleLine = true,
             colors = OutlinedTextFieldDefaults.colors(
-                disabledTextColor = MaterialTheme.colorScheme.onSurface,
-                disabledBorderColor = MaterialTheme.colorScheme.outline,
-                disabledLeadingIconColor = MaterialTheme.colorScheme.onSurfaceVariant,
-                disabledTrailingIconColor = MaterialTheme.colorScheme.onSurfaceVariant,
-                disabledLabelColor = MaterialTheme.colorScheme.onSurfaceVariant,
-                disabledPlaceholderColor = MaterialTheme.colorScheme.onSurfaceVariant,
+                disabledTextColor = Color(0xFF071E27),
+                disabledBorderColor = Color(0xFFBFCABA),
+                disabledLeadingIconColor = Color(0xFF071E27),
+                disabledTrailingIconColor = Color(0xFF071E27),
+                disabledLabelColor = Color(0xFF071E27),
+                disabledPlaceholderColor = Color(0xFF707A6C),
                 disabledContainerColor = Color.Transparent
             )
         )

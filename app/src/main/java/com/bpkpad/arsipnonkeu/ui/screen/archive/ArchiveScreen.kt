@@ -228,7 +228,7 @@ private fun ArchiveControlSection(
                 fontSize = 13.sp,
                 fontWeight = FontWeight.Medium,
                 fontFamily = PoppinsFont,
-                color = Color(0xFF40493D)
+                color = Color.Black
             )
 
             Text(
@@ -236,7 +236,7 @@ private fun ArchiveControlSection(
                 fontSize = 12.sp,
                 fontWeight = FontWeight.Medium,
                 fontFamily = PoppinsFont,
-                color = Color(0xFF707A6C)
+                color = Color.Black
             )
         }
 
@@ -281,7 +281,9 @@ private fun ArchiveControlSection(
                 Icon(
                     imageVector = Icons.Outlined.FileDownload,
                     contentDescription = null,
-                    modifier = Modifier.size(18.dp)
+                    modifier = Modifier.size(18.dp),
+                    tint = Color.White
+
                 )
 
                 Spacer(modifier = Modifier.width(8.dp))
@@ -395,7 +397,8 @@ private fun SearchInput(
                 fontSize = 14.sp,
                 fontFamily = PoppinsFont,
                 maxLines = 1,
-                overflow = TextOverflow.Ellipsis
+                overflow = TextOverflow.Ellipsis,
+                color = Color.Black
             )
         },
         leadingIcon = {
@@ -789,14 +792,6 @@ private fun ArchiveListFooter(totalFound: Int) {
                 color = Color(0xFF707A6C)
             )
         }
-
-        Text(
-            text = "Menampilkan $totalFound dokumen ditemukan",
-            fontSize = 13.sp,
-            fontWeight = FontWeight.Normal,
-            fontFamily = PoppinsFont,
-            color = Color(0xFF40493D)
-        )
     }
 }
 

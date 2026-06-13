@@ -140,38 +140,38 @@ class FakeArchiveRepository : ArchiveRepository {
     private val storageLocations = mutableListOf(
         StorageLocation(
             id = "loc-001",
-            room = "Ruang Arsip",
-            shelf = "Rak 04-B",
+            room = "A",
+            shelf = "04",
             boxNumber = "01"
         ),
         StorageLocation(
             id = "loc-002",
-            room = "Ruang Arsip",
-            shelf = "Rak 01-A",
+            room = "A",
+            shelf = "01",
             boxNumber = "02"
         ),
         StorageLocation(
             id = "loc-003",
-            room = "Ruang Arsip",
-            shelf = "Rak 02-C",
+            room = "A",
+            shelf = "02-C",
             boxNumber = "03"
         ),
         StorageLocation(
             id = "loc-004",
-            room = "Ruang Arsip",
-            shelf = "Rak 03-A",
+            room = "A",
+            shelf = "03-A",
             boxNumber = "04"
         ),
         StorageLocation(
             id = "loc-005",
-            room = "Gudang Arsip",
-            shelf = "Rak 06-B",
+            room = "A",
+            shelf = "06-B",
             boxNumber = "01"
         ),
         StorageLocation(
             id = "loc-006",
-            room = "Gudang Arsip",
-            shelf = "Rak 07-D",
+            room = "A",
+            shelf = "07-D",
             boxNumber = "05"
         )
     )
@@ -355,10 +355,8 @@ class FakeArchiveRepository : ArchiveRepository {
         shelf: String,
         boxNumber: String?
     ) {
-        var location = storageLocations.find {
-            it.room.equals(room, ignoreCase = true) &&
-                    it.shelf.equals(shelf, ignoreCase = true) &&
-                    it.boxNumber.equals(boxNumber, ignoreCase = true)
+        var location = storageLocations.firstOrNull {
+            it.room == room && it.shelf == shelf && it.boxNumber == boxNumber
         }
 
         if (location == null) {
@@ -371,28 +369,22 @@ class FakeArchiveRepository : ArchiveRepository {
             storageLocations.add(location)
         }
 
-        val now = "2025-06-14" // Dummy date
-
         documents.forEach { doc ->
-            val documentToInsert = if (doc.id.isBlank() || doc.id.startsWith("stage-") || doc.id.contains("-")) {
-                doc.copy(
-                    id = generateDocumentId(),
-                    createdAt = now
-                )
-            } else {
-                doc.copy(createdAt = now)
-            }
-
-            this.documents.add(documentToInsert)
+            val docId = if (doc.id.isBlank()) generateDocumentId() else doc.id
+            val docToInsert = doc.copy(
+                id = docId,
+                createdAt = doc.createdAt ?: "2025-02-17"
+            )
+            this.documents.add(docToInsert)
 
             placements.add(
                 DocumentPlacement(
                     id = "place-${(placements.size + 1).toString().padStart(3, '0')}",
-                    archiveDocumentId = documentToInsert.id,
+                    archiveDocumentId = docToInsert.id,
                     storageLocationId = location.id,
-                    placedAt = now,
+                    placedAt = docToInsert.createdAt ?: "2025-02-17",
                     removedAt = null,
-                    userId = "user-current"
+                    userId = null,
                 )
             )
         }
