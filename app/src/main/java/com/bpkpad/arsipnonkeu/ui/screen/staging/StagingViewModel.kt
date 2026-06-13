@@ -4,12 +4,16 @@ import android.content.Context
 import android.net.Uri
 import androidx.lifecycle.ViewModel
 import androidx.lifecycle.viewModelScope
+import com.bpkpad.arsipnonkeu.data.repository.StagingDraftRepository
 import com.bpkpad.arsipnonkeu.di.ArchiveModule
 import com.bpkpad.arsipnonkeu.domain.model.ArchiveClassification
+import com.bpkpad.arsipnonkeu.domain.model.ArchiveDocument
 import com.bpkpad.arsipnonkeu.domain.model.DocumentCondition
 import com.bpkpad.arsipnonkeu.domain.model.DocumentStatus
 import com.bpkpad.arsipnonkeu.domain.model.DocumentType
 import com.bpkpad.arsipnonkeu.domain.model.PhysicalForm
+import com.bpkpad.arsipnonkeu.domain.model.StagingDraft
+import com.bpkpad.arsipnonkeu.domain.repository.ArchiveRepository
 import com.bpkpad.arsipnonkeu.ui.screen.scan.ParsedOcrDocument
 import com.bpkpad.arsipnonkeu.util.ArchiveExcelService
 import kotlinx.coroutines.Dispatchers
@@ -35,7 +39,30 @@ data class StagingDocument(
     val status: DocumentStatus,
     val originInstance: String?,
     val source: StagingDocumentSource
-)
+) {
+    fun toArchiveDocument(): ArchiveDocument {
+        return ArchiveDocument(
+            id = id,
+            documentType = documentType,
+            documentNumber = documentNumber,
+            classificationCode = classificationCode,
+            title = title,
+            description = description,
+            year = year,
+            physicalForm = physicalForm,
+            condition = condition,
+            copyCount = copyCount,
+            isCopy = isCopy,
+            status = status,
+            originInstance = originInstance,
+            createdBy = "user-current",
+            updatedBy = null,
+            createdAt = null,
+            updatedAt = null,
+            deletedAt = null
+        )
+    }
+}
 
 enum class StagingDocumentSource(val label: String) {
     MANUAL("Manual"),
@@ -79,7 +106,16 @@ data class StagingUiState(
         }
 }
 
-class StagingViewModel : ViewModel() {
+class StagingViewModel(
+    private val repository: StagingDraftRepository,
+    private val archiveRepository: ArchiveRepository
+) : ViewModel() {
+
+    private val _savedDrafts = MutableStateFlow<List<StagingDraft>>(emptyList())
+    val savedDrafts: StateFlow<List<StagingDraft>> = _savedDrafts.asStateFlow()
+
+    private val _message = MutableStateFlow<String?>(null)
+    val message: StateFlow<String?> = _message.asStateFlow()
 
     private val getArchiveClassificationsUseCase =
         ArchiveModule.getArchiveClassificationsUseCase
@@ -143,6 +179,11 @@ class StagingViewModel : ViewModel() {
 
     init {
         loadArchiveClassifications()
+        loadSavedDrafts()
+    }
+
+    fun loadSavedDrafts() {
+        _savedDrafts.value = repository.getDrafts()
     }
 
     fun onRoomChange(value: String) {
@@ -165,6 +206,49 @@ class StagingViewModel : ViewModel() {
             isSuccess = false
         )
     }
+
+    fun saveCurrentStaging(
+        archiveCode: String,
+        title: String,
+        documentType: String,
+        physicalForm: String,
+        condition: String,
+        status: String,
+        locationText: String,
+        description: String
+    ) {
+        if (archiveCode.isBlank()) {
+            _message.value = "Kode arsip tidak boleh kosong"
+            return
+        }
+
+        if (title.isBlank()) {
+            _message.value = "Judul dokumen tidak boleh kosong"
+            return
+        }
+
+        val now = System.currentTimeMillis()
+
+        val draft = StagingDraft(
+            id = UUID.randomUUID().toString(),
+            archiveCode = archiveCode.trim(),
+            title = title.trim(),
+            documentType = documentType,
+            physicalForm = physicalForm,
+            condition = condition,
+            status = status,
+            locationText = locationText.trim(),
+            description = description.trim(),
+            createdAtMillis = now,
+            updatedAtMillis = now
+        )
+
+        repository.saveDraft(draft)
+        loadSavedDrafts()
+
+        _message.value = "Data staging berhasil disimpan"
+    }
+
 
     fun selectDocument(documentId: String) {
         val document = _uiState.value.documents.firstOrNull { document ->
@@ -243,6 +327,14 @@ class StagingViewModel : ViewModel() {
             isSuccess = false
         )
     }
+
+    fun deleteDraft(id: String) {
+        repository.deleteDraft(id)
+        loadSavedDrafts()
+
+        _message.value = "Draft staging berhasil dihapus"
+    }
+
 
     fun deleteSelectedDocument() {
         val selectedDocument = _uiState.value.selectedDocument ?: return
@@ -509,18 +601,28 @@ class StagingViewModel : ViewModel() {
                 isSuccess = false
             )
 
-            // TODO:
-            // Setelah repository arsip mendukung insert placement:
-            // 1. Insert/find storage_locations berdasarkan room, shelf, boxNumber
-            // 2. Insert archive_documents dari StagingDocument
-            // 3. Insert document_placements untuk setiap dokumen
+            try {
+                val archiveDocuments = currentState.documents.map { it.toArchiveDocument() }
 
-            _uiState.value = _uiState.value.copy(
-                isLoading = false,
-                isSuccess = true,
-                documents = emptyList(),
-                selectedDocument = null
-            )
+                archiveRepository.saveStagingDocuments(
+                    documents = archiveDocuments,
+                    room = currentState.room,
+                    shelf = currentState.shelf,
+                    boxNumber = currentState.boxNumber.takeIf { it.isNotBlank() }
+                )
+
+                _uiState.value = _uiState.value.copy(
+                    isLoading = false,
+                    isSuccess = true,
+                    documents = emptyList(),
+                    selectedDocument = null
+                )
+            } catch (throwable: Throwable) {
+                _uiState.value = _uiState.value.copy(
+                    isLoading = false,
+                    errorMessage = throwable.message ?: "Gagal menyimpan ke arsip utama"
+                )
+            }
         }
     }
 

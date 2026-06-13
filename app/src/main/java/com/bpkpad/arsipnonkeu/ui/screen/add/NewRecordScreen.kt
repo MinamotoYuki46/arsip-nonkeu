@@ -65,7 +65,7 @@ private val PoppinsFont = FontFamily.Default
 fun NewRecordScreen(
     onBackClick: () -> Unit = {},
     onSave: () -> Unit = {},
-    viewModel: StagingViewModel = remember { StagingViewModel() }
+    viewModel: StagingViewModel
 ) {
     var documentType by remember { mutableStateOf(DocumentType.SURAT) }
     var documentNumber by remember { mutableStateOf("") }
@@ -633,12 +633,12 @@ private fun EnumChip(
     }
 }
 
-@Preview(
-    showBackground = true,
-    showSystemUi = true,
-    device = "spec:width=390dp,height=844dp,dpi=420"
-)
-@Composable
-fun NewRecordScreenPreview() {
-    NewRecordScreen()
-}
+//@Preview(
+//    showBackground = true,
+//    showSystemUi = true,
+//    device = "spec:width=390dp,height=844dp,dpi=420"
+//)
+//@Composable
+//fun NewRecordScreenPreview() {
+//    NewRecordScreen()
+//}

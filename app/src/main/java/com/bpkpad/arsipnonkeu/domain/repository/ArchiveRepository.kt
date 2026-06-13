@@ -31,4 +31,11 @@ interface ArchiveRepository {
     suspend fun deleteArchiveDocument(
         id: String
     )
+
+    suspend fun saveStagingDocuments(
+        documents: List<ArchiveDocument>,
+        room: String,
+        shelf: String,
+        boxNumber: String?
+    )
 }

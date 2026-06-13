@@ -45,6 +45,15 @@ class ArchiveRepositoryImpl : ArchiveRepository {
         // TODO: implement soft delete later
     }
 
+    override suspend fun saveStagingDocuments(
+        documents: List<ArchiveDocument>,
+        room: String,
+        shelf: String,
+        boxNumber: String?
+    ) {
+        // TODO: implement batch insert with placement later
+    }
+
     override suspend fun getArchiveDocumentListItemById(
         id: String
     ): ArchiveDocumentListItem? {

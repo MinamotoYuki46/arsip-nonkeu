@@ -137,7 +137,7 @@ class FakeArchiveRepository : ArchiveRepository {
         )
     )
 
-    private val storageLocations = listOf(
+    private val storageLocations = mutableListOf(
         StorageLocation(
             id = "loc-001",
             room = "Ruang Arsip",
@@ -345,6 +345,55 @@ class FakeArchiveRepository : ArchiveRepository {
         if (index != -1) {
             documents[index] = documents[index].copy(
                 deletedAt = "SOFT_DELETED"
+            )
+        }
+    }
+
+    override suspend fun saveStagingDocuments(
+        documents: List<ArchiveDocument>,
+        room: String,
+        shelf: String,
+        boxNumber: String?
+    ) {
+        var location = storageLocations.find {
+            it.room.equals(room, ignoreCase = true) &&
+                    it.shelf.equals(shelf, ignoreCase = true) &&
+                    it.boxNumber.equals(boxNumber, ignoreCase = true)
+        }
+
+        if (location == null) {
+            location = StorageLocation(
+                id = "loc-${(storageLocations.size + 1).toString().padStart(3, '0')}",
+                room = room,
+                shelf = shelf,
+                boxNumber = boxNumber
+            )
+            storageLocations.add(location)
+        }
+
+        val now = "2025-06-14" // Dummy date
+
+        documents.forEach { doc ->
+            val documentToInsert = if (doc.id.isBlank() || doc.id.startsWith("stage-") || doc.id.contains("-")) {
+                doc.copy(
+                    id = generateDocumentId(),
+                    createdAt = now
+                )
+            } else {
+                doc.copy(createdAt = now)
+            }
+
+            this.documents.add(documentToInsert)
+
+            placements.add(
+                DocumentPlacement(
+                    id = "place-${(placements.size + 1).toString().padStart(3, '0')}",
+                    archiveDocumentId = documentToInsert.id,
+                    storageLocationId = location.id,
+                    placedAt = now,
+                    removedAt = null,
+                    userId = "user-current"
+                )
             )
         }
     }

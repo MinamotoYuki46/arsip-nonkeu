@@ -74,6 +74,7 @@ import androidx.compose.ui.text.style.TextOverflow
 import androidx.compose.ui.tooling.preview.Preview
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
+import androidx.lifecycle.viewmodel.compose.viewModel
 import com.bpkpad.arsipnonkeu.domain.model.DocumentCondition
 import com.bpkpad.arsipnonkeu.domain.model.DocumentStatus
 import com.bpkpad.arsipnonkeu.domain.model.DocumentType
@@ -92,7 +93,9 @@ fun StagingScreen(
     onScanClick: () -> Unit = {},
     onImportClick: () -> Unit = {},
     onPushAllClick: () -> Unit = {},
-    viewModel: StagingViewModel = remember { StagingViewModel() }
+    viewModel: StagingViewModel = viewModel(
+        factory = StagingViewModelFactory(LocalContext.current.applicationContext)
+    )
 ) {
     val uiState by viewModel.uiState.collectAsState()
 
@@ -110,6 +113,35 @@ fun StagingScreen(
     var isFabExpanded by remember { mutableStateOf(false) }
     var isLocationExpanded by remember { mutableStateOf(false) }
     var showPushConfirmDialog by remember { mutableStateOf(false) }
+
+    fun hasInvalidStagingDocument(): Boolean {
+        return uiState.documents.any { document ->
+            document.title.isBlank() ||
+                    document.year !in 1900..2100 ||
+                    document.copyCount <= 0
+        }
+    }
+
+    fun saveCurrentDocumentsToLocalDrafts() {
+        uiState.documents.forEach { document ->
+            val archiveCode = document.classificationCode
+                ?.takeIf { it.isNotBlank() }
+                ?: document.documentNumber
+                    ?.takeIf { it.isNotBlank() }
+                ?: document.id
+
+            viewModel.saveCurrentStaging(
+                archiveCode = archiveCode,
+                title = document.title,
+                documentType = document.documentType.name,
+                physicalForm = document.physicalForm.name,
+                condition = document.condition?.name ?: "UNKNOWN",
+                status = document.status.name,
+                locationText = uiState.storageLocationLabel,
+                description = document.description.orEmpty()
+            )
+        }
+    }
 
     LaunchedEffect(uiState.isSuccess) {
         if (uiState.isSuccess) {
@@ -236,6 +268,15 @@ fun StagingScreen(
             locationLabel = uiState.storageLocationLabel,
             onConfirm = {
                 showPushConfirmDialog = false
+
+                if (
+                    uiState.isStorageLocationValid &&
+                    uiState.documents.isNotEmpty() &&
+                    !hasInvalidStagingDocument()
+                ) {
+                    saveCurrentDocumentsToLocalDrafts()
+                }
+
                 viewModel.pushAllToArchive()
             },
             onDismiss = {

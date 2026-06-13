@@ -10,6 +10,7 @@ import androidx.compose.runtime.mutableIntStateOf
 import androidx.compose.runtime.mutableStateOf
 import androidx.compose.runtime.remember
 import androidx.compose.runtime.setValue
+import androidx.lifecycle.viewmodel.compose.viewModel
 import com.bpkpad.arsipnonkeu.ui.screen.add.NewRecordScreen
 import com.bpkpad.arsipnonkeu.ui.screen.archive.ArchiveScreen
 import com.bpkpad.arsipnonkeu.ui.screen.dashboard.DashboardScreen
@@ -18,6 +19,7 @@ import com.bpkpad.arsipnonkeu.ui.screen.staging.StagingScreen
 import com.bpkpad.arsipnonkeu.ui.screen.staging.StagingViewModel
 import com.bpkpad.arsipnonkeu.ui.theme.ArsipBPKADTheme
 import com.bpkpad.arsipnonkeu.ui.screen.scan.ScanScreen
+import com.bpkpad.arsipnonkeu.ui.screen.staging.StagingViewModelFactory
 
 /**
  * MainActivity - Entry point of the BPKPAD Balangan application.
@@ -39,7 +41,9 @@ class MainActivity : ComponentActivity() {
                 var selectedYear by remember { mutableIntStateOf(2025) }
                 var selectedDocumentId by remember { mutableStateOf<String?>(null) }
 
-                val stagingViewModel = remember { StagingViewModel() }
+                val stagingViewModel: StagingViewModel = viewModel(
+                    factory = StagingViewModelFactory(applicationContext)
+                )
 
                 BackHandler(enabled = currentRoute != "dashboard") {
                     currentRoute = when (currentRoute) {
