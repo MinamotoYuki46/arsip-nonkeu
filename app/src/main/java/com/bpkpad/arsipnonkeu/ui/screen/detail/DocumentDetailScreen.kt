@@ -64,6 +64,9 @@ import com.bpkpad.arsipnonkeu.domain.model.DocumentStatus
 import com.bpkpad.arsipnonkeu.domain.model.DocumentType
 import com.bpkpad.arsipnonkeu.domain.model.PhysicalForm
 import com.bpkpad.arsipnonkeu.domain.model.StorageLocation
+import com.bpkpad.arsipnonkeu.ui.component.ArchiveClassificationField
+import com.bpkpad.arsipnonkeu.ui.component.ArchiveClassificationSelectorSheet
+
 private val PoppinsFont = FontFamily.Default
 
 @Composable
@@ -84,6 +87,9 @@ fun DocumentDetailScreen(
     var editedDocumentCode by remember { mutableStateOf("") }
     var editedOriginInstance by remember { mutableStateOf("") }
     var editedCopyCount by remember { mutableStateOf("") }
+
+    var showClassificationSheet by remember { mutableStateOf(false) }
+    var classificationKeyword by remember { mutableStateOf("") }
 
     LaunchedEffect(documentId) {
         viewModel.loadDocument(documentId)
@@ -180,7 +186,9 @@ fun DocumentDetailScreen(
                             editedOriginInstance = editedOriginInstance,
                             onOriginInstanceChange = { editedOriginInstance = it },
                             editedCopyCount = editedCopyCount,
-                            onCopyCountChange = { editedCopyCount = it }
+                            onCopyCountChange = { editedCopyCount = it },
+                            viewModel = viewModel,
+                            onClassificationClick = { showClassificationSheet = true }
                         )
                     }
 
@@ -290,6 +298,26 @@ fun DocumentDetailScreen(
             }
         )
     }
+
+    ArchiveClassificationSelectorSheet(
+        visible = showClassificationSheet,
+        classifications = uiState.archiveClassifications,
+        selectedCode = editedDocumentCode,
+        keyword = classificationKeyword,
+        isLoading = uiState.isClassificationLoading,
+        onKeywordChange = { keyword ->
+            classificationKeyword = keyword
+            viewModel.loadArchiveClassifications(keyword)
+        },
+        onSelect = { classification ->
+            editedDocumentCode = classification.code
+            classificationKeyword = ""
+            showClassificationSheet = false
+        },
+        onDismiss = {
+            showClassificationSheet = false
+        }
+    )
 }
 
 @Composable
@@ -358,7 +386,9 @@ private fun DocumentInformationCard(
     editedOriginInstance: String,
     onOriginInstanceChange: (String) -> Unit,
     editedCopyCount: String,
-    onCopyCountChange: (String) -> Unit
+    onCopyCountChange: (String) -> Unit,
+    viewModel: DocumentDetailViewModel,
+    onClassificationClick: () -> Unit
 ) {
     val document = item.document
 
@@ -371,10 +401,10 @@ private fun DocumentInformationCard(
                 minLines = 3
             )
 
-            DetailTextField(
-                label = "Kode Dokumen",
-                value = editedDocumentCode,
-                onValueChange = onDocumentCodeChange
+            ArchiveClassificationField(
+                selectedCode = editedDocumentCode,
+                selectedLabel = viewModel.getLoadedArchiveClassificationLabel(editedDocumentCode),
+                onClick = onClassificationClick
             )
 
             DetailTextField(
@@ -392,7 +422,11 @@ private fun DocumentInformationCard(
             DetailRow("ID", document.id)
             DetailRow("Jenis Dokumen", document.documentType.label)
             DetailRow("Nomor Dokumen", document.documentNumber ?: "-")
-            DetailRow("Kode Klasifikasi", document.classificationCode ?: "-")
+            DetailRow(
+                label = "Kode Klasifikasi",
+                value = viewModel.getLoadedArchiveClassificationLabel(document.classificationCode)
+                    .ifBlank { document.classificationCode ?: "-" }
+            )
             DetailRow("Judul", document.title)
             DetailRow("Deskripsi", document.description ?: "-")
             DetailRow("Tahun", document.year.toString())
@@ -697,6 +731,7 @@ private fun ConfirmDialog(
 )
 @Composable
 fun DocumentDetailContentPreview() {
+    val viewModel = remember { DocumentDetailViewModel() }
     val document = ArchiveDocument(
         id = "doc-003",
         documentType = DocumentType.KEPBUP,
@@ -783,7 +818,9 @@ fun DocumentDetailContentPreview() {
                     editedOriginInstance = document.originInstance.orEmpty(),
                     onOriginInstanceChange = {},
                     editedCopyCount = document.copyCount.toString(),
-                    onCopyCountChange = {}
+                    onCopyCountChange = {},
+                    viewModel = viewModel,
+                    onClassificationClick = {}
                 )
             }
 

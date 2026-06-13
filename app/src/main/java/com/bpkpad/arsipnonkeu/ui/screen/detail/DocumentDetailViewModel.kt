@@ -3,9 +3,11 @@ package com.bpkpad.arsipnonkeu.ui.screen.detail
 import androidx.lifecycle.ViewModel
 import androidx.lifecycle.viewModelScope
 import com.bpkpad.arsipnonkeu.di.ArchiveModule
+import com.bpkpad.arsipnonkeu.domain.model.ArchiveClassification
 import com.bpkpad.arsipnonkeu.domain.model.ArchiveDocument
 import com.bpkpad.arsipnonkeu.domain.model.ArchiveDocumentListItem
 import com.bpkpad.arsipnonkeu.domain.repository.ArchiveRepository
+import com.bpkpad.arsipnonkeu.domain.usecase.GetArchiveClassificationsUseCase
 import com.bpkpad.arsipnonkeu.domain.usecase.GetArchiveDocumentDetailUseCase
 import kotlinx.coroutines.flow.MutableStateFlow
 import kotlinx.coroutines.flow.StateFlow
@@ -17,18 +19,52 @@ data class DocumentDetailUiState(
     val item: ArchiveDocumentListItem? = null,
     val errorMessage: String? = null,
     val isDeleted: Boolean = false,
-    val successMessage: String? = null
+    val successMessage: String? = null,
+    val archiveClassifications: List<ArchiveClassification> = emptyList(),
+    val isClassificationLoading: Boolean = false
 )
 
 class DocumentDetailViewModel(
     private val getArchiveDocumentDetailUseCase: GetArchiveDocumentDetailUseCase =
         ArchiveModule.getArchiveDocumentDetailUseCase,
     private val repository: ArchiveRepository =
-        ArchiveModule.archiveRepositoryInstance
+        ArchiveModule.archiveRepositoryInstance,
+    private val getArchiveClassificationsUseCase: GetArchiveClassificationsUseCase =
+        ArchiveModule.getArchiveClassificationsUseCase
 ) : ViewModel() {
 
     private val _uiState = MutableStateFlow(DocumentDetailUiState())
     val uiState: StateFlow<DocumentDetailUiState> = _uiState.asStateFlow()
+
+    init {
+        loadArchiveClassifications()
+    }
+
+    fun loadArchiveClassifications(keyword: String = "") {
+        viewModelScope.launch {
+            _uiState.value = _uiState.value.copy(isClassificationLoading = true)
+            try {
+                val classifications = getArchiveClassificationsUseCase(keyword)
+                _uiState.value = _uiState.value.copy(
+                    archiveClassifications = classifications,
+                    isClassificationLoading = false
+                )
+            } catch (e: Exception) {
+                _uiState.value = _uiState.value.copy(
+                    isClassificationLoading = false,
+                    errorMessage = e.message ?: "Gagal memuat klasifikasi"
+                )
+            }
+        }
+    }
+
+    fun getLoadedArchiveClassificationLabel(code: String?): String {
+        if (code.isNullOrBlank()) return ""
+        val classification = _uiState.value.archiveClassifications.firstOrNull {
+            it.code.equals(code.trim(), ignoreCase = true)
+        }
+        return classification?.displayName ?: code
+    }
 
     fun loadDocument(documentId: String) {
         viewModelScope.launch {
