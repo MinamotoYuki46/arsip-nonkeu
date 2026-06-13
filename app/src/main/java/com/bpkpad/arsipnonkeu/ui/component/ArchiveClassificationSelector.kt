@@ -300,6 +300,18 @@ private fun QuickCodeChips(
             )
 
             QuickChip(
+                text = "200 Politik",
+                query = "200",
+                onKeywordChange = onKeywordChange
+            )
+
+            QuickChip(
+                text = "300 Keamanan dan Ketertiban",
+                query = "300",
+                onKeywordChange = onKeywordChange
+            )
+
+            QuickChip(
                 text = "400 Kesra",
                 query = "400",
                 onKeywordChange = onKeywordChange
@@ -308,6 +320,18 @@ private fun QuickCodeChips(
             QuickChip(
                 text = "500 Perekonomian",
                 query = "500",
+                onKeywordChange = onKeywordChange
+            )
+
+            QuickChip(
+                text = "600 Pekerjaan Umum dan Ketenagaan",
+                query = "600",
+                onKeywordChange = onKeywordChange
+            )
+
+            QuickChip(
+                text = "700 Pengawasan",
+                query = "700",
                 onKeywordChange = onKeywordChange
             )
 
