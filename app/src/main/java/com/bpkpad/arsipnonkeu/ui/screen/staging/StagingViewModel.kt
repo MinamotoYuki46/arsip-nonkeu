@@ -615,7 +615,10 @@ class StagingViewModel(
                     isLoading = false,
                     isSuccess = true,
                     documents = emptyList(),
-                    selectedDocument = null
+                    selectedDocument = null,
+                    room = "",
+                    shelf = "",
+                    boxNumber = ""
                 )
             } catch (throwable: Throwable) {
                 _uiState.value = _uiState.value.copy(

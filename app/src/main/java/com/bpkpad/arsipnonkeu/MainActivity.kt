@@ -125,6 +125,7 @@ class MainActivity : ComponentActivity() {
 
                     "new_record" -> {
                         NewRecordScreen(
+                            selectedYear = selectedYear,
                             onBackClick = {
                                 currentRoute = "staging"
                             },

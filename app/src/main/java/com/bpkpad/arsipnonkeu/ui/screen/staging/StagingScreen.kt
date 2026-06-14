@@ -153,6 +153,7 @@ fun StagingScreen(
     LaunchedEffect(uiState.isSuccess) {
         if (uiState.isSuccess) {
             onPushAllClick()
+            viewModel.clearMessage()
         }
     }
 

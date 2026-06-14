@@ -480,9 +480,12 @@ private fun DocumentInformationCard(
                 keyboardType = KeyboardType.Number
             )
 
-            DetailReadOnlyField(
+            DetailDropdownField(
                 label = "Status",
-                value = editedStatus.label
+                value = editedStatus,
+                options = DocumentStatus.values().toList(),
+                optionLabel = { it.label },
+                onValueChange = onStatusChange
             )
 
             DetailTextField(
@@ -752,7 +755,10 @@ private fun DetailTextField(
         value = value,
         onValueChange = onValueChange,
         label = {
-            Text(label)
+            Text(
+                text = label,
+                color = Color.Black
+            )
         },
         modifier = Modifier.fillMaxWidth(),
         minLines = minLines,
@@ -761,7 +767,7 @@ private fun DetailTextField(
             keyboardType = keyboardType
         ),
         textStyle = LocalTextStyle.current.copy(
-            color = Color(0xFF071E27),
+            color = Color.Black,
             fontFamily = PoppinsFont,
             fontSize = 14.sp
         ),
@@ -779,12 +785,15 @@ private fun DetailReadOnlyField(
         onValueChange = {},
         readOnly = true,
         label = {
-            Text(label)
+            Text(
+                text = label,
+                color = Color.Black
+            )
         },
         modifier = Modifier.fillMaxWidth(),
         shape = RoundedCornerShape(16.dp),
         textStyle = LocalTextStyle.current.copy(
-            color = Color(0xFF071E27),
+            color = Color.Black,
             fontFamily = PoppinsFont,
             fontSize = 14.sp
         ),
@@ -808,12 +817,15 @@ private fun DetailClickableField(
             onValueChange = {},
             enabled = false,
             label = {
-                Text(label)
+                Text(
+                    text = label,
+                    color = Color.Black
+                )
             },
             modifier = Modifier.fillMaxWidth(),
             shape = RoundedCornerShape(16.dp),
             textStyle = LocalTextStyle.current.copy(
-                color = Color(0xFF071E27),
+                color = Color.Black,
                 fontFamily = PoppinsFont,
                 fontSize = 14.sp
             ),
@@ -845,7 +857,10 @@ private fun <T> DetailDropdownField(
             onValueChange = {},
             readOnly = true,
             label = {
-                Text(label)
+                Text(
+                    text = label,
+                    color = Color.Black
+                )
             },
             trailingIcon = {
                 ExposedDropdownMenuDefaults.TrailingIcon(
@@ -857,7 +872,7 @@ private fun <T> DetailDropdownField(
                 .fillMaxWidth(),
             shape = RoundedCornerShape(16.dp),
             textStyle = LocalTextStyle.current.copy(
-                color = Color(0xFF071E27),
+                color = Color.Black,
                 fontFamily = PoppinsFont,
                 fontSize = 14.sp
             ),
@@ -876,7 +891,7 @@ private fun <T> DetailDropdownField(
                     text = {
                         Text(
                             text = optionLabel(option),
-                            color = Color(0xFF071E27),
+                            color = Color.Black,
                             fontFamily = PoppinsFont
                         )
                     },
@@ -892,23 +907,27 @@ private fun <T> DetailDropdownField(
 
 @Composable
 private fun detailTextFieldColors() = OutlinedTextFieldDefaults.colors(
-    focusedTextColor = Color(0xFF071E27),
-    unfocusedTextColor = Color(0xFF071E27),
-    disabledTextColor = Color(0xFF071E27),
+    focusedTextColor = Color.Black,
+    unfocusedTextColor = Color.Black,
+    disabledTextColor = Color.Black,
 
-    focusedLabelColor = Color(0xFF0D631B),
-    unfocusedLabelColor = Color(0xFF707A6C),
-    disabledLabelColor = Color(0xFF707A6C),
+    focusedLabelColor = Color.Black,
+    unfocusedLabelColor = Color.Black,
+    disabledLabelColor = Color.Black,
 
-    focusedContainerColor = Color.White,
-    unfocusedContainerColor = Color.White,
-    disabledContainerColor = Color.White,
+    focusedPlaceholderColor = Color.Black,
+    unfocusedPlaceholderColor = Color.Black,
+    disabledPlaceholderColor = Color.Black,
 
-    focusedBorderColor = Color(0xFF0D631B),
-    unfocusedBorderColor = Color(0xFFBFCABA),
-    disabledBorderColor = Color(0xFFBFCABA),
+    focusedBorderColor = Color.Black,
+    unfocusedBorderColor = Color.Black,
+    disabledBorderColor = Color.Black,
 
-    cursorColor = Color(0xFF0D631B)
+    cursorColor = Color.Black,
+
+    focusedContainerColor = Color.Transparent,
+    unfocusedContainerColor = Color.Transparent,
+    disabledContainerColor = Color.Transparent
 )
 
 @Composable

@@ -24,14 +24,20 @@ import androidx.compose.material.icons.filled.Save
 import androidx.compose.material3.AlertDialog
 import androidx.compose.material3.Button
 import androidx.compose.material3.ButtonDefaults
+import androidx.compose.material3.DropdownMenuItem
+import androidx.compose.material3.ExperimentalMaterial3Api
+import androidx.compose.material3.ExposedDropdownMenuBox
+import androidx.compose.material3.ExposedDropdownMenuDefaults
 import androidx.compose.material3.HorizontalDivider
 import androidx.compose.material3.Icon
+import androidx.compose.material3.LocalTextStyle
 import androidx.compose.material3.OutlinedButton
 import androidx.compose.material3.OutlinedTextField
 import androidx.compose.material3.OutlinedTextFieldDefaults
 import androidx.compose.material3.Scaffold
 import androidx.compose.material3.Text
 import androidx.compose.material3.TextButton
+import androidx.compose.material3.rememberModalBottomSheetState
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.collectAsState
 import androidx.compose.runtime.derivedStateOf
@@ -63,6 +69,7 @@ private val PoppinsFont = FontFamily.Default
 
 @Composable
 fun NewRecordScreen(
+    selectedYear: Int,
     onBackClick: () -> Unit = {},
     onSave: () -> Unit = {},
     viewModel: StagingViewModel
@@ -72,7 +79,7 @@ fun NewRecordScreen(
     var classificationCode by remember { mutableStateOf("") }
     var title by remember { mutableStateOf("") }
     var description by remember { mutableStateOf("") }
-    var year by remember { mutableStateOf("") }
+    var year by remember { mutableStateOf(selectedYear.toString()) }
     var physicalForm by remember { mutableStateOf(PhysicalForm.SHEET) }
     var condition by remember { mutableStateOf<DocumentCondition?>(DocumentCondition.GOOD) }
     var copyCount by remember { mutableStateOf("1") }
@@ -136,12 +143,12 @@ fun NewRecordScreen(
                     title = "Identitas Dokumen",
                     description = "Data utama yang dipakai untuk mengenali dokumen arsip."
                 ) {
-                    EnumChipSelector(
-                        title = "Jenis Dokumen",
-                        selected = documentType,
-                        values = DocumentType.values().toList(),
-                        label = { it.label },
-                        onSelected = { selected ->
+                    StagingDropdownField(
+                        label = "Jenis Dokumen",
+                        value = documentType,
+                        options = DocumentType.values().toList(),
+                        optionLabel = { it.label },
+                        onValueChange = { selected ->
                             documentType = selected ?: documentType
                         }
                     )
@@ -195,24 +202,24 @@ fun NewRecordScreen(
                         placeholder = "2025"
                     )
 
-                    EnumChipSelector(
-                        title = "Bentuk Fisik",
-                        selected = physicalForm,
-                        values = PhysicalForm.values().toList(),
-                        label = { it.label },
-                        onSelected = { selected ->
+                    StagingDropdownField(
+                        label = "Bentuk Fisik",
+                        value = physicalForm,
+                        options = PhysicalForm.values().toList(),
+                        optionLabel = { it.label },
+                        onValueChange = { selected ->
                             physicalForm = selected ?: physicalForm
                         }
                     )
 
-                    EnumChipSelector(
-                        title = "Kondisi",
-                        selected = condition,
-                        values = DocumentCondition.values().toList(),
-                        label = { it.label },
+                    StagingDropdownField(
+                        label = "Kondisi",
+                        value = condition,
+                        options = DocumentCondition.values().toList(),
+                        optionLabel = { it.label },
                         allowNull = true,
                         nullLabel = "Tidak diketahui",
-                        onSelected = { selected ->
+                        onValueChange = { selected ->
                             condition = selected
                         }
                     )
@@ -228,12 +235,12 @@ fun NewRecordScreen(
                         placeholder = "1"
                     )
 
-                    EnumChipSelector(
-                        title = "Status",
-                        selected = status,
-                        values = DocumentStatus.values().toList(),
-                        label = { it.label },
-                        onSelected = { selected ->
+                    StagingDropdownField(
+                        label = "Status",
+                        value = status,
+                        options = DocumentStatus.values().toList(),
+                        optionLabel = { it.label },
+                        onValueChange = { selected ->
                             status = selected ?: status
                         }
                     )
@@ -521,6 +528,115 @@ private fun ValidationInfoCard(
     }
 }
 
+@OptIn(ExperimentalMaterial3Api::class)
+@Composable
+private fun <T> StagingDropdownField(
+    label: String,
+    value: T?,
+    options: List<T>,
+    optionLabel: (T) -> String,
+    onValueChange: (T?) -> Unit,
+    allowNull: Boolean = false,
+    nullLabel: String = "Tidak diketahui"
+) {
+    var expanded by remember { mutableStateOf(false) }
+
+    ExposedDropdownMenuBox(
+        expanded = expanded,
+        onExpandedChange = {
+            expanded = !expanded
+        },
+        modifier = Modifier.fillMaxWidth()
+    ) {
+        OutlinedTextField(
+            value = value?.let { optionLabel(it) } ?: nullLabel,
+            onValueChange = {},
+            readOnly = true,
+            label = {
+                Text(
+                    text = label,
+                    color = Color.Black
+                )
+            },
+            trailingIcon = {
+                ExposedDropdownMenuDefaults.TrailingIcon(
+                    expanded = expanded
+                )
+            },
+            modifier = Modifier
+                .menuAnchor()
+                .fillMaxWidth(),
+            shape = RoundedCornerShape(16.dp),
+            textStyle = LocalTextStyle.current.copy(
+                color = Color.Black
+            ),
+            colors = OutlinedTextFieldDefaults.colors(
+                focusedTextColor = Color.Black,
+                unfocusedTextColor = Color.Black,
+                disabledTextColor = Color.Black,
+
+                focusedLabelColor = Color.Black,
+                unfocusedLabelColor = Color.Black,
+                disabledLabelColor = Color.Black,
+
+                focusedPlaceholderColor = Color.Black,
+                unfocusedPlaceholderColor = Color.Black,
+                disabledPlaceholderColor = Color.Black,
+
+                focusedBorderColor = Color.Black,
+                unfocusedBorderColor = Color.Black,
+                disabledBorderColor = Color.Black,
+
+                cursorColor = Color.Black,
+
+                focusedContainerColor = Color.Transparent,
+                unfocusedContainerColor = Color.Transparent,
+                disabledContainerColor = Color.Transparent
+            )
+        )
+
+        ExposedDropdownMenu(
+            expanded = expanded,
+            onDismissRequest = {
+                expanded = false
+            },
+            containerColor = Color.White,
+        ) {
+            if (allowNull) {
+                DropdownMenuItem(
+                    text = {
+                        Text(
+                            text = nullLabel,
+                            color = Color.Black,
+                            fontFamily = PoppinsFont
+                        )
+                    },
+                    onClick = {
+                        onValueChange(null)
+                        expanded = false
+                    }
+                )
+            }
+
+            options.forEach { option ->
+                DropdownMenuItem(
+                    text = {
+                        Text(
+                            text = optionLabel(option),
+                            color = Color.Black,
+                            fontFamily = PoppinsFont
+                        )
+                    },
+                    onClick = {
+                        onValueChange(option)
+                        expanded = false
+                    }
+                )
+            }
+        }
+    }
+}
+
 @Composable
 private fun DetailTextField(
     label: String,
@@ -552,93 +668,12 @@ private fun DetailTextField(
     )
 }
 
-@Composable
-private fun <T> EnumChipSelector(
-    title: String,
-    selected: T?,
-    values: List<T>,
-    label: (T) -> String,
-    allowNull: Boolean = false,
-    nullLabel: String = "Tidak diketahui",
-    onSelected: (T?) -> Unit
-) {
-    Column(verticalArrangement = Arrangement.spacedBy(6.dp)) {
-        Text(
-            text = title.uppercase(),
-            fontSize = 10.sp,
-            fontWeight = FontWeight.Bold,
-            fontFamily = PoppinsFont,
-            color = Color(0xFF707A6C),
-            letterSpacing = 0.48.sp
-        )
-
-        Row(
-            modifier = Modifier
-                .fillMaxWidth()
-                .horizontalScroll(rememberScrollState()),
-            horizontalArrangement = Arrangement.spacedBy(8.dp)
-        ) {
-            if (allowNull) {
-                EnumChip(
-                    label = nullLabel,
-                    isSelected = selected == null,
-                    onClick = { onSelected(null) }
-                )
-            }
-
-            values.forEach { value ->
-                EnumChip(
-                    label = label(value),
-                    isSelected = selected == value,
-                    onClick = { onSelected(value) }
-                )
-            }
-        }
-    }
-}
-
-@Composable
-private fun EnumChip(
-    label: String,
-    isSelected: Boolean,
-    onClick: () -> Unit
-) {
-    Box(
-        modifier = Modifier
-            .clip(RoundedCornerShape(9999.dp))
-            .background(if (isSelected) Color(0xFF2E7D32) else Color.White)
-            .then(
-                if (!isSelected) {
-                    Modifier.border(
-                        width = 1.dp,
-                        color = Color(0xFFBFCABA),
-                        shape = RoundedCornerShape(9999.dp)
-                    )
-                } else {
-                    Modifier
-                }
-            )
-            .clickable(onClick = onClick)
-            .padding(horizontal = 14.dp, vertical = 8.dp)
-    ) {
-        Text(
-            text = label,
-            fontSize = 13.sp,
-            fontWeight = FontWeight.SemiBold,
-            fontFamily = PoppinsFont,
-            color = if (isSelected) Color(0xFFCBFFC2) else Color(0xFF40493D),
-            maxLines = 1,
-            overflow = TextOverflow.Ellipsis
-        )
-    }
-}
-
-//@Preview(
+// @Preview(
 //    showBackground = true,
 //    showSystemUi = true,
 //    device = "spec:width=390dp,height=844dp,dpi=420"
 //)
-//@Composable
-//fun NewRecordScreenPreview() {
-//    NewRecordScreen()
-//}
+// @Composable
+// fun NewRecordScreenPreview() {
+//    // NewRecordScreen(selectedYear = 2025, viewModel = ...)
+// }
