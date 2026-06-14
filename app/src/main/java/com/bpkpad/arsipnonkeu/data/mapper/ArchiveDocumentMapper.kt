@@ -1,7 +1,9 @@
 package com.bpkpad.arsipnonkeu.data.mapper
 
 import com.bpkpad.arsipnonkeu.data.remote.model.ArchiveDocumentDto
+import com.bpkpad.arsipnonkeu.data.remote.model.StorageLocationDto
 import com.bpkpad.arsipnonkeu.domain.model.ArchiveDocument
+import com.bpkpad.arsipnonkeu.domain.model.StorageLocation
 import com.bpkpad.arsipnonkeu.domain.model.DocumentCondition
 import com.bpkpad.arsipnonkeu.domain.model.PhysicalForm
 import com.bpkpad.arsipnonkeu.domain.model.DocumentStatus
@@ -12,13 +14,13 @@ fun ArchiveDocumentDto.toDomain(): ArchiveDocument {
         id = id.orEmpty(),
         documentType = documentType.toDocumentType(),
         documentNumber = documentNumber,
-        classificationCode = documentCode,
-        title = title.orEmpty(),
+        classificationCode = classificationCode,
+        title = title,
         description = description,
         year = year,
         physicalForm = physicalForm.toPhysicalForm(),
         condition = condition.toDocumentConditionOrNull(),
-        copyCount = copyCount ?: 1,
+        copyCount = copyCount,
         isCopy = isCopy,
         status = status.toDocumentStatus(),
         originInstance = originInstance,
@@ -26,7 +28,16 @@ fun ArchiveDocumentDto.toDomain(): ArchiveDocument {
         updatedBy = updatedBy,
         createdAt = createdAt,
         updatedAt = updatedAt,
-        deletedAt = deletedAt
+        deletedAt = deletedAt,
+    )
+}
+
+fun StorageLocationDto.toDomain(): StorageLocation {
+    return StorageLocation(
+        id = id ?: "",
+        room = room,
+        shelf = shelf,
+        boxNumber = boxNumber
     )
 }
 

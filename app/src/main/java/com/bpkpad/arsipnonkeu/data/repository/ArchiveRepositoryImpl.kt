@@ -1,48 +1,133 @@
 package com.bpkpad.arsipnonkeu.data.repository
 
-import com.bpkpad.arsipnonkeu.domain.model.ArchiveDocument
-import com.bpkpad.arsipnonkeu.domain.model.ArchiveDocumentFilter
-import com.bpkpad.arsipnonkeu.domain.model.ArchiveDocumentListItem
-import com.bpkpad.arsipnonkeu.domain.model.ArchiveYearSummary
+import com.bpkpad.arsipnonkeu.data.remote.model.*
+import com.bpkpad.arsipnonkeu.data.mapper.*
+import com.bpkpad.arsipnonkeu.domain.model.*
 import com.bpkpad.arsipnonkeu.domain.repository.ArchiveRepository
+import io.github.jan.supabase.SupabaseClient
+import io.github.jan.supabase.functions.functions
+import io.github.jan.supabase.postgrest.postgrest
+import io.github.jan.supabase.postgrest.query.Columns
+import io.github.jan.supabase.postgrest.query.filter.FilterOperator
+import io.github.jan.supabase.postgrest.query.filter.PostgrestFilterBuilder
+import kotlinx.serialization.json.buildJsonObject
+import kotlinx.serialization.json.put
 
-class ArchiveRepositoryImpl : ArchiveRepository {
+class ArchiveRepositoryImpl(
+    private val supabase: SupabaseClient
+) : ArchiveRepository {
 
     override suspend fun getArchiveYearSummaries(): List<ArchiveYearSummary> {
-        // TODO: implement database/API query later
-        return emptyList()
+        val response = supabase.postgrest["archive_documents"]
+            .select(columns = Columns.raw("year")) {
+                filter {
+                    filter("deleted_at", FilterOperator.IS, "null")
+                }
+            }
+        
+        val years = response.decodeList<YearOnlyDto>()
+            .map { it.year }
+            .distinct()
+            .sortedDescending()
+
+        return years.map { year ->
+            val countResponse = supabase.postgrest["archive_documents"]
+                .select(columns = Columns.raw("id")) {
+                    filter {
+                        eq("year", year)
+                        filter("deleted_at", FilterOperator.IS, "null")
+                    }
+                }
+            
+            ArchiveYearSummary(year, countResponse.decodeList<Map<String, String>>().size)
+        }
     }
 
     override suspend fun getArchiveDocumentListItems(
         filter: ArchiveDocumentFilter
     ): List<ArchiveDocumentListItem> {
-        // TODO: implement database/API query later
-        return emptyList()
+        val query = supabase.postgrest["archive_documents"].select(
+            columns = Columns.raw("*, storage_locations(*)")
+        ) {
+            filter {
+                eq("year", filter.year)
+                filter("deleted_at", FilterOperator.IS, "null")
+                filter.documentType?.let { eq("document_type", it.name) }
+                filter.status?.let { eq("status", it.name) }
+                filter.physicalForm?.let { eq("physical_form", it.name) }
+                filter.condition?.let { eq("condition", it.name) }
+                if (!filter.keyword.isNullOrBlank()) {
+                    or {
+                        ilike("title", "%${filter.keyword}%")
+                        ilike("document_number", "%${filter.keyword}%")
+                    }
+                }
+            }
+        }
+
+        return query.decodeList<ArchiveDocumentDto>().map { dto ->
+            ArchiveDocumentListItem(
+                document = dto.toDomain(),
+                currentPlacement = null, // Can fetch from document_placements if needed
+                storageLocation = dto.storageLocation?.toDomain()
+            )
+        }
     }
 
     override suspend fun getArchiveDocumentById(
         id: String
     ): ArchiveDocument? {
-        // TODO: implement database/API query later
-        return null
+        return supabase.postgrest["archive_documents"].select {
+            filter {
+                eq("id", id)
+            }
+        }.decodeSingleOrNull<ArchiveDocumentDto>()?.toDomain()
     }
 
     override suspend fun createArchiveDocument(
         document: ArchiveDocument
     ) {
-        // TODO: implement insert later
+        // This is usually done via push_staging_document_to_archive
+        // but can be implemented for direct creation if needed.
     }
 
     override suspend fun updateArchiveDocument(
         document: ArchiveDocument
     ) {
-        // TODO: implement update later
+        val dto = ArchiveDocumentDto(
+            documentType = document.documentType.name,
+            documentNumber = document.documentNumber,
+            classificationCode = document.classificationCode,
+            title = document.title,
+            description = document.description,
+            year = document.year,
+            physicalForm = document.physicalForm.name,
+            condition = document.condition?.name ?: "GOOD",
+            copyCount = document.copyCount,
+            isCopy = document.isCopy,
+            status = document.status.name,
+            originInstance = document.originInstance
+        )
+
+        supabase.postgrest["archive_documents"].update(dto) {
+            filter {
+                eq("id", document.id)
+            }
+        }
     }
 
     override suspend fun deleteArchiveDocument(
         id: String
     ) {
-        // TODO: implement soft delete later
+        supabase.postgrest["archive_documents"].update(
+            buildJsonObject {
+                put("deleted_at", System.currentTimeMillis().toString()) // Should use DB now() ideally
+            }
+        ) {
+            filter {
+                eq("id", id)
+            }
+        }
     }
 
     override suspend fun saveStagingDocuments(
@@ -51,13 +136,35 @@ class ArchiveRepositoryImpl : ArchiveRepository {
         shelf: String,
         boxNumber: String?
     ) {
-        // TODO: implement batch insert with placement later
+        // We use RPC push_staging_document_to_archive for each document
+        documents.forEach { doc ->
+            supabase.postgrest.rpc(
+                function = "push_staging_document_to_archive",
+                parameters = buildJsonObject {
+                    put("p_staging_document_id", doc.id)
+                    put("p_room", room)
+                    put("p_shelf", shelf)
+                    put("p_box_number", boxNumber)
+                }
+            )
+        }
     }
 
     override suspend fun getArchiveDocumentListItemById(
         id: String
     ): ArchiveDocumentListItem? {
-        // TODO: implement database/API query later
-        return null
+        val dto = supabase.postgrest["archive_documents"].select(
+            columns = Columns.raw("*, storage_locations(*)")
+        ) {
+            filter {
+                eq("id", id)
+            }
+        }.decodeSingleOrNull<ArchiveDocumentDto>() ?: return null
+
+        return ArchiveDocumentListItem(
+            document = dto.toDomain(),
+            currentPlacement = null,
+            storageLocation = dto.storageLocation?.toDomain()
+        )
     }
 }

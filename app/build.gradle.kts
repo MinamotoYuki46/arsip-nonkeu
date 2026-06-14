@@ -3,6 +3,7 @@ import java.util.Properties
 plugins {
     alias(libs.plugins.android.application)
     alias(libs.plugins.kotlin.compose)
+    alias(libs.plugins.kotlin.serialization)
 }
 
 val localProperties = Properties().apply {
@@ -92,6 +93,21 @@ android {
             name = "GEMINI_API_KEY",
             value = buildConfigString(geminiApiKey)
         )
+
+        val supabaseUrl = localProperty("SUPABASE_URL")
+        val supabaseAnonKey = localProperty("SUPABASE_ANON_KEY")
+
+        buildConfigField(
+            type = "String",
+            name = "SUPABASE_URL",
+            value = buildConfigString(supabaseUrl)
+        )
+
+        buildConfigField(
+            type = "String",
+            name = "SUPABASE_ANON_KEY",
+            value = buildConfigString(supabaseAnonKey)
+        )
     }
 
     buildTypes {
@@ -128,6 +144,14 @@ dependencies {
     implementation(libs.androidx.compose.ui.tooling.preview)
     implementation(libs.androidx.core.ktx)
     implementation(libs.androidx.lifecycle.runtime.ktx)
+
+    implementation(libs.kotlinx.serialization.json)
+
+    // Supabase
+    implementation(platform(libs.supabase.bom))
+    implementation(libs.supabase.postgrest)
+    implementation(libs.supabase.functions)
+    implementation(libs.ktor.client.android)
 
     implementation("androidx.lifecycle:lifecycle-viewmodel-compose:2.8.7")
     implementation("androidx.compose.material:material-icons-extended:1.7.0")

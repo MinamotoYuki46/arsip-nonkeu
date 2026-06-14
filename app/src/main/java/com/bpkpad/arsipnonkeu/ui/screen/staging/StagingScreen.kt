@@ -121,35 +121,6 @@ fun StagingScreen(
     var isLocationExpanded by remember { mutableStateOf(false) }
     var showPushConfirmDialog by remember { mutableStateOf(false) }
 
-    fun hasInvalidStagingDocument(): Boolean {
-        return uiState.documents.any { document ->
-            document.title.isBlank() ||
-                    document.year !in 1900..2100 ||
-                    document.copyCount <= 0
-        }
-    }
-
-    fun saveCurrentDocumentsToLocalDrafts() {
-        uiState.documents.forEach { document ->
-            val archiveCode = document.classificationCode
-                ?.takeIf { it.isNotBlank() }
-                ?: document.documentNumber
-                    ?.takeIf { it.isNotBlank() }
-                ?: document.id
-
-            viewModel.saveCurrentStaging(
-                archiveCode = archiveCode,
-                title = document.title,
-                documentType = document.documentType.name,
-                physicalForm = document.physicalForm.name,
-                condition = document.condition?.name ?: "UNKNOWN",
-                status = document.status.name,
-                locationText = uiState.storageLocationLabel,
-                description = document.description.orEmpty()
-            )
-        }
-    }
-
     LaunchedEffect(uiState.isSuccess) {
         if (uiState.isSuccess) {
             onPushAllClick()
@@ -276,15 +247,6 @@ fun StagingScreen(
             locationLabel = uiState.storageLocationLabel,
             onConfirm = {
                 showPushConfirmDialog = false
-
-                if (
-                    uiState.isStorageLocationValid &&
-                    uiState.documents.isNotEmpty() &&
-                    !hasInvalidStagingDocument()
-                ) {
-                    saveCurrentDocumentsToLocalDrafts()
-                }
-
                 viewModel.pushAllToArchive()
             },
             onDismiss = {
