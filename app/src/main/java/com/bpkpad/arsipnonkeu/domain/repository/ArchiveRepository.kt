@@ -38,4 +38,16 @@ interface ArchiveRepository {
         shelf: String,
         boxNumber: String?
     )
+
+    suspend fun checkStorageLocationExists(
+        room: String,
+        shelf: String,
+        boxNumber: String?
+    ): Boolean
+
+    suspend fun checkDocumentDuplicate(
+        title: String,
+        documentNumber: String?,
+        year: Int
+    ): Boolean
 }

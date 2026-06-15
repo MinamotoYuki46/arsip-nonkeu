@@ -53,6 +53,7 @@ import androidx.compose.material3.FloatingActionButton
 import androidx.compose.material3.HorizontalDivider
 import androidx.compose.material3.Icon
 import androidx.compose.material3.LocalTextStyle
+import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.ModalBottomSheet
 import androidx.compose.material3.OutlinedButton
 import androidx.compose.material3.OutlinedTextField
@@ -88,6 +89,7 @@ import com.bpkpad.arsipnonkeu.domain.model.DocumentType
 import com.bpkpad.arsipnonkeu.domain.model.PhysicalForm
 import com.bpkpad.arsipnonkeu.ui.component.ArchiveClassificationField
 import com.bpkpad.arsipnonkeu.ui.component.ArchiveClassificationSelectorSheet
+import com.bpkpad.arsipnonkeu.ui.component.LoadingIndicator
 import com.bpkpad.arsipnonkeu.ui.component.TopBar
 import com.bpkpad.arsipnonkeu.ui.theme.BackgroundGray
 
@@ -95,6 +97,7 @@ private val PoppinsFont = FontFamily.Default
 
 @Composable
 fun StagingScreen(
+    selectedYear: Int,
     onBackClick: () -> Unit = {},
     onManualClick: () -> Unit = {},
     onScanClick: () -> Unit = {},
@@ -194,6 +197,16 @@ fun StagingScreen(
                 )
             }
 
+            if (uiState.duplicateWarning != null) {
+                WarningMessageCard(
+                    message = uiState.duplicateWarning.orEmpty(),
+                    onDismiss = viewModel::clearMessage,
+                    onConfirm = {
+                        viewModel.pushAllToArchive()
+                    }
+                )
+            }
+
             StagingContentSection(
                 documents = uiState.documents,
                 onDocumentClick = { documentId ->
@@ -207,6 +220,7 @@ fun StagingScreen(
     if (uiState.selectedDocument != null) {
         StagingDocumentDetailSheet(
             document = uiState.selectedDocument!!,
+            selectedYear = selectedYear,
             onDismiss = viewModel::clearSelectedDocument,
             viewModel = viewModel,
             onSave = { documentType,
@@ -546,6 +560,7 @@ private fun StagingDocumentCard(
 @Composable
 private fun StagingDocumentDetailSheet(
     document: StagingDocument,
+    selectedYear: Int,
     onDismiss: () -> Unit,
     viewModel: StagingViewModel,
     onSave: (
@@ -577,7 +592,7 @@ private fun StagingDocumentDetailSheet(
     var documentNumber by remember(document.id) { mutableStateOf(document.documentNumber.orEmpty()) }
     var documentCode by remember(document.id) { mutableStateOf(document.classificationCode.orEmpty()) }
     var description by remember(document.id) { mutableStateOf(document.description.orEmpty()) }
-    var year by remember(document.id) { mutableStateOf(document.year.toString()) }
+    var year by remember(document.id) { mutableStateOf(selectedYear.toString()) }
     var copyCount by remember(document.id) { mutableStateOf(document.copyCount.toString()) }
     var isCopy by remember(document.id) { mutableStateOf(document.isCopy) }
     var originInstance by remember(document.id) { mutableStateOf(document.originInstance.orEmpty()) }
@@ -614,10 +629,11 @@ private fun StagingDocumentDetailSheet(
             if (isEditMode) {
                 item {
                     DetailTextField(
-                        label = "Judul",
+                        label = "Judul (Maks 255 karakter)",
                         value = title,
-                        onValueChange = { title = it },
-                        placeholder = "Judul dokumen"
+                        onValueChange = { if (it.length <= 255) title = it },
+                        placeholder = "Judul dokumen",
+                        error = title.isBlank()
                     )
                 }
 
@@ -625,7 +641,7 @@ private fun StagingDocumentDetailSheet(
                     DetailTextField(
                         label = "Nomor Dokumen",
                         value = documentNumber,
-                        onValueChange = { documentNumber = it },
+                        onValueChange = { if (it.length <= 50) documentNumber = it },
                         placeholder = "Nomor dokumen"
                     )
                 }
@@ -645,7 +661,7 @@ private fun StagingDocumentDetailSheet(
                     DetailTextField(
                         label = "Deskripsi",
                         value = description,
-                        onValueChange = { description = it },
+                        onValueChange = { if (it.length <= 1000) description = it },
                         placeholder = "Deskripsi dokumen",
                         singleLine = false
                     )
@@ -655,12 +671,9 @@ private fun StagingDocumentDetailSheet(
                     DetailTextField(
                         label = "Tahun",
                         value = year,
-                        onValueChange = { input ->
-                            if (input.length <= 4 && input.all { it.isDigit() }) {
-                                year = input
-                            }
-                        },
-                        placeholder = "2025"
+                        onValueChange = {},
+                        placeholder = "2025",
+                        readOnly = true
                     )
                 }
 
@@ -746,7 +759,7 @@ private fun StagingDocumentDetailSheet(
                     DetailTextField(
                         label = "Asal Instansi",
                         value = originInstance,
-                        onValueChange = { originInstance = it },
+                        onValueChange = { if (it.length <= 100) originInstance = it },
                         placeholder = "Bagian Umum"
                     )
                 }
@@ -1012,7 +1025,7 @@ private fun <T> StagingDropdownField(
             label = {
                 Text(
                     text = label,
-                    color = Color.Black
+                    color =  Color.Black
                 )
             },
             trailingIcon = {
@@ -1025,31 +1038,9 @@ private fun <T> StagingDropdownField(
                 .fillMaxWidth(),
             shape = RoundedCornerShape(16.dp),
             textStyle = LocalTextStyle.current.copy(
-                color = Color.Black
+                color =  Color.Black
             ),
-            colors = OutlinedTextFieldDefaults.colors(
-                focusedTextColor = Color.Black,
-                unfocusedTextColor = Color.Black,
-                disabledTextColor = Color.Black,
-
-                focusedLabelColor = Color.Black,
-                unfocusedLabelColor = Color.Black,
-                disabledLabelColor = Color.Black,
-
-                focusedPlaceholderColor = Color.Black,
-                unfocusedPlaceholderColor = Color.Black,
-                disabledPlaceholderColor = Color.Black,
-
-                focusedBorderColor = Color.Black,
-                unfocusedBorderColor = Color.Black,
-                disabledBorderColor = Color.Black,
-
-                cursorColor = Color.Black,
-
-                focusedContainerColor = Color.Transparent,
-                unfocusedContainerColor = Color.Transparent,
-                disabledContainerColor = Color.Transparent
-            )
+            colors = detailTextFieldColors()
         )
 
         ExposedDropdownMenu(
@@ -1057,14 +1048,14 @@ private fun <T> StagingDropdownField(
             onDismissRequest = {
                 expanded = false
             },
-            containerColor = Color.White,
+            containerColor = MaterialTheme.colorScheme.surface,
         ) {
             if (allowNull) {
                 DropdownMenuItem(
                     text = {
                         Text(
                             text = nullLabel,
-                            color = Color.Black,
+                            color = MaterialTheme.colorScheme.onSurface,
                             fontFamily = PoppinsFont
                         )
                     },
@@ -1080,7 +1071,7 @@ private fun <T> StagingDropdownField(
                     text = {
                         Text(
                             text = optionLabel(option),
-                            color = Color.Black,
+                            color = MaterialTheme.colorScheme.onSurface,
                             fontFamily = PoppinsFont
                         )
                     },
@@ -1195,7 +1186,7 @@ private fun StagingBottomBar(
         verticalArrangement = Arrangement.spacedBy(8.dp)
     ) {
         if (isLoading) {
-            CircularProgressIndicator(
+            LoadingIndicator(
                 modifier = Modifier
                     .align(Alignment.CenterHorizontally)
                     .size(24.dp)
@@ -1267,6 +1258,65 @@ private fun ConfirmPushDialog(
 }
 
 @Composable
+private fun WarningMessageCard(
+    message: String,
+    onDismiss: () -> Unit,
+    onConfirm: () -> Unit
+) {
+    Column(
+        modifier = Modifier
+            .fillMaxWidth()
+            .padding(horizontal = 32.dp, vertical = 8.dp)
+            .clip(RoundedCornerShape(16.dp))
+            .background(Color(0xFFFFF7ED))
+            .border(1.dp, Color(0xFFFED7AA), RoundedCornerShape(16.dp))
+            .padding(14.dp),
+        verticalArrangement = Arrangement.spacedBy(8.dp)
+    ) {
+        Row(
+            modifier = Modifier.fillMaxWidth(),
+            horizontalArrangement = Arrangement.SpaceBetween,
+            verticalAlignment = Alignment.CenterVertically
+        ) {
+            Text(
+                text = message,
+                fontSize = 13.sp,
+                fontWeight = FontWeight.Medium,
+                fontFamily = PoppinsFont,
+                color = Color(0xFF9A3412),
+                modifier = Modifier.weight(1f)
+            )
+
+            Icon(
+                imageVector = Icons.Default.Close,
+                contentDescription = "Tutup",
+                tint = Color(0xFF9A3412),
+                modifier = Modifier
+                    .size(20.dp)
+                    .clickable(onClick = onDismiss)
+            )
+        }
+
+        Row(
+            modifier = Modifier.fillMaxWidth(),
+            horizontalArrangement = Arrangement.End,
+            verticalAlignment = Alignment.CenterVertically
+        ) {
+            Text(
+                text = "Tetap Simpan",
+                modifier = Modifier
+                    .clickable(onClick = onConfirm)
+                    .padding(horizontal = 8.dp, vertical = 4.dp),
+                fontSize = 13.sp,
+                fontWeight = FontWeight.Bold,
+                fontFamily = PoppinsFont,
+                color = Color(0xFF9A3412)
+            )
+        }
+    }
+}
+
+@Composable
 private fun ErrorMessageCard(
     message: String,
     onDismiss: () -> Unit
@@ -1302,6 +1352,30 @@ private fun ErrorMessageCard(
 }
 
 @Composable
+private fun detailTextFieldColors() = OutlinedTextFieldDefaults.colors(
+    focusedTextColor = Color.Black,
+    unfocusedTextColor = Color.Black,
+    disabledTextColor = Color.Black,
+
+    focusedLabelColor = Color.Black,
+    unfocusedLabelColor = Color.Black,
+    disabledLabelColor = Color.Black,
+
+    focusedPlaceholderColor = Color.Black,
+    unfocusedPlaceholderColor = Color.Black,
+    disabledPlaceholderColor = Color.Black,
+
+    focusedBorderColor = Color.Black,
+    unfocusedBorderColor = Color.Black,
+    disabledBorderColor = Color.Black,
+
+    cursorColor = Color.Black,
+
+    focusedContainerColor = Color.Transparent,
+    unfocusedContainerColor = Color.Transparent,
+    disabledContainerColor = Color.Transparent
+)
+@Composable
 private fun DetailTextField(
     label: String,
     value: String,
@@ -1309,56 +1383,39 @@ private fun DetailTextField(
     placeholder: String,
     modifier: Modifier = Modifier,
     singleLine: Boolean = true,
-    keyboardType: KeyboardType = KeyboardType.Text
+    keyboardType: KeyboardType = KeyboardType.Text,
+    error: Boolean = false,
+    readOnly: Boolean = false
 ) {
     OutlinedTextField(
         value = value,
         onValueChange = onValueChange,
+        readOnly = readOnly,
         label = {
             Text(
                 text = label,
-                color = Color.Black
+                color = if (error) MaterialTheme.colorScheme.error else  Color.Black
             )
         },
         placeholder = {
             Text(
                 text = placeholder,
-                color = Color.Black
+                color =  Color.Black
             )
         },
         modifier = modifier.fillMaxWidth(),
         singleLine = singleLine,
         minLines = if (singleLine) 1 else 3,
         shape = RoundedCornerShape(16.dp),
+        isError = error,
         textStyle = LocalTextStyle.current.copy(
             color = Color.Black
         ),
         keyboardOptions = KeyboardOptions(
             keyboardType = keyboardType
         ),
-        colors = OutlinedTextFieldDefaults.colors(
-            focusedTextColor = Color.Black,
-            unfocusedTextColor = Color.Black,
-            disabledTextColor = Color.Black,
+        colors = detailTextFieldColors()
 
-            focusedLabelColor = Color.Black,
-            unfocusedLabelColor = Color.Black,
-            disabledLabelColor = Color.Black,
-
-            focusedPlaceholderColor = Color.Black,
-            unfocusedPlaceholderColor = Color.Black,
-            disabledPlaceholderColor = Color.Black,
-
-            focusedBorderColor = Color.Black,
-            unfocusedBorderColor = Color.Black,
-            disabledBorderColor = Color.Black,
-
-            cursorColor = Color.Black,
-
-            focusedContainerColor = Color.Transparent,
-            unfocusedContainerColor = Color.Transparent,
-            disabledContainerColor = Color.Transparent
-        )
     )
 }
 
@@ -1416,5 +1473,5 @@ private fun SmallBadge(
 )
 @Composable
 fun StagingScreenPreview() {
-    StagingScreen()
+    StagingScreen(selectedYear = 2025)
 }

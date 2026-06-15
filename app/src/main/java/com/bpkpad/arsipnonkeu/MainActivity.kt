@@ -101,6 +101,7 @@ class MainActivity : ComponentActivity() {
 
                     "staging" -> {
                         StagingScreen(
+                            selectedYear = selectedYear,
                             onBackClick = {
                                 currentRoute = "archive"
                             },

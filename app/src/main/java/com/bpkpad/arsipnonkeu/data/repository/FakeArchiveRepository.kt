@@ -390,6 +390,31 @@ class FakeArchiveRepository : ArchiveRepository {
         }
     }
 
+    override suspend fun checkStorageLocationExists(
+        room: String,
+        shelf: String,
+        boxNumber: String?
+    ): Boolean {
+        return storageLocations.any {
+            it.room.equals(room, ignoreCase = true) &&
+                    it.shelf.equals(shelf, ignoreCase = true) &&
+                    it.boxNumber.equals(boxNumber, ignoreCase = true)
+        }
+    }
+
+    override suspend fun checkDocumentDuplicate(
+        title: String,
+        documentNumber: String?,
+        year: Int
+    ): Boolean {
+        return documents.any {
+            it.deletedAt == null &&
+                    it.title.equals(title, ignoreCase = true) &&
+                    it.documentNumber.equals(documentNumber, ignoreCase = true) &&
+                    it.year == year
+        }
+    }
+
     private fun buildListItem(
         document: ArchiveDocument
     ): ArchiveDocumentListItem {

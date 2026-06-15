@@ -32,6 +32,7 @@ import androidx.compose.material3.ExposedDropdownMenuDefaults
 import androidx.compose.material3.HorizontalDivider
 import androidx.compose.material3.Icon
 import androidx.compose.material3.LocalTextStyle
+import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.OutlinedButton
 import androidx.compose.material3.OutlinedTextField
 import androidx.compose.material3.OutlinedTextFieldDefaults
@@ -67,6 +68,7 @@ import com.bpkpad.arsipnonkeu.domain.model.PhysicalForm
 import com.bpkpad.arsipnonkeu.domain.model.StorageLocation
 import com.bpkpad.arsipnonkeu.ui.component.ArchiveClassificationField
 import com.bpkpad.arsipnonkeu.ui.component.ArchiveClassificationSelectorSheet
+import com.bpkpad.arsipnonkeu.ui.component.LoadingIndicator
 import com.bpkpad.arsipnonkeu.ui.component.TopBar
 import com.bpkpad.arsipnonkeu.ui.theme.BackgroundGray
 
@@ -147,7 +149,7 @@ fun DocumentDetailScreen(
                         .padding(innerPadding),
                     contentAlignment = Alignment.Center
                 ) {
-                    CircularProgressIndicator()
+                    LoadingIndicator()
                 }
             }
 
@@ -434,11 +436,9 @@ private fun DocumentInformationCard(
                 minLines = 3
             )
 
-            DetailTextField(
+            DetailReadOnlyField(
                 label = "Tahun",
-                value = editedYear,
-                onValueChange = onYearChange,
-                keyboardType = KeyboardType.Number
+                value = editedYear
             )
 
             DetailDropdownField(

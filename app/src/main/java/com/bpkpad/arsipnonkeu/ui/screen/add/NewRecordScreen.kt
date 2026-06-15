@@ -19,6 +19,7 @@ import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.lazy.LazyColumn
 import androidx.compose.foundation.rememberScrollState
 import androidx.compose.foundation.shape.RoundedCornerShape
+import androidx.compose.foundation.text.KeyboardOptions
 import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.filled.Save
 import androidx.compose.material3.AlertDialog
@@ -31,6 +32,7 @@ import androidx.compose.material3.ExposedDropdownMenuDefaults
 import androidx.compose.material3.HorizontalDivider
 import androidx.compose.material3.Icon
 import androidx.compose.material3.LocalTextStyle
+import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.OutlinedButton
 import androidx.compose.material3.OutlinedTextField
 import androidx.compose.material3.OutlinedTextFieldDefaults
@@ -51,6 +53,7 @@ import androidx.compose.ui.draw.clip
 import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.text.font.FontFamily
 import androidx.compose.ui.text.font.FontWeight
+import androidx.compose.ui.text.input.KeyboardType
 import androidx.compose.ui.text.style.TextOverflow
 import androidx.compose.ui.tooling.preview.Preview
 import androidx.compose.ui.unit.dp
@@ -156,7 +159,7 @@ fun NewRecordScreen(
                     DetailTextField(
                         label = "Nomor Dokumen",
                         value = documentNumber,
-                        onValueChange = { documentNumber = it },
+                        onValueChange = { if (it.length <= 50) documentNumber = it },
                         placeholder = "Contoh: 001/UMUM/2025"
                     )
 
@@ -170,16 +173,17 @@ fun NewRecordScreen(
                     )
 
                     DetailTextField(
-                        label = "Judul Dokumen",
+                        label = "Judul Dokumen (Maks 255)",
                         value = title,
-                        onValueChange = { title = it },
-                        placeholder = "Masukkan judul dokumen"
+                        onValueChange = { if (it.length <= 255) title = it },
+                        placeholder = "Masukkan judul dokumen",
+                        error = title.isBlank()
                     )
 
                     DetailTextField(
                         label = "Deskripsi",
                         value = description,
-                        onValueChange = { description = it },
+                        onValueChange = { if (it.length <= 1000) description = it },
                         placeholder = "Masukkan deskripsi dokumen",
                         singleLine = false
                     )
@@ -194,12 +198,9 @@ fun NewRecordScreen(
                     DetailTextField(
                         label = "Tahun",
                         value = year,
-                        onValueChange = { input ->
-                            if (input.length <= 4 && input.all { it.isDigit() }) {
-                                year = input
-                            }
-                        },
-                        placeholder = "2025"
+                        onValueChange = {},
+                        placeholder = "2025",
+                        readOnly = true
                     )
 
                     StagingDropdownField(
@@ -232,7 +233,8 @@ fun NewRecordScreen(
                                 copyCount = input
                             }
                         },
-                        placeholder = "1"
+                        placeholder = "1",
+                        keyboardType = KeyboardType.Number
                     )
 
                     StagingDropdownField(
@@ -255,7 +257,7 @@ fun NewRecordScreen(
                     DetailTextField(
                         label = "Asal Instansi",
                         value = originInstance,
-                        onValueChange = { originInstance = it },
+                        onValueChange = { if (it.length <= 100) originInstance = it },
                         placeholder = "Contoh: Bagian Umum"
                     )
                 }
@@ -528,6 +530,31 @@ private fun ValidationInfoCard(
     }
 }
 
+@Composable
+private fun detailTextFieldColors() = OutlinedTextFieldDefaults.colors(
+    focusedTextColor = Color.Black,
+    unfocusedTextColor = Color.Black,
+    disabledTextColor = Color.Black,
+
+    focusedLabelColor = Color.Black,
+    unfocusedLabelColor = Color.Black,
+    disabledLabelColor = Color.Black,
+
+    focusedPlaceholderColor = Color.Black,
+    unfocusedPlaceholderColor = Color.Black,
+    disabledPlaceholderColor = Color.Black,
+
+    focusedBorderColor = Color.Black,
+    unfocusedBorderColor = Color.Black,
+    disabledBorderColor = Color.Black,
+
+    cursorColor = Color.Black,
+
+    focusedContainerColor = Color.Transparent,
+    unfocusedContainerColor = Color.Transparent,
+    disabledContainerColor = Color.Transparent
+)
+
 @OptIn(ExperimentalMaterial3Api::class)
 @Composable
 private fun <T> StagingDropdownField(
@@ -570,29 +597,7 @@ private fun <T> StagingDropdownField(
             textStyle = LocalTextStyle.current.copy(
                 color = Color.Black
             ),
-            colors = OutlinedTextFieldDefaults.colors(
-                focusedTextColor = Color.Black,
-                unfocusedTextColor = Color.Black,
-                disabledTextColor = Color.Black,
-
-                focusedLabelColor = Color.Black,
-                unfocusedLabelColor = Color.Black,
-                disabledLabelColor = Color.Black,
-
-                focusedPlaceholderColor = Color.Black,
-                unfocusedPlaceholderColor = Color.Black,
-                disabledPlaceholderColor = Color.Black,
-
-                focusedBorderColor = Color.Black,
-                unfocusedBorderColor = Color.Black,
-                disabledBorderColor = Color.Black,
-
-                cursorColor = Color.Black,
-
-                focusedContainerColor = Color.Transparent,
-                unfocusedContainerColor = Color.Transparent,
-                disabledContainerColor = Color.Transparent
-            )
+            colors = detailTextFieldColors()
         )
 
         ExposedDropdownMenu(
@@ -600,7 +605,7 @@ private fun <T> StagingDropdownField(
             onDismissRequest = {
                 expanded = false
             },
-            containerColor = Color.White,
+            containerColor = MaterialTheme.colorScheme.surface,
         ) {
             if (allowNull) {
                 DropdownMenuItem(
@@ -623,7 +628,7 @@ private fun <T> StagingDropdownField(
                     text = {
                         Text(
                             text = optionLabel(option),
-                            color = Color.Black,
+                            color = MaterialTheme.colorScheme.onSurface,
                             fontFamily = PoppinsFont
                         )
                     },
@@ -644,27 +649,39 @@ private fun DetailTextField(
     onValueChange: (String) -> Unit,
     placeholder: String,
     modifier: Modifier = Modifier,
-    singleLine: Boolean = true
+    singleLine: Boolean = true,
+    error: Boolean = false,
+    keyboardType: KeyboardType = KeyboardType.Text,
+    readOnly: Boolean = false
 ) {
     OutlinedTextField(
         value = value,
         onValueChange = onValueChange,
+        readOnly = readOnly,
         label = {
-            Text(label)
+            Text(
+                text = label,
+                color = if (error) MaterialTheme.colorScheme.error else Color.Black
+            )
         },
         placeholder = {
-            Text(placeholder)
+            Text(
+                text = placeholder,
+                color = Color.Black
+            )
         },
         modifier = modifier.fillMaxWidth(),
         singleLine = singleLine,
         minLines = if (singleLine) 1 else 3,
         shape = RoundedCornerShape(16.dp),
-        colors = OutlinedTextFieldDefaults.colors(
-            focusedContainerColor = Color.White,
-            unfocusedContainerColor = Color.White,
-            focusedBorderColor = Color(0xFF0D631B),
-            unfocusedBorderColor = Color(0xFFBFCABA)
-        )
+        isError = error,
+        textStyle = LocalTextStyle.current.copy(
+            color = Color.Black
+        ),
+        keyboardOptions = KeyboardOptions(
+            keyboardType = keyboardType
+        ),
+        colors = detailTextFieldColors()
     )
 }
 

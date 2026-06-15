@@ -167,4 +167,41 @@ class ArchiveRepositoryImpl(
             storageLocation = dto.storageLocation?.toDomain()
         )
     }
+
+    override suspend fun checkStorageLocationExists(
+        room: String,
+        shelf: String,
+        boxNumber: String?
+    ): Boolean {
+        val query = supabase.postgrest["storage_locations"].select {
+            filter {
+                eq("room", room)
+                eq("shelf", shelf)
+                if (boxNumber != null) {
+                    eq("box_number", boxNumber)
+                } else {
+                    filter("box_number", FilterOperator.IS, "null")
+                }
+            }
+        }
+        return query.decodeList<StorageLocationDto>().isNotEmpty()
+    }
+
+    override suspend fun checkDocumentDuplicate(
+        title: String,
+        documentNumber: String?,
+        year: Int
+    ): Boolean {
+        val response = supabase.postgrest["archive_documents"].select {
+            filter {
+                eq("title", title.trim())
+                eq("year", year)
+                if (documentNumber != null) {
+                    eq("document_number", documentNumber.trim())
+                }
+                filter("deleted_at", FilterOperator.IS, "null")
+            }
+        }
+        return response.decodeList<ArchiveDocumentDto>().isNotEmpty()
+    }
 }

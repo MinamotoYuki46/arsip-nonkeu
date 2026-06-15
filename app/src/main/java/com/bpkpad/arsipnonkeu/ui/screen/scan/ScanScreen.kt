@@ -69,6 +69,7 @@ import androidx.compose.ui.unit.sp
 import androidx.compose.ui.viewinterop.AndroidView
 import androidx.core.content.ContextCompat
 import com.bpkpad.arsipnonkeu.domain.model.DocumentType
+import com.bpkpad.arsipnonkeu.ui.component.LoadingIndicator
 import com.bpkpad.arsipnonkeu.ui.screen.staging.StagingViewModel
 import java.io.File
 import java.util.concurrent.ExecutorService
@@ -514,7 +515,7 @@ private fun ProcessingOverlay(
         horizontalAlignment = Alignment.CenterHorizontally,
         verticalArrangement = Arrangement.spacedBy(12.dp)
     ) {
-        CircularProgressIndicator(
+        LoadingIndicator(
             color = Color.White
         )
 

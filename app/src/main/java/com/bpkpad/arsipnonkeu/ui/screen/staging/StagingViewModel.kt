@@ -84,7 +84,8 @@ data class StagingUiState(
     val isLoading: Boolean = false,
     val isClassificationLoading: Boolean = false,
     val isSuccess: Boolean = false,
-    val errorMessage: String? = null
+    val errorMessage: String? = null,
+    val duplicateWarning: String? = null
 ) {
     val isStorageLocationValid: Boolean
         get() = room.isNotBlank() && shelf.isNotBlank()
@@ -144,21 +145,21 @@ class StagingViewModel(
 
     fun onRoomChange(value: String) {
         _uiState.value = _uiState.value.copy(
-            room = value,
+            room = value.take(50),
             isSuccess = false
         )
     }
 
     fun onShelfChange(value: String) {
         _uiState.value = _uiState.value.copy(
-            shelf = value,
+            shelf = value.take(50),
             isSuccess = false
         )
     }
 
     fun onBoxNumberChange(value: String) {
         _uiState.value = _uiState.value.copy(
-            boxNumber = value,
+            boxNumber = value.filter { it.isDigit() || it.isLetter() || it == '-' }.take(20),
             isSuccess = false
         )
     }
@@ -197,17 +198,17 @@ class StagingViewModel(
 
         val updatedDocument = selectedDocument.copy(
             documentType = documentType,
-            documentNumber = documentNumber.cleanTextOrNull(),
-            classificationCode = classificationCode.cleanTextOrNull(),
-            title = title.trim(),
-            description = description.cleanTextOrNull(),
+            documentNumber = documentNumber.cleanTextOrNull()?.take(50),
+            classificationCode = classificationCode.cleanTextOrNull()?.take(50),
+            title = title.trim().take(255),
+            description = description.cleanTextOrNull()?.take(1000),
             year = year,
             physicalForm = physicalForm,
             condition = condition,
             copyCount = copyCount.coerceAtLeast(1),
             isCopy = isCopy,
             status = status,
-            originInstance = originInstance.cleanTextOrNull()
+            originInstance = originInstance.cleanTextOrNull()?.take(100)
         )
 
         viewModelScope.launch {
@@ -269,17 +270,17 @@ class StagingViewModel(
         val newDocument = StagingDocument(
             id = UUID.randomUUID().toString(),
             documentType = documentType,
-            documentNumber = documentNumber.cleanTextOrNull(),
-            classificationCode = classificationCode.cleanTextOrNull(),
-            title = title.trim(),
-            description = description.cleanTextOrNull(),
+            documentNumber = documentNumber.cleanTextOrNull()?.take(50),
+            classificationCode = classificationCode.cleanTextOrNull()?.take(50),
+            title = title.trim().take(255),
+            description = description.cleanTextOrNull()?.take(1000),
             year = year,
             physicalForm = physicalForm,
             condition = condition,
             copyCount = copyCount.coerceAtLeast(1),
             isCopy = isCopy,
             status = status,
-            originInstance = originInstance.cleanTextOrNull(),
+            originInstance = originInstance.cleanTextOrNull()?.take(100),
             source = StagingDocumentSource.MANUAL
         )
 
@@ -469,10 +470,35 @@ class StagingViewModel(
             _uiState.value = _uiState.value.copy(
                 isLoading = true,
                 errorMessage = null,
+                duplicateWarning = null,
                 isSuccess = false
             )
 
             try {
+                // Check for duplicates first
+                var duplicateFound = false
+                val duplicateTitles = mutableListOf<String>()
+
+                for (doc in currentState.documents) {
+                    val isDuplicate = archiveRepository.checkDocumentDuplicate(
+                        title = doc.title,
+                        documentNumber = doc.documentNumber,
+                        year = doc.year
+                    )
+                    if (isDuplicate) {
+                        duplicateFound = true
+                        duplicateTitles.add(doc.title)
+                    }
+                }
+
+                if (duplicateFound && currentState.duplicateWarning == null) {
+                    _uiState.value = _uiState.value.copy(
+                        isLoading = false,
+                        duplicateWarning = "Peringatan: ${duplicateTitles.size} dokumen mungkin sudah ada di arsip (duplikat judul & tahun). Tetap simpan?"
+                    )
+                    return@launch
+                }
+
                 val archiveDocuments = currentState.documents.map { it.toArchiveDocument() }
 
                 archiveRepository.saveStagingDocuments(
@@ -555,6 +581,7 @@ class StagingViewModel(
     fun clearMessage() {
         _uiState.value = _uiState.value.copy(
             errorMessage = null,
+            duplicateWarning = null,
             isSuccess = false
         )
     }

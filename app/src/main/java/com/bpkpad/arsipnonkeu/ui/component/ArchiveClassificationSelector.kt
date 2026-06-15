@@ -376,7 +376,7 @@ private fun LoadingContent() {
         horizontalAlignment = Alignment.CenterHorizontally,
         verticalArrangement = Arrangement.Center
     ) {
-        CircularProgressIndicator()
+        LoadingIndicator()
 
         Spacer(modifier = Modifier.size(12.dp))
 
