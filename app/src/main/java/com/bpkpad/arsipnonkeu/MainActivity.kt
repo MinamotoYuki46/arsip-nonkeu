@@ -42,7 +42,8 @@ class MainActivity : ComponentActivity() {
                 var selectedDocumentId by remember { mutableStateOf<String?>(null) }
 
                 val stagingViewModel: StagingViewModel = viewModel(
-                    factory = StagingViewModelFactory(applicationContext)
+                    key = selectedYear.toString(),
+                    factory = StagingViewModelFactory(applicationContext, selectedYear)
                 )
 
                 BackHandler(enabled = currentRoute != "dashboard") {

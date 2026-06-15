@@ -12,9 +12,13 @@ class StagingRepositoryImpl(
     private val supabase: SupabaseClient
 ) : StagingRepository {
 
-    override suspend fun getStagingDocuments(): List<StagingDocument> {
+    override suspend fun getStagingDocuments(year: Int): List<StagingDocument> {
         return supabase.postgrest["staging_documents"]
-            .select()
+            .select {
+                filter {
+                    eq("year", year)
+                }
+            }
             .decodeList<StagingDocumentDto>()
             .map { it.toDomain() }
     }

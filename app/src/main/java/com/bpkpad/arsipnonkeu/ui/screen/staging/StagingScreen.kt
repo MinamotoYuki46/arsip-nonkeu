@@ -103,9 +103,7 @@ fun StagingScreen(
     onScanClick: () -> Unit = {},
     onImportClick: () -> Unit = {},
     onPushAllClick: () -> Unit = {},
-    viewModel: StagingViewModel = viewModel(
-        factory = StagingViewModelFactory(LocalContext.current.applicationContext)
-    )
+    viewModel: StagingViewModel
 ) {
     val uiState by viewModel.uiState.collectAsState()
 
@@ -1473,5 +1471,12 @@ private fun SmallBadge(
 )
 @Composable
 fun StagingScreenPreview() {
-    StagingScreen(selectedYear = 2025)
+    val context = LocalContext.current
+    val viewModel: StagingViewModel = viewModel(
+        factory = StagingViewModelFactory(context, 2025)
+    )
+    StagingScreen(
+        selectedYear = 2025,
+        viewModel = viewModel
+    )
 }

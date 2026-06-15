@@ -480,7 +480,8 @@ private fun ManualInputBottomBar(
             ) {
                 Icon(
                     imageVector = Icons.Default.Save,
-                    contentDescription = null
+                    contentDescription = null,
+                    tint = Color.White
                 )
 
                 Spacer(modifier = Modifier.padding(horizontal = 4.dp))

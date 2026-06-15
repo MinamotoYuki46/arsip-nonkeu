@@ -6,7 +6,8 @@ import androidx.lifecycle.ViewModelProvider
 import com.bpkpad.arsipnonkeu.di.ArchiveModule
 
 class StagingViewModelFactory(
-    private val context: Context
+    private val context: Context,
+    private val year: Int
 ) : ViewModelProvider.Factory {
 
     @Suppress("UNCHECKED_CAST")
@@ -14,6 +15,6 @@ class StagingViewModelFactory(
         val stagingRepository = ArchiveModule.stagingRepositoryInstance
         val archiveRepository = ArchiveModule.archiveRepositoryInstance
 
-        return StagingViewModel(stagingRepository, archiveRepository) as T
+        return StagingViewModel(year, stagingRepository, archiveRepository) as T
     }
 }

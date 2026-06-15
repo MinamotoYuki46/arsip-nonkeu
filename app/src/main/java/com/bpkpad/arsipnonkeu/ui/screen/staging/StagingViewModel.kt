@@ -107,6 +107,7 @@ data class StagingUiState(
 }
 
 class StagingViewModel(
+    private val year: Int,
     private val stagingRepository: StagingRepository,
     private val archiveRepository: ArchiveRepository
 ) : ViewModel() {
@@ -129,7 +130,7 @@ class StagingViewModel(
         viewModelScope.launch {
             _uiState.value = _uiState.value.copy(isLoading = true)
             try {
-                val docs = stagingRepository.getStagingDocuments()
+                val docs = stagingRepository.getStagingDocuments(year)
                 _uiState.value = _uiState.value.copy(
                     documents = docs,
                     isLoading = false
