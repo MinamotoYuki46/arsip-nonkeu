@@ -6,13 +6,10 @@ import androidx.compose.foundation.clickable
 import androidx.compose.foundation.layout.*
 import androidx.compose.foundation.lazy.LazyColumn
 import androidx.compose.foundation.shape.RoundedCornerShape
-import androidx.compose.material3.CircularProgressIndicator
-import androidx.compose.material3.Scaffold
-import androidx.compose.material3.Text
-import androidx.compose.runtime.Composable
-import androidx.compose.runtime.LaunchedEffect
-import androidx.compose.runtime.collectAsState
-import androidx.compose.runtime.getValue
+import androidx.compose.material.icons.Icons
+import androidx.compose.material.icons.filled.Add
+import androidx.compose.material3.*
+import androidx.compose.runtime.*
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.draw.clip
@@ -38,6 +35,8 @@ fun DashboardScreen(
     viewModel: DashboardViewModel = viewModel()
 ) {
     val uiState by viewModel.uiState.collectAsState()
+    
+    var showAddYearDialog by remember { mutableStateOf(false) }
 
     LaunchedEffect(Unit) {
         viewModel.loadYears()
@@ -68,7 +67,8 @@ fun DashboardScreen(
                     isLoading = uiState.isLoading,
                     years = uiState.years,
                     errorMessage = uiState.errorMessage,
-                    onYearClick = onArchiveYearClick
+                    onYearClick = onArchiveYearClick,
+                    onAddYearClick = { showAddYearDialog = true }
                 )
             }
 
@@ -80,6 +80,58 @@ fun DashboardScreen(
                 Spacer(modifier = Modifier.height(16.dp))
             }
         }
+    }
+
+    if (showAddYearDialog) {
+        var yearInput by remember { mutableStateOf("") }
+        val isDuplicate = remember(yearInput, uiState.years) {
+            yearInput.toIntOrNull()?.let { inputYear ->
+                uiState.years.any { it.year == inputYear }
+            } ?: false
+        }
+        
+        AlertDialog(
+            onDismissRequest = { showAddYearDialog = false },
+            title = { Text("Tambah Tahun Arsip Baru") },
+            text = {
+                Column(verticalArrangement = Arrangement.spacedBy(8.dp)) {
+                    Text("Masukkan tahun baru yang ingin didaftarkan ke sistem.")
+                    OutlinedTextField(
+                        value = yearInput,
+                        onValueChange = { if (it.length <= 4 && it.all { char -> char.isDigit() }) yearInput = it },
+                        label = { Text("Tahun") },
+                        placeholder = { Text("Contoh: 2027") },
+                        modifier = Modifier.fillMaxWidth(),
+                        singleLine = true,
+                        isError = isDuplicate,
+                        supportingText = {
+                            if (isDuplicate) {
+                                Text("Tahun $yearInput sudah ada dalam daftar.", color = MaterialTheme.colorScheme.error)
+                            }
+                        }
+                    )
+                }
+            },
+            confirmButton = {
+                TextButton(
+                    onClick = {
+                        val year = yearInput.toIntOrNull()
+                        if (year != null && year > 1900 && !isDuplicate) {
+                            viewModel.addNewYear(year)
+                            showAddYearDialog = false
+                        }
+                    },
+                    enabled = yearInput.length == 4 && !isDuplicate
+                ) {
+                    Text("Tambah", color = Color(0xFF0D631B))
+                }
+            },
+            dismissButton = {
+                TextButton(onClick = { showAddYearDialog = false }) {
+                    Text("Batal")
+                }
+            }
+        )
     }
 }
 
@@ -119,7 +171,8 @@ private fun AnnualArchivesSection(
     isLoading: Boolean,
     years: List<ArchiveYearSummary>,
     errorMessage: String?,
-    onYearClick: (Int) -> Unit
+    onYearClick: (Int) -> Unit,
+    onAddYearClick: () -> Unit
 ) {
     Column(
         verticalArrangement = Arrangement.spacedBy(16.dp),
@@ -146,19 +199,11 @@ private fun AnnualArchivesSection(
                 )
             }
 
-            years.isEmpty() -> {
-                Text(
-                    text = "Belum ada data arsip.",
-                    fontSize = 14.sp,
-                    fontFamily = PoppinsFont,
-                    color = Color(0xFF40493D)
-                )
-            }
-
             else -> {
                 YearCardGrid(
                     years = years,
-                    onYearClick = onYearClick
+                    onYearClick = onYearClick,
+                    onAddYearClick = onAddYearClick
                 )
             }
         }
@@ -168,23 +213,34 @@ private fun AnnualArchivesSection(
 @Composable
 private fun YearCardGrid(
     years: List<ArchiveYearSummary>,
-    onYearClick: (Int) -> Unit
+    onYearClick: (Int) -> Unit,
+    onAddYearClick: () -> Unit
 ) {
     Column(
         modifier = Modifier.fillMaxWidth(),
         verticalArrangement = Arrangement.spacedBy(12.dp)
     ) {
-        years.chunked(2).forEach { rowItems ->
+        // Combiner years with an "Add" placeholder
+        val items = years + null
+        
+        items.chunked(2).forEach { rowItems ->
             Row(
                 modifier = Modifier.fillMaxWidth(),
                 horizontalArrangement = Arrangement.spacedBy(12.dp)
             ) {
                 rowItems.forEach { summary ->
-                    YearCard(
-                        summary = summary,
-                        onClick = { onYearClick(summary.year) },
-                        modifier = Modifier.weight(1f)
-                    )
+                    if (summary != null) {
+                        YearCard(
+                            summary = summary,
+                            onClick = { onYearClick(summary.year) },
+                            modifier = Modifier.weight(1f)
+                        )
+                    } else {
+                        AddYearCard(
+                            onClick = onAddYearClick,
+                            modifier = Modifier.weight(1f)
+                        )
+                    }
                 }
 
                 if (rowItems.size == 1) {
@@ -192,6 +248,42 @@ private fun YearCardGrid(
                 }
             }
         }
+    }
+}
+
+@Composable
+private fun AddYearCard(
+    onClick: () -> Unit,
+    modifier: Modifier = Modifier
+) {
+    Column(
+        modifier = modifier
+            .height(120.dp)
+            .shadow(elevation = 1.dp, shape = RoundedCornerShape(18.dp))
+            .clip(RoundedCornerShape(18.dp))
+            .background(Color.White)
+            .border(0.5.dp, Color(0xFFBFCABA), RoundedCornerShape(18.dp))
+            .clickable(onClick = onClick)
+            .padding(16.dp),
+        verticalArrangement = Arrangement.Center,
+        horizontalAlignment = Alignment.CenterHorizontally
+    ) {
+        Icon(
+            imageVector = Icons.Default.Add,
+            contentDescription = null,
+            modifier = Modifier.size(32.dp),
+            tint = Color(0xFF0D631B)
+        )
+        
+        Spacer(modifier = Modifier.height(8.dp))
+        
+        Text(
+            text = "Tambah Tahun",
+            fontSize = 16.sp,
+            fontFamily = PoppinsFont,
+            fontWeight = FontWeight.Bold,
+            color = Color(0xFF0D631B)
+        )
     }
 }
 

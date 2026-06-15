@@ -12,6 +12,10 @@ import io.github.jan.supabase.postgrest.query.filter.FilterOperator
 import io.github.jan.supabase.postgrest.query.filter.PostgrestFilterBuilder
 import kotlinx.serialization.json.buildJsonObject
 import kotlinx.serialization.json.put
+import java.text.SimpleDateFormat
+import java.util.Date
+import java.util.Locale
+import java.util.TimeZone
 
 class ArchiveRepositoryImpl(
     private val supabase: SupabaseClient
@@ -87,8 +91,8 @@ class ArchiveRepositoryImpl(
     override suspend fun createArchiveDocument(
         document: ArchiveDocument
     ) {
-        // This is usually done via push_staging_document_to_archive
-        // but can be implemented for direct creation if needed.
+        val dto = document.toDto()
+        supabase.postgrest["archive_documents"].insert(dto)
     }
 
     override suspend fun updateArchiveDocument(
@@ -119,9 +123,13 @@ class ArchiveRepositoryImpl(
     override suspend fun deleteArchiveDocument(
         id: String
     ) {
+        val sdf = SimpleDateFormat("yyyy-MM-dd'T'HH:mm:ss.SSSXXX", Locale.getDefault())
+        sdf.timeZone = TimeZone.getTimeZone("UTC")
+        val timestamp = sdf.format(Date())
+
         supabase.postgrest["archive_documents"].update(
             buildJsonObject {
-                put("deleted_at", System.currentTimeMillis().toString()) // Should use DB now() ideally
+                put("deleted_at", timestamp)
             }
         ) {
             filter {

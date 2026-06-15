@@ -104,6 +104,29 @@ fun StagingDocument.toDto(): StagingDocumentDto {
     )
 }
 
+fun ArchiveDocument.toDto(): ArchiveDocumentDto {
+    return ArchiveDocumentDto(
+        id = id.takeIf { it.isNotBlank() },
+        documentType = documentType.name,
+        documentNumber = documentNumber,
+        classificationCode = classificationCode,
+        title = title,
+        description = description,
+        year = year,
+        physicalForm = physicalForm.name,
+        condition = condition?.name ?: "GOOD",
+        copyCount = copyCount,
+        isCopy = isCopy,
+        status = status.name,
+        originInstance = originInstance,
+        createdBy = createdBy,
+        updatedBy = updatedBy,
+        createdAt = createdAt,
+        updatedAt = updatedAt,
+        deletedAt = deletedAt
+    )
+}
+
 fun StagingDocumentDto.toDomain(): com.bpkpad.arsipnonkeu.ui.screen.staging.StagingDocument {
     return com.bpkpad.arsipnonkeu.ui.screen.staging.StagingDocument(
         id = id ?: "",
