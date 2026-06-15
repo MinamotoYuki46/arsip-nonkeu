@@ -145,7 +145,6 @@ fun StagingScreen(
                 },
                 onScanClick = {
                     isFabExpanded = false
-                    viewModel.addDummyScanDocument()
                     onScanClick()
                 },
                 onImportClick = {
