@@ -30,6 +30,7 @@ val PoppinsFont = FontFamily.Default
 
 @Composable
 fun DashboardScreen(
+    userRole: String = "",
     onProfileClick: () -> Unit = {},
     onArchiveYearClick: (Int) -> Unit = {},
     viewModel: DashboardViewModel = viewModel()
@@ -67,6 +68,7 @@ fun DashboardScreen(
                     isLoading = uiState.isLoading,
                     years = uiState.years,
                     errorMessage = uiState.errorMessage,
+                    userRole = userRole,
                     onYearClick = onArchiveYearClick,
                     onAddYearClick = { showAddYearDialog = true }
                 )
@@ -171,6 +173,7 @@ private fun AnnualArchivesSection(
     isLoading: Boolean,
     years: List<ArchiveYearSummary>,
     errorMessage: String?,
+    userRole: String,
     onYearClick: (Int) -> Unit,
     onAddYearClick: () -> Unit
 ) {
@@ -202,6 +205,7 @@ private fun AnnualArchivesSection(
             else -> {
                 YearCardGrid(
                     years = years,
+                    userRole = userRole,
                     onYearClick = onYearClick,
                     onAddYearClick = onAddYearClick
                 )
@@ -213,6 +217,7 @@ private fun AnnualArchivesSection(
 @Composable
 private fun YearCardGrid(
     years: List<ArchiveYearSummary>,
+    userRole: String,
     onYearClick: (Int) -> Unit,
     onAddYearClick: () -> Unit
 ) {
@@ -220,8 +225,9 @@ private fun YearCardGrid(
         modifier = Modifier.fillMaxWidth(),
         verticalArrangement = Arrangement.spacedBy(12.dp)
     ) {
-        // Combiner years with an "Add" placeholder
-        val items = years + null
+        // Combiner years with an "Add" placeholder only if ARSIPARIS
+        val isArsiparis = userRole.equals("ARSIPARIS", ignoreCase = true)
+        val items = if (isArsiparis) years + null else years
         
         items.chunked(2).forEach { rowItems ->
             Row(
@@ -235,7 +241,7 @@ private fun YearCardGrid(
                             onClick = { onYearClick(summary.year) },
                             modifier = Modifier.weight(1f)
                         )
-                    } else {
+                    } else if (isArsiparis) {
                         AddYearCard(
                             onClick = onAddYearClick,
                             modifier = Modifier.weight(1f)

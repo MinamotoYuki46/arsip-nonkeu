@@ -78,11 +78,16 @@ private val PoppinsFont = FontFamily.Default
 @Composable
 fun DocumentDetailScreen(
     documentId: String,
+    userRole: String = "",
     onProfileClick: () -> Unit = {},
     onBackClick: () -> Unit = {},
     viewModel: DocumentDetailViewModel = remember { DocumentDetailViewModel() }
 ) {
     val uiState by viewModel.uiState.collectAsState()
+
+    val canEdit = remember(userRole) {
+        userRole.equals("ARSIPARIS", ignoreCase = true)
+    }
 
     var isEditMode by remember { mutableStateOf(false) }
     var showEditConfirmDialog by remember { mutableStateOf(false) }
@@ -265,9 +270,12 @@ fun DocumentDetailScreen(
                     item {
                         DetailActionButtons(
                             isEditMode = isEditMode,
+                            canEdit = canEdit,
                             onEditClick = {
-                                isEditMode = true
-                                viewModel.clearMessage()
+                                if (canEdit) {
+                                    isEditMode = true
+                                    viewModel.clearMessage()
+                                }
                             },
                             onCancelEditClick = {
                                 isEditMode = false
@@ -587,6 +595,7 @@ private fun DocumentSystemCard(
 @Composable
 private fun DetailActionButtons(
     isEditMode: Boolean,
+    canEdit: Boolean,
     onEditClick: () -> Unit,
     onCancelEditClick: () -> Unit,
     onSaveClick: () -> Unit,
@@ -632,49 +641,51 @@ private fun DetailActionButtons(
                 )
             }
         } else {
-            Button(
-                onClick = onEditClick,
-                modifier = Modifier
-                    .fillMaxWidth()
-                    .height(48.dp),
-                colors = ButtonDefaults.buttonColors(
-                    containerColor = Color(0xFF0D631B)
-                ),
-                shape = RoundedCornerShape(9999.dp)
-            ) {
-                Icon(
-                    imageVector = Icons.Default.Edit,
-                    contentDescription = null,
-                    tint = Color.White
-                )
+            if (canEdit) {
+                Button(
+                    onClick = onEditClick,
+                    modifier = Modifier
+                        .fillMaxWidth()
+                        .height(48.dp),
+                    colors = ButtonDefaults.buttonColors(
+                        containerColor = Color(0xFF0D631B)
+                    ),
+                    shape = RoundedCornerShape(9999.dp)
+                ) {
+                    Icon(
+                        imageVector = Icons.Default.Edit,
+                        contentDescription = null,
+                        tint = Color.White
+                    )
 
-                Spacer(modifier = Modifier.padding(4.dp))
+                    Spacer(modifier = Modifier.padding(4.dp))
 
-                Text(
-                    text = "Edit Dokumen",
-                    color = Color.White
-                )
-            }
+                    Text(
+                        text = "Edit Dokumen",
+                        color = Color.White
+                    )
+                }
 
-            OutlinedButton(
-                onClick = onDeleteClick,
-                modifier = Modifier
-                    .fillMaxWidth()
-                    .height(48.dp),
-                shape = RoundedCornerShape(9999.dp)
-            ) {
-                Icon(
-                    imageVector = Icons.Default.Delete,
-                    contentDescription = null,
-                    tint = Color(0xFFBA1A1A)
-                )
+                OutlinedButton(
+                    onClick = onDeleteClick,
+                    modifier = Modifier
+                        .fillMaxWidth()
+                        .height(48.dp),
+                    shape = RoundedCornerShape(9999.dp)
+                ) {
+                    Icon(
+                        imageVector = Icons.Default.Delete,
+                        contentDescription = null,
+                        tint = Color(0xFFBA1A1A)
+                    )
 
-                Spacer(modifier = Modifier.padding(4.dp))
+                    Spacer(modifier = Modifier.padding(4.dp))
 
-                Text(
-                    text = "Hapus Dokumen",
-                    color = Color(0xFFBA1A1A)
-                )
+                    Text(
+                        text = "Hapus Dokumen",
+                        color = Color(0xFFBA1A1A)
+                    )
+                }
             }
 
             OutlinedButton(
@@ -1207,6 +1218,7 @@ fun DocumentDetailContentPreview() {
             item {
                 DetailActionButtons(
                     isEditMode = false,
+                    canEdit = false,
                     onEditClick = {},
                     onCancelEditClick = {},
                     onSaveClick = {},

@@ -83,6 +83,7 @@ private val PoppinsFont = FontFamily.Default
 @Composable
 fun ArchiveScreen(
     selectedYear: Int,
+    userRole: String = "",
     onProfileClick: () -> Unit = {},
     onDocumentClick: (String) -> Unit = {},
     onStagingClick: () -> Unit = {},
@@ -124,6 +125,10 @@ fun ArchiveScreen(
     var showExportDialog by remember { mutableStateOf(false) }
     var showFilterSheet by remember { mutableStateOf(false) }
 
+    val canAddDocument = remember(userRole) {
+        userRole.equals("ARSIPARIS", ignoreCase = true)
+    }
+
     LaunchedEffect(selectedYear) {
         viewModel.loadDocumentsByYear(selectedYear)
     }
@@ -136,16 +141,18 @@ fun ArchiveScreen(
             )
         },
         floatingActionButton = {
-            FloatingActionButton(
-                onClick = onStagingClick,
-                containerColor = Color(0xFF0D631B),
-                contentColor = Color.White,
-                shape = CircleShape
-            ) {
-                Icon(
-                    imageVector = Icons.Default.Add,
-                    contentDescription = "Tambah dokumen"
-                )
+            if (canAddDocument) {
+                FloatingActionButton(
+                    onClick = onStagingClick,
+                    containerColor = Color(0xFF0D631B),
+                    contentColor = Color.White,
+                    shape = CircleShape
+                ) {
+                    Icon(
+                        imageVector = Icons.Default.Add,
+                        contentDescription = "Tambah dokumen"
+                    )
+                }
             }
         },
         containerColor = BackgroundGray

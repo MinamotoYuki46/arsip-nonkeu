@@ -105,6 +105,7 @@ class MainActivity : ComponentActivity() {
                     when (currentRoute) {
                         "dashboard" -> {
                             DashboardScreen(
+                                userRole = userRole,
                                 onProfileClick = {
                                     routeBeforeProfile = "dashboard"
                                     currentRoute = "profile"
@@ -119,6 +120,7 @@ class MainActivity : ComponentActivity() {
                         "archive" -> {
                             ArchiveScreen(
                                 selectedYear = selectedYear,
+                                userRole = userRole,
                                 onProfileClick = {
                                     routeBeforeProfile = "archive"
                                     currentRoute = "profile"
@@ -135,59 +137,71 @@ class MainActivity : ComponentActivity() {
                         }
 
                         "staging" -> {
-                            StagingScreen(
-                                selectedYear = selectedYear,
-                                onProfileClick = {
-                                    routeBeforeProfile = "staging"
-                                    currentRoute = "profile"
-                                },
-                                onBackClick = {
-                                    currentRoute = "archive"
-                                },
-                                onManualClick = {
-                                    currentRoute = "new_record"
-                                },
-                                onScanClick = {
-                                    currentRoute = "scan"
-                                },
-                                onImportClick = {
-                                    // Sementara import langsung ditangani di StagingScreen.
-                                    // Tidak perlu pindah halaman dulu.
-                                },
-                                onPushAllClick = {
-                                    currentRoute = "dashboard"
-                                },
-                                viewModel = stagingViewModel
-                            )
+                            if (!userRole.equals("ARSIPARIS", ignoreCase = true)) {
+                                currentRoute = "dashboard"
+                            } else {
+                                StagingScreen(
+                                    selectedYear = selectedYear,
+                                    onProfileClick = {
+                                        routeBeforeProfile = "staging"
+                                        currentRoute = "profile"
+                                    },
+                                    onBackClick = {
+                                        currentRoute = "archive"
+                                    },
+                                    onManualClick = {
+                                        currentRoute = "new_record"
+                                    },
+                                    onScanClick = {
+                                        currentRoute = "scan"
+                                    },
+                                    onImportClick = {
+                                        // Sementara import langsung ditangani di StagingScreen.
+                                        // Tidak perlu pindah halaman dulu.
+                                    },
+                                    onPushAllClick = {
+                                        currentRoute = "dashboard"
+                                    },
+                                    viewModel = stagingViewModel
+                                )
+                            }
                         }
 
                         "new_record" -> {
-                            NewRecordScreen(
-                                selectedYear = selectedYear,
-                                onProfileClick = {
-                                    routeBeforeProfile = "new_record"
-                                    currentRoute = "profile"
-                                },
-                                onBackClick = {
-                                    currentRoute = "staging"
-                                },
-                                onSave = {
-                                    currentRoute = "staging"
-                                },
-                                viewModel = stagingViewModel
-                            )
+                            if (!userRole.equals("ARSIPARIS", ignoreCase = true)) {
+                                currentRoute = "dashboard"
+                            } else {
+                                NewRecordScreen(
+                                    selectedYear = selectedYear,
+                                    onProfileClick = {
+                                        routeBeforeProfile = "new_record"
+                                        currentRoute = "profile"
+                                    },
+                                    onBackClick = {
+                                        currentRoute = "staging"
+                                    },
+                                    onSave = {
+                                        currentRoute = "staging"
+                                    },
+                                    viewModel = stagingViewModel
+                                )
+                            }
                         }
 
                         "scan" -> {
-                            ScanScreen(
-                                onBackClick = {
-                                    currentRoute = "staging"
-                                },
-                                onScanCompleted = {
-                                    currentRoute = "staging"
-                                },
-                                stagingViewModel = stagingViewModel
-                            )
+                            if (!userRole.equals("ARSIPARIS", ignoreCase = true)) {
+                                currentRoute = "dashboard"
+                            } else {
+                                ScanScreen(
+                                    onBackClick = {
+                                        currentRoute = "staging"
+                                    },
+                                    onScanCompleted = {
+                                        currentRoute = "staging"
+                                    },
+                                    stagingViewModel = stagingViewModel
+                                )
+                            }
                         }
 
                         "document_detail" -> {
@@ -196,6 +210,7 @@ class MainActivity : ComponentActivity() {
                             if (documentId != null) {
                                 DocumentDetailScreen(
                                     documentId = documentId,
+                                    userRole = userRole,
                                     onProfileClick = {
                                         routeBeforeProfile = "document_detail"
                                         currentRoute = "profile"
