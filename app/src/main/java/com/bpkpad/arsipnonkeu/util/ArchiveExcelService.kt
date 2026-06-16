@@ -31,7 +31,9 @@ object ArchiveExcelService {
         "Keaslian",
         "Status",
         "Asal Instansi",
-        "Lokasi"
+        "Ruangan",
+        "Rak",
+        "Boks"
     )
 
     fun exportArchiveDocuments(
@@ -43,31 +45,36 @@ object ArchiveExcelService {
             val workbook = Workbook(outputStream, "ArsipNonKeu", "1.0")
             val sheet = workbook.newWorksheet("Arsip")
 
+            // Headers
             headers.forEachIndexed { index, header ->
                 sheet.value(0, index, header)
             }
 
+            // Data
             documents.forEachIndexed { rowIndex, item ->
                 val row = rowIndex + 1
-                val document = item.document
+                val doc = item.document
+                val loc = item.storageLocation
 
-                sheet.value(row, 0, document.documentType.label)
-                sheet.value(row, 1, document.documentNumber.orEmpty())
-                sheet.value(row, 2, document.classificationCode.orEmpty())
-                sheet.value(row, 3, document.title)
-                sheet.value(row, 4, document.description.orEmpty())
-                sheet.value(row, 5, document.year)
-                sheet.value(row, 6, document.physicalForm.label)
-                sheet.value(row, 7, document.condition?.label.orEmpty())
-                sheet.value(row, 8, document.copyCount)
-                sheet.value(row, 9, when (document.isCopy) {
+                sheet.value(row, 0, doc.documentType.label)
+                sheet.value(row, 1, doc.documentNumber.orEmpty())
+                sheet.value(row, 2, doc.classificationCode.orEmpty())
+                sheet.value(row, 3, doc.title)
+                sheet.value(row, 4, doc.description.orEmpty())
+                sheet.value(row, 5, doc.year.toDouble()) // numeric in excel
+                sheet.value(row, 6, doc.physicalForm.label)
+                sheet.value(row, 7, doc.condition?.label ?: "Tidak diketahui")
+                sheet.value(row, 8, doc.copyCount.toDouble()) // numeric in excel
+                sheet.value(row, 9, when (doc.isCopy) {
                     true -> "Kopi"
                     false -> "Asli"
                     null -> "Tidak diketahui"
                 })
-                sheet.value(row, 10, document.status.label)
-                sheet.value(row, 11, document.originInstance.orEmpty())
-                sheet.value(row, 12, item.locationLabel)
+                sheet.value(row, 10, doc.status.label)
+                sheet.value(row, 11, doc.originInstance.orEmpty())
+                sheet.value(row, 12, loc?.room.orEmpty())
+                sheet.value(row, 13, loc?.shelf.orEmpty())
+                sheet.value(row, 14, loc?.boxNumber.orEmpty())
             }
 
             workbook.finish()
@@ -76,24 +83,26 @@ object ArchiveExcelService {
 
     fun importStagingDocuments(
         context: Context,
-        uri: Uri
+        uri: Uri,
+        expectedYear: Int
     ): List<StagingDocument> {
         val bytes = context.contentResolver.openInputStream(uri)?.use { inputStream ->
             inputStream.readBytes()
         } ?: return emptyList()
 
         return try {
-            readStagingDocumentsFromXlsx(bytes)
+            readStagingDocumentsFromXlsx(bytes, expectedYear)
         } catch (throwable: Throwable) {
             throw IllegalStateException(
-                "Gagal membaca file Excel. Pastikan file berformat .xlsx dan mengikuti template kolom arsip.",
+                throwable.message ?: "Gagal membaca file Excel. Pastikan file berformat .xlsx dan mengikuti template kolom arsip.",
                 throwable
             )
         }
     }
 
     private fun readStagingDocumentsFromXlsx(
-        xlsxBytes: ByteArray
+        xlsxBytes: ByteArray,
+        expectedYear: Int
     ): List<StagingDocument> {
         val sharedStrings = readSharedStrings(xlsxBytes)
         val sheetXml = readZipEntry(
@@ -106,40 +115,56 @@ object ArchiveExcelService {
             sharedStrings = sharedStrings
         )
 
-        return rows
-            .drop(1) // skip header
-            .mapNotNull { row ->
-                val title = row[3].orEmpty()
+        val importedDocs = mutableListOf<StagingDocument>()
+        val invalidYearRows = mutableListOf<Int>()
 
-                val isEmptyRow = listOf(
-                    row[0].orEmpty(),
-                    row[1].orEmpty(),
-                    row[2].orEmpty(),
-                    title,
-                    row[5].orEmpty()
-                ).all { it.isBlank() }
+        rows.drop(1).forEachIndexed { index, row ->
+            val rowIndex = index + 2 // 1-based, +1 for header
+            val title = row[3].orEmpty()
 
-                if (isEmptyRow) {
-                    null
+            val isEmptyRow = listOf(
+                row[0].orEmpty(),
+                row[1].orEmpty(),
+                row[2].orEmpty(),
+                title,
+                row[5].orEmpty()
+            ).all { it.isBlank() }
+
+            if (!isEmptyRow) {
+                val rowYear = parseIntCell(row[5].orEmpty(), -1)
+                
+                if (rowYear != expectedYear) {
+                    invalidYearRows.add(rowIndex)
                 } else {
-                    StagingDocument(
-                        id = UUID.randomUUID().toString(),
-                        documentType = parseDocumentType(row[0].orEmpty()),
-                        documentNumber = row[1].orEmpty().takeIf { it.isNotBlank() },
-                        classificationCode = row[2].orEmpty().takeIf { it.isNotBlank() },
-                        title = title.ifBlank { "Dokumen Tanpa Judul" },
-                        description = row[4].orEmpty().takeIf { it.isNotBlank() },
-                        year = parseIntCell(row[5].orEmpty(), 2025),
-                        physicalForm = parsePhysicalForm(row[6].orEmpty()),
-                        condition = parseDocumentCondition(row[7].orEmpty()),
-                        copyCount = parseIntCell(row[8].orEmpty(), 1).coerceAtLeast(1),
-                        isCopy = parseIsCopy(row[9].orEmpty()),
-                        status = parseDocumentStatus(row[10].orEmpty()),
-                        originInstance = row[11].orEmpty().takeIf { it.isNotBlank() },
-                        source = StagingDocumentSource.IMPORT
+                    importedDocs.add(
+                        StagingDocument(
+                            id = UUID.randomUUID().toString(),
+                            documentType = parseDocumentType(row[0].orEmpty()),
+                            documentNumber = row[1].orEmpty().takeIf { it.isNotBlank() },
+                            classificationCode = row[2].orEmpty().takeIf { it.isNotBlank() },
+                            title = title.ifBlank { "Dokumen Tanpa Judul" },
+                            description = row[4].orEmpty().takeIf { it.isNotBlank() },
+                            year = rowYear,
+                            physicalForm = parsePhysicalForm(row[6].orEmpty()),
+                            condition = parseDocumentCondition(row[7].orEmpty()),
+                            copyCount = parseIntCell(row[8].orEmpty(), 1).coerceAtLeast(1),
+                            isCopy = parseIsCopy(row[9].orEmpty()),
+                            status = parseDocumentStatus(row[10].orEmpty()),
+                            originInstance = row[11].orEmpty().takeIf { it.isNotBlank() },
+                            source = StagingDocumentSource.IMPORT
+                        )
                     )
                 }
             }
+        }
+
+        if (invalidYearRows.isNotEmpty()) {
+            throw IllegalArgumentException(
+                "Ditemukan data dengan tahun yang tidak sesuai ($expectedYear) pada baris: ${invalidYearRows.joinToString(", ")}. Mohon periksa kembali file Excel Anda."
+            )
+        }
+
+        return importedDocs
     }
 
     private fun readSharedStrings(

@@ -403,7 +403,8 @@ class StagingViewModel(
                 val importedDocuments = withContext(Dispatchers.IO) {
                     ArchiveExcelService.importStagingDocuments(
                         context = context,
-                        uri = uri
+                        uri = uri,
+                        expectedYear = year
                     )
                 }.map { document ->
                     document.copy(
