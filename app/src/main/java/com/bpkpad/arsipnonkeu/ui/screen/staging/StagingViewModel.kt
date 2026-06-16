@@ -502,12 +502,14 @@ class StagingViewModel(
                 }
 
                 val archiveDocuments = currentState.documents.map { it.toArchiveDocument() }
+                val actorId = ArchiveModule.authRepository.getCurrentUserId()
 
                 archiveRepository.saveStagingDocuments(
                     documents = archiveDocuments,
                     room = currentState.room,
                     shelf = currentState.shelf,
-                    boxNumber = currentState.boxNumber.takeIf { it.isNotBlank() }
+                    boxNumber = currentState.boxNumber.takeIf { it.isNotBlank() },
+                    actorId = actorId
                 )
 
                 _uiState.value = _uiState.value.copy(

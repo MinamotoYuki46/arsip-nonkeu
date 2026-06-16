@@ -49,7 +49,7 @@ object ArchiveModule {
 
     val authRepository: AuthRepository = AuthRepositoryImpl(authRemoteDataSource)
     val profileRepository: ProfileRepository = ProfileRepositoryImpl(profileRemoteDataSource)
-    val activityLogRepository: ActivityLogRepository = ActivityLogRepositoryImpl(activityLogRemoteDataSource)
+    val activityLogRepository: ActivityLogRepository = ActivityLogRepositoryImpl(activityLogRemoteDataSource, authRemoteDataSource)
 
     val getArchiveYearSummariesUseCase =
         GetArchiveYearSummariesUseCase(archiveRepository)

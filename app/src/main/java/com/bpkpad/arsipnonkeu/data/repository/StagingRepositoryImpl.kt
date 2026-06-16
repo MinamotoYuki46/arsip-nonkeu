@@ -6,6 +6,7 @@ import com.bpkpad.arsipnonkeu.data.remote.model.toDto
 import com.bpkpad.arsipnonkeu.domain.repository.StagingRepository
 import com.bpkpad.arsipnonkeu.ui.screen.staging.StagingDocument
 import io.github.jan.supabase.SupabaseClient
+import io.github.jan.supabase.auth.auth
 import io.github.jan.supabase.postgrest.postgrest
 
 class StagingRepositoryImpl(
@@ -24,7 +25,13 @@ class StagingRepositoryImpl(
     }
 
     override suspend fun upsertStagingDocument(document: StagingDocument) {
-        val dto = document.toDto()
+        val actorId = supabase.auth.currentUserOrNull()?.id
+        val dto = document.toDto().copy(
+            createdBy = actorId,
+            updatedBy = actorId,
+            updatedAt = null
+        )
+
         supabase.postgrest["staging_documents"].upsert(dto)
     }
 

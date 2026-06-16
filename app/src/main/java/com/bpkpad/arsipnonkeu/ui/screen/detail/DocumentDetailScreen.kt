@@ -71,6 +71,7 @@ import com.bpkpad.arsipnonkeu.ui.component.ArchiveClassificationSelectorSheet
 import com.bpkpad.arsipnonkeu.ui.component.LoadingIndicator
 import com.bpkpad.arsipnonkeu.ui.component.TopBar
 import com.bpkpad.arsipnonkeu.ui.theme.BackgroundGray
+import com.bpkpad.arsipnonkeu.util.DateFormatter
 
 private val PoppinsFont = FontFamily.Default
 
@@ -229,11 +230,17 @@ fun DocumentDetailScreen(
                     }
 
                     item {
-                        DocumentPlacementCard(item = uiState.item!!)
+                        DocumentPlacementCard(
+                            item = uiState.item!!,
+                            viewModel = viewModel
+                        )
                     }
 
                     item {
-                        DocumentSystemCard(item = uiState.item!!)
+                        DocumentSystemCard(
+                            item = uiState.item!!,
+                            viewModel = viewModel
+                        )
                     }
 
                     uiState.errorMessage?.let { message ->
@@ -523,7 +530,8 @@ private fun DocumentInformationCard(
 
 @Composable
 private fun DocumentPlacementCard(
-    item: ArchiveDocumentListItem
+    item: ArchiveDocumentListItem,
+    viewModel: DocumentDetailViewModel
 ) {
     val placement = item.currentPlacement
     val location = item.storageLocation
@@ -553,23 +561,25 @@ private fun DocumentPlacementCard(
             )
         }
 
-        DetailRow("Tanggal Penempatan", placement?.placedAt ?: "-")
-        DetailRow("Tanggal Dipindah/Dikeluarkan", placement?.removedAt ?: "-")
+        DetailRow("Tanggal Penempatan", DateFormatter.formatIsoToHuman(placement?.placedAt))
+        DetailRow("Tanggal Dipindah/Dikeluarkan", DateFormatter.formatIsoToHuman(placement?.removedAt))
+        DetailRow("Ditempatkan oleh", viewModel.getUserDisplayName(placement?.userId))
     }
 }
 
 @Composable
 private fun DocumentSystemCard(
-    item: ArchiveDocumentListItem
+    item: ArchiveDocumentListItem,
+    viewModel: DocumentDetailViewModel
 ) {
     val document = item.document
 
     DetailCard(title = "Informasi Sistem") {
-        DetailRow("Dibuat oleh", document.createdBy ?: "-")
-        DetailRow("Diubah oleh", document.updatedBy ?: "-")
-        DetailRow("Dibuat pada", document.createdAt ?: "-")
-        DetailRow("Diubah pada", document.updatedAt ?: "-")
-        DetailRow("Dihapus pada", document.deletedAt ?: "-")
+        DetailRow("Dibuat oleh", viewModel.getUserDisplayName(document.createdBy))
+        DetailRow("Diubah oleh", viewModel.getUserDisplayName(document.updatedBy))
+        DetailRow("Dibuat pada", DateFormatter.formatIsoToHuman(document.createdAt))
+        DetailRow("Diubah pada", DateFormatter.formatIsoToHuman(document.updatedAt))
+        DetailRow("Dihapus pada", DateFormatter.formatIsoToHuman(document.deletedAt))
     }
 }
 
@@ -1180,11 +1190,17 @@ fun DocumentDetailContentPreview() {
             }
 
             item {
-                DocumentPlacementCard(item = item)
+                DocumentPlacementCard(
+                    item = item,
+                    viewModel = viewModel
+                )
             }
 
             item {
-                DocumentSystemCard(item = item)
+                DocumentSystemCard(
+                    item = item,
+                    viewModel = viewModel
+                )
             }
 
             item {

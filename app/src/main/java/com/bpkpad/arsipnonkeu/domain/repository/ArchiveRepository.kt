@@ -36,7 +36,8 @@ interface ArchiveRepository {
         documents: List<ArchiveDocument>,
         room: String,
         shelf: String,
-        boxNumber: String?
+        boxNumber: String?,
+        actorId: String? = null
     )
 
     suspend fun checkStorageLocationExists(

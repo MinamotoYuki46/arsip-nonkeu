@@ -5,6 +5,7 @@ import com.bpkpad.arsipnonkeu.data.mapper.*
 import com.bpkpad.arsipnonkeu.domain.model.*
 import com.bpkpad.arsipnonkeu.domain.repository.ArchiveRepository
 import io.github.jan.supabase.SupabaseClient
+import io.github.jan.supabase.auth.auth
 import io.github.jan.supabase.functions.functions
 import io.github.jan.supabase.postgrest.postgrest
 import io.github.jan.supabase.postgrest.query.Columns
@@ -91,13 +92,15 @@ class ArchiveRepositoryImpl(
     override suspend fun createArchiveDocument(
         document: ArchiveDocument
     ) {
-        val dto = document.toDto()
+        val actorId = supabase.auth.currentUserOrNull()?.id
+        val dto = document.toDto().copy(createdBy = actorId)
         supabase.postgrest["archive_documents"].insert(dto)
     }
 
     override suspend fun updateArchiveDocument(
         document: ArchiveDocument
     ) {
+        val actorId = supabase.auth.currentUserOrNull()?.id
         val dto = ArchiveDocumentDto(
             documentType = document.documentType.name,
             documentNumber = document.documentNumber,
@@ -110,7 +113,8 @@ class ArchiveRepositoryImpl(
             copyCount = document.copyCount,
             isCopy = document.isCopy,
             status = document.status.name,
-            originInstance = document.originInstance
+            originInstance = document.originInstance,
+            updatedBy = actorId
         )
 
         supabase.postgrest["archive_documents"].update(dto) {
@@ -142,7 +146,8 @@ class ArchiveRepositoryImpl(
         documents: List<ArchiveDocument>,
         room: String,
         shelf: String,
-        boxNumber: String?
+        boxNumber: String?,
+        actorId: String?
     ) {
         // We use RPC push_staging_document_to_archive for each document
         documents.forEach { doc ->
@@ -153,6 +158,7 @@ class ArchiveRepositoryImpl(
                     put("p_room", room)
                     put("p_shelf", shelf)
                     put("p_box_number", boxNumber)
+                    put("p_actor_id", actorId)
                 }
             )
         }

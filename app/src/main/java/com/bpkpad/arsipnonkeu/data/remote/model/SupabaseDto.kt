@@ -21,6 +21,8 @@ data class StagingDocumentDto(
     @SerialName("status") val status: String,
     @SerialName("origin_instance") val originInstance: String? = null,
     @SerialName("source") val source: String,
+    @SerialName("created_by") val createdBy: String? = null,
+    @SerialName("updated_by") val updatedBy: String? = null,
     @SerialName("created_at") val createdAt: String? = null,
     @SerialName("updated_at") val updatedAt: String? = null
 )
@@ -100,7 +102,9 @@ fun StagingDocument.toDto(): StagingDocumentDto {
         isCopy = isCopy,
         status = status.name,
         originInstance = originInstance,
-        source = source.name
+        source = source.name,
+        createdBy = null, // Will be set in Repository
+        updatedBy = null  // Will be set in Repository
     )
 }
 

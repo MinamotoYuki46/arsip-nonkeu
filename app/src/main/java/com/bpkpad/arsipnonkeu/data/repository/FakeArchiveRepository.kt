@@ -353,7 +353,8 @@ class FakeArchiveRepository : ArchiveRepository {
         documents: List<ArchiveDocument>,
         room: String,
         shelf: String,
-        boxNumber: String?
+        boxNumber: String?,
+        actorId: String?
     ) {
         var location = storageLocations.firstOrNull {
             it.room == room && it.shelf == shelf && it.boxNumber == boxNumber
@@ -373,7 +374,8 @@ class FakeArchiveRepository : ArchiveRepository {
             val docId = if (doc.id.isBlank()) generateDocumentId() else doc.id
             val docToInsert = doc.copy(
                 id = docId,
-                createdAt = doc.createdAt ?: "2025-02-17"
+                createdAt = doc.createdAt ?: "2025-02-17T10:00:00Z",
+                createdBy = actorId ?: "Sistem"
             )
             this.documents.add(docToInsert)
 
@@ -382,9 +384,9 @@ class FakeArchiveRepository : ArchiveRepository {
                     id = "place-${(placements.size + 1).toString().padStart(3, '0')}",
                     archiveDocumentId = docToInsert.id,
                     storageLocationId = location.id,
-                    placedAt = docToInsert.createdAt ?: "2025-02-17",
+                    placedAt = docToInsert.createdAt ?: "2025-02-17T10:00:00Z",
                     removedAt = null,
-                    userId = null,
+                    userId = actorId ?: "Sistem",
                 )
             )
         }

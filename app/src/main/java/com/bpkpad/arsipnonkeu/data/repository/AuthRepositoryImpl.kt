@@ -25,6 +25,10 @@ class AuthRepositoryImpl(
         return remoteDataSource.getCurrentUserId()
     }
 
+    override fun getCurrentUserEmail(): String? {
+        return remoteDataSource.getCurrentUserEmail()
+    }
+
     private fun usernameToAuthEmail(username: String): String {
         return "${username.trim().lowercase()}@example.com"
     }

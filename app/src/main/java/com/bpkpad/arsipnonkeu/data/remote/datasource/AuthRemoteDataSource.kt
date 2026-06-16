@@ -21,4 +21,8 @@ class AuthRemoteDataSource(
     fun getCurrentUserId(): String? {
         return supabaseClient.auth.currentUserOrNull()?.id
     }
+
+    fun getCurrentUserEmail(): String? {
+        return supabaseClient.auth.currentUserOrNull()?.email
+    }
 }

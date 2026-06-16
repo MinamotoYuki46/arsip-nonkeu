@@ -6,7 +6,9 @@ import com.bpkpad.arsipnonkeu.di.ArchiveModule
 import com.bpkpad.arsipnonkeu.domain.model.ArchiveClassification
 import com.bpkpad.arsipnonkeu.domain.model.ArchiveDocument
 import com.bpkpad.arsipnonkeu.domain.model.ArchiveDocumentListItem
+import com.bpkpad.arsipnonkeu.domain.model.UserProfile
 import com.bpkpad.arsipnonkeu.domain.repository.ArchiveRepository
+import com.bpkpad.arsipnonkeu.domain.repository.ProfileRepository
 import com.bpkpad.arsipnonkeu.domain.usecase.GetArchiveClassificationsUseCase
 import com.bpkpad.arsipnonkeu.domain.usecase.GetArchiveDocumentDetailUseCase
 import kotlinx.coroutines.flow.MutableStateFlow
@@ -21,7 +23,8 @@ data class DocumentDetailUiState(
     val isDeleted: Boolean = false,
     val successMessage: String? = null,
     val archiveClassifications: List<ArchiveClassification> = emptyList(),
-    val isClassificationLoading: Boolean = false
+    val isClassificationLoading: Boolean = false,
+    val userProfiles: Map<String, UserProfile> = emptyMap()
 )
 
 class DocumentDetailViewModel(
@@ -30,7 +33,9 @@ class DocumentDetailViewModel(
     private val repository: ArchiveRepository =
         ArchiveModule.archiveRepositoryInstance,
     private val getArchiveClassificationsUseCase: GetArchiveClassificationsUseCase =
-        ArchiveModule.getArchiveClassificationsUseCase
+        ArchiveModule.getArchiveClassificationsUseCase,
+    private val profileRepository: ProfileRepository =
+        ArchiveModule.profileRepository
 ) : ViewModel() {
 
     private val _uiState = MutableStateFlow(DocumentDetailUiState())
@@ -66,6 +71,28 @@ class DocumentDetailViewModel(
         return classification?.displayName ?: code
     }
 
+    fun getUserDisplayName(userId: String?): String {
+        if (userId.isNullOrBlank()) return "-"
+        return _uiState.value.userProfiles[userId]?.name ?: userId
+    }
+
+    private fun loadUserProfiles(userIds: Set<String>) {
+        val missingIds = userIds.filter { it !in _uiState.value.userProfiles && it.isNotBlank() }
+        if (missingIds.isEmpty()) return
+
+        viewModelScope.launch {
+            try {
+                val profiles = missingIds.mapNotNull { id ->
+                    profileRepository.getProfileById(id)
+                }
+                val newProfilesMap = _uiState.value.userProfiles + profiles.associateBy { it.id }
+                _uiState.value = _uiState.value.copy(userProfiles = newProfilesMap)
+            } catch (e: Exception) {
+                // Silent error for profile loading
+            }
+        }
+    }
+
     fun loadDocument(documentId: String) {
         viewModelScope.launch {
             _uiState.value = _uiState.value.copy(
@@ -86,6 +113,14 @@ class DocumentDetailViewModel(
                         null
                     }
                 )
+
+                item?.let {
+                    val userIds = mutableSetOf<String>()
+                    it.document.createdBy?.let { id -> userIds.add(id) }
+                    it.document.updatedBy?.let { id -> userIds.add(id) }
+                    it.currentPlacement?.userId?.let { id -> userIds.add(id) }
+                    loadUserProfiles(userIds)
+                }
             } catch (exception: Exception) {
                 _uiState.value = _uiState.value.copy(
                     isLoading = false,
