@@ -28,6 +28,31 @@ import com.bpkpad.arsipnonkeu.ui.theme.BackgroundGray
 import androidx.lifecycle.viewmodel.compose.viewModel
 
 @Composable
+private fun detailTextFieldColors() = OutlinedTextFieldDefaults.colors(
+    focusedTextColor = Color.Black,
+    unfocusedTextColor = Color.Black,
+    disabledTextColor = Color.Black,
+
+    focusedLabelColor = Color.Black,
+    unfocusedLabelColor = Color.Black,
+    disabledLabelColor = Color.Black,
+
+    focusedPlaceholderColor = Color.Black,
+    unfocusedPlaceholderColor = Color.Black,
+    disabledPlaceholderColor = Color.Black,
+
+    focusedBorderColor = Color.Black,
+    unfocusedBorderColor = Color.Black,
+    disabledBorderColor = Color.Black,
+
+    cursorColor = Color.Black,
+
+    focusedContainerColor = Color.Transparent,
+    unfocusedContainerColor = Color.Transparent,
+    disabledContainerColor = Color.Transparent
+)
+
+@Composable
 fun LoginScreen(
     onLoginSuccess: (UserProfile) -> Unit = {},
     viewModel: LoginViewModel = viewModel()
@@ -65,7 +90,7 @@ fun LoginScreen(
             // Header
             Column(horizontalAlignment = Alignment.CenterHorizontally) {
                 Text(
-                    text = "Arsip Non-Keu",
+                    text = "SIMPANKAN",
                     fontSize = 32.sp,
                     fontWeight = FontWeight.Bold,
                     color = Color(0xFF0D631B)
@@ -109,7 +134,8 @@ fun LoginScreen(
                         leadingIcon = { Icon(Icons.Default.Person, contentDescription = null) },
                         shape = RoundedCornerShape(16.dp),
                         singleLine = true,
-                        enabled = !isLoading
+                        enabled = !isLoading,
+                        colors = detailTextFieldColors()
                     )
 
                     OutlinedTextField(
@@ -134,7 +160,8 @@ fun LoginScreen(
                         keyboardOptions = KeyboardOptions(keyboardType = KeyboardType.Password),
                         shape = RoundedCornerShape(16.dp),
                         singleLine = true,
-                        enabled = !isLoading
+                        enabled = !isLoading,
+                        colors = detailTextFieldColors()
                     )
 
                     if (errorMessage != null) {
@@ -169,7 +196,7 @@ fun LoginScreen(
                                 strokeWidth = 2.dp
                             )
                         } else {
-                            Text("Masuk", fontSize = 16.sp, fontWeight = FontWeight.Bold)
+                            Text("Masuk", fontSize = 16.sp, fontWeight = FontWeight.Bold, color = Color.White)
                         }
                     }
                 }

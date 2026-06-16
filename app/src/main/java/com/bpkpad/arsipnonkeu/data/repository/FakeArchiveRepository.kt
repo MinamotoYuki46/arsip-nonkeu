@@ -11,6 +11,8 @@ import com.bpkpad.arsipnonkeu.domain.model.DocumentType
 import com.bpkpad.arsipnonkeu.domain.model.PhysicalForm
 import com.bpkpad.arsipnonkeu.domain.model.StorageLocation
 import com.bpkpad.arsipnonkeu.domain.repository.ArchiveRepository
+import kotlinx.coroutines.flow.Flow
+import kotlinx.coroutines.flow.flowOf
 
 class FakeArchiveRepository : ArchiveRepository {
 
@@ -226,6 +228,41 @@ class FakeArchiveRepository : ArchiveRepository {
             userId = null,
         )
     )
+
+    override fun observeArchiveYearSummaries(): Flow<List<ArchiveYearSummary>> {
+        return flowOf(
+            documents
+                .filter { it.deletedAt == null }
+                .groupBy { it.year }
+                .map { (year, documentsInYear) ->
+                    ArchiveYearSummary(
+                        year = year,
+                        documentCount = documentsInYear.size
+                    )
+                }
+                .sortedByDescending { it.year }
+        )
+    }
+
+    override fun observeArchiveDocumentListItems(year: Int): Flow<List<ArchiveDocumentListItem>> {
+        return flowOf(
+            documents
+                .filter { it.deletedAt == null && it.year == year }
+                .map { buildListItem(it) }
+        )
+    }
+
+    override suspend fun refreshArchiveYearSummaries() {
+        // No-op for fake
+    }
+
+    override suspend fun refreshArchiveDocuments(year: Int) {
+        // No-op for fake
+    }
+
+    override suspend fun refreshArchiveDocumentById(id: String) {
+        // No-op for fake
+    }
 
     override suspend fun getArchiveYearSummaries(): List<ArchiveYearSummary> {
         return documents

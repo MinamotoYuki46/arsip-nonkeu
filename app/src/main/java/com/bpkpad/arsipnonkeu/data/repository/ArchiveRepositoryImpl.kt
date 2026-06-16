@@ -2,15 +2,15 @@ package com.bpkpad.arsipnonkeu.data.repository
 
 import com.bpkpad.arsipnonkeu.data.remote.model.*
 import com.bpkpad.arsipnonkeu.data.mapper.*
+import com.bpkpad.arsipnonkeu.data.local.datasource.ArchiveLocalDataSource
 import com.bpkpad.arsipnonkeu.domain.model.*
 import com.bpkpad.arsipnonkeu.domain.repository.ArchiveRepository
 import io.github.jan.supabase.SupabaseClient
 import io.github.jan.supabase.auth.auth
-import io.github.jan.supabase.functions.functions
 import io.github.jan.supabase.postgrest.postgrest
 import io.github.jan.supabase.postgrest.query.Columns
 import io.github.jan.supabase.postgrest.query.filter.FilterOperator
-import io.github.jan.supabase.postgrest.query.filter.PostgrestFilterBuilder
+import kotlinx.coroutines.flow.Flow
 import kotlinx.serialization.json.buildJsonObject
 import kotlinx.serialization.json.put
 import java.text.SimpleDateFormat
@@ -19,10 +19,72 @@ import java.util.Locale
 import java.util.TimeZone
 
 class ArchiveRepositoryImpl(
-    private val supabase: SupabaseClient
+    private val supabase: SupabaseClient,
+    private val localDataSource: ArchiveLocalDataSource
 ) : ArchiveRepository {
 
+    // --- NEW FLOW-BASED METHODS ---
+
+    override fun observeArchiveYearSummaries(): Flow<List<ArchiveYearSummary>> {
+        return localDataSource.observeArchiveYearSummaries()
+    }
+
+    override fun observeArchiveDocumentListItems(year: Int): Flow<List<ArchiveDocumentListItem>> {
+        return localDataSource.observeArchiveDocumentListItems(year)
+    }
+
+    override suspend fun refreshArchiveYearSummaries() {
+        // Fetch unique years from Supabase
+        val response = supabase.postgrest["archive_documents"]
+            .select(columns = Columns.raw("year")) {
+                filter {
+                    filter("deleted_at", FilterOperator.IS, "null")
+                }
+            }
+        
+        val years = response.decodeList<YearOnlyDto>()
+            .map { it.year }
+            .distinct()
+
+        // For each year, fetch some documents to populate the local cache for year counts
+        // A more efficient way would be an RPC that returns counts per year, 
+        // but for now we'll just fetch documents.
+        years.forEach { year ->
+            refreshArchiveDocuments(year)
+        }
+    }
+
+    override suspend fun refreshArchiveDocuments(year: Int) {
+        val query = supabase.postgrest["archive_documents"].select {
+            filter {
+                eq("year", year)
+                filter("deleted_at", FilterOperator.IS, "null")
+            }
+        }
+
+        val documents = query.decodeList<ArchiveDocumentDto>().map { it.toDomain() }
+        
+        // Update local cache
+        localDataSource.clearArchiveDocumentsByYear(year)
+        localDataSource.saveArchiveDocuments(documents)
+    }
+
+    override suspend fun refreshArchiveDocumentById(id: String) {
+        val dto = supabase.postgrest["archive_documents"].select {
+            filter {
+                eq("id", id)
+            }
+        }.decodeSingleOrNull<ArchiveDocumentDto>()
+
+        dto?.let {
+            localDataSource.saveArchiveDocument(it.toDomain())
+        }
+    }
+
+    // --- LEGACY/SYNC METHODS ---
+
     override suspend fun getArchiveYearSummaries(): List<ArchiveYearSummary> {
+        // Still can call remote if needed, but preferably use observe + refresh
         val response = supabase.postgrest["archive_documents"]
             .select(columns = Columns.raw("year")) {
                 filter {
@@ -73,7 +135,7 @@ class ArchiveRepositoryImpl(
         return query.decodeList<ArchiveDocumentDto>().map { dto ->
             ArchiveDocumentListItem(
                 document = dto.toDomain(),
-                currentPlacement = null, // Can fetch from document_placements if needed
+                currentPlacement = null,
                 storageLocation = dto.storageLocation?.toDomain()
             )
         }
@@ -82,19 +144,38 @@ class ArchiveRepositoryImpl(
     override suspend fun getArchiveDocumentById(
         id: String
     ): ArchiveDocument? {
-        return supabase.postgrest["archive_documents"].select {
+        // Try local first
+        val local = localDataSource.getArchiveDocumentById(id)
+        if (local != null) return local
+
+        // Fallback to remote
+        val remote = supabase.postgrest["archive_documents"].select {
             filter {
                 eq("id", id)
             }
         }.decodeSingleOrNull<ArchiveDocumentDto>()?.toDomain()
+
+        // Cache it if found
+        remote?.let { localDataSource.saveArchiveDocument(it) }
+        
+        return remote
     }
+
+    // --- WRITE OPERATIONS ---
 
     override suspend fun createArchiveDocument(
         document: ArchiveDocument
     ) {
         val actorId = supabase.auth.currentUserOrNull()?.id
         val dto = document.toDto().copy(createdBy = actorId)
-        supabase.postgrest["archive_documents"].insert(dto)
+        
+        // 1. Remote Insert
+        val insertedDto = supabase.postgrest["archive_documents"].insert(dto) {
+            select()
+        }.decodeSingle<ArchiveDocumentDto>()
+
+        // 2. Local Cache Update
+        localDataSource.saveArchiveDocument(insertedDto.toDomain())
     }
 
     override suspend fun updateArchiveDocument(
@@ -117,11 +198,16 @@ class ArchiveRepositoryImpl(
             updatedBy = actorId
         )
 
-        supabase.postgrest["archive_documents"].update(dto) {
+        // 1. Remote Update
+        val updatedDto = supabase.postgrest["archive_documents"].update(dto) {
             filter {
                 eq("id", document.id)
             }
-        }
+            select()
+        }.decodeSingleOrNull<ArchiveDocumentDto>()
+
+        // 2. Local Cache Update
+        updatedDto?.let { localDataSource.saveArchiveDocument(it.toDomain()) }
     }
 
     override suspend fun deleteArchiveDocument(
@@ -131,7 +217,8 @@ class ArchiveRepositoryImpl(
         sdf.timeZone = TimeZone.getTimeZone("UTC")
         val timestamp = sdf.format(Date())
 
-        supabase.postgrest["archive_documents"].update(
+        // 1. Remote Soft Delete
+        val updatedDto = supabase.postgrest["archive_documents"].update(
             buildJsonObject {
                 put("deleted_at", timestamp)
             }
@@ -139,6 +226,14 @@ class ArchiveRepositoryImpl(
             filter {
                 eq("id", id)
             }
+            select()
+        }.decodeSingleOrNull<ArchiveDocumentDto>()
+
+        // 2. Local Cache Update (or delete)
+        updatedDto?.let { 
+            // In our system, we don't show items with deleted_at IS NOT NULL
+            // So we can either delete it or update it and the query filter will hide it.
+            localDataSource.saveArchiveDocument(it.toDomain())
         }
     }
 
@@ -149,7 +244,6 @@ class ArchiveRepositoryImpl(
         boxNumber: String?,
         actorId: String?
     ) {
-        // We use RPC push_staging_document_to_archive for each document
         documents.forEach { doc ->
             supabase.postgrest.rpc(
                 function = "push_staging_document_to_archive",
@@ -161,6 +255,8 @@ class ArchiveRepositoryImpl(
                     put("p_actor_id", actorId)
                 }
             )
+            // After successful push, we should ideally refresh the documents for that year
+            refreshArchiveDocuments(doc.year)
         }
     }
 
@@ -175,8 +271,13 @@ class ArchiveRepositoryImpl(
             }
         }.decodeSingleOrNull<ArchiveDocumentDto>() ?: return null
 
+        val domain = dto.toDomain()
+        
+        // Sync local cache
+        localDataSource.saveArchiveDocument(domain)
+
         return ArchiveDocumentListItem(
-            document = dto.toDomain(),
+            document = domain,
             currentPlacement = null,
             storageLocation = dto.storageLocation?.toDomain()
         )

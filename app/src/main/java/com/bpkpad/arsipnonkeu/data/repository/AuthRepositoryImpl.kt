@@ -1,10 +1,12 @@
 package com.bpkpad.arsipnonkeu.data.repository
 
+import com.bpkpad.arsipnonkeu.data.local.datasource.ProfileLocalDataSource
 import com.bpkpad.arsipnonkeu.data.remote.datasource.AuthRemoteDataSource
 import com.bpkpad.arsipnonkeu.domain.repository.AuthRepository
 
 class AuthRepositoryImpl(
-    private val remoteDataSource: AuthRemoteDataSource
+    private val remoteDataSource: AuthRemoteDataSource,
+    private val profileLocalDataSource: ProfileLocalDataSource
 ) : AuthRepository {
 
     override suspend fun login(username: String, password: String) {
@@ -19,6 +21,8 @@ class AuthRepositoryImpl(
 
     override suspend fun logout() {
         remoteDataSource.logout()
+        // Clear local profile cache on logout
+        profileLocalDataSource.clearUserProfile()
     }
 
     override fun getCurrentUserId(): String? {

@@ -1,6 +1,9 @@
 package com.bpkpad.arsipnonkeu.di
 
 import com.bpkpad.arsipnonkeu.BuildConfig
+import com.bpkpad.arsipnonkeu.data.local.database.AppDatabase
+import com.bpkpad.arsipnonkeu.data.local.datasource.ArchiveLocalDataSource
+import com.bpkpad.arsipnonkeu.data.local.datasource.ProfileLocalDataSource
 import com.bpkpad.arsipnonkeu.data.remote.datasource.ActivityLogRemoteDataSource
 import com.bpkpad.arsipnonkeu.data.remote.datasource.AuthRemoteDataSource
 import com.bpkpad.arsipnonkeu.data.remote.datasource.ProfileRemoteDataSource
@@ -27,6 +30,12 @@ import io.github.jan.supabase.functions.Functions
 import io.github.jan.supabase.postgrest.Postgrest
 
 object ArchiveModule {
+    private lateinit var database: AppDatabase
+
+    fun initialize(appDatabase: AppDatabase) {
+        database = appDatabase
+    }
+
     private val supabaseClient: SupabaseClient by lazy {
         createSupabaseClient(
             supabaseUrl = BuildConfig.SUPABASE_URL,
@@ -38,31 +47,58 @@ object ArchiveModule {
         }
     }
 
-    private val archiveRepository: ArchiveRepository = ArchiveRepositoryImpl(supabaseClient)
-    private val stagingRepository: StagingRepository = StagingRepositoryImpl(supabaseClient)
-    private val archiveClassificationRepository: ArchiveClassificationRepository = 
+    private val archiveLocalDataSource: ArchiveLocalDataSource by lazy {
+        ArchiveLocalDataSource(database.archiveDocumentDao())
+    }
+
+    private val profileLocalDataSource: ProfileLocalDataSource by lazy {
+        ProfileLocalDataSource(database.userProfileDao())
+    }
+
+    val archiveRepository: ArchiveRepository by lazy {
+        ArchiveRepositoryImpl(supabaseClient, archiveLocalDataSource)
+    }
+
+    val stagingRepository: StagingRepository by lazy {
+        StagingRepositoryImpl(supabaseClient)
+    }
+
+    val archiveClassificationRepository: ArchiveClassificationRepository by lazy {
         ArchiveClassificationRepositoryImpl(supabaseClient)
+    }
 
-    private val authRemoteDataSource = AuthRemoteDataSource(supabaseClient)
-    private val profileRemoteDataSource = ProfileRemoteDataSource(supabaseClient)
-    private val activityLogRemoteDataSource = ActivityLogRemoteDataSource(supabaseClient)
+    private val authRemoteDataSource by lazy { AuthRemoteDataSource(supabaseClient) }
+    private val profileRemoteDataSource by lazy { ProfileRemoteDataSource(supabaseClient) }
+    private val activityLogRemoteDataSource by lazy { ActivityLogRemoteDataSource(supabaseClient) }
 
-    val authRepository: AuthRepository = AuthRepositoryImpl(authRemoteDataSource)
-    val profileRepository: ProfileRepository = ProfileRepositoryImpl(profileRemoteDataSource)
-    val activityLogRepository: ActivityLogRepository = ActivityLogRepositoryImpl(activityLogRemoteDataSource, authRemoteDataSource)
+    val authRepository: AuthRepository by lazy {
+        AuthRepositoryImpl(authRemoteDataSource, profileLocalDataSource)
+    }
 
-    val getArchiveYearSummariesUseCase =
+    val profileRepository: ProfileRepository by lazy {
+        ProfileRepositoryImpl(profileRemoteDataSource, profileLocalDataSource)
+    }
+
+    val activityLogRepository: ActivityLogRepository by lazy {
+        ActivityLogRepositoryImpl(activityLogRemoteDataSource, authRemoteDataSource)
+    }
+
+    val getArchiveYearSummariesUseCase by lazy {
         GetArchiveYearSummariesUseCase(archiveRepository)
+    }
 
-    val getArchiveDocumentListItemsUseCase =
+    val getArchiveDocumentListItemsUseCase by lazy {
         GetArchiveDocumentListItemsUseCase(archiveRepository)
+    }
 
-    val getArchiveDocumentDetailUseCase =
+    val getArchiveDocumentDetailUseCase by lazy {
         GetArchiveDocumentDetailUseCase(archiveRepository)
+    }
 
-    val archiveRepositoryInstance: ArchiveRepository = archiveRepository
-    val stagingRepositoryInstance: StagingRepository = stagingRepository
+    val archiveRepositoryInstance: ArchiveRepository get() = archiveRepository
+    val stagingRepositoryInstance: StagingRepository get() = stagingRepository
 
-    val getArchiveClassificationsUseCase =
+    val getArchiveClassificationsUseCase by lazy {
         GetArchiveClassificationsUseCase(archiveClassificationRepository)
+    }
 }

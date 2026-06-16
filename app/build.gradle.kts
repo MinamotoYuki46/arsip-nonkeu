@@ -2,8 +2,10 @@ import java.util.Properties
 
 plugins {
     alias(libs.plugins.android.application)
+    alias(libs.plugins.kotlin.android)
     alias(libs.plugins.kotlin.compose)
     alias(libs.plugins.kotlin.serialization)
+    alias(libs.plugins.ksp)
 }
 
 val localProperties = Properties().apply {
@@ -37,16 +39,12 @@ fun buildConfigString(
 android {
     namespace = "com.bpkpad.arsipnonkeu"
 
-    compileSdk {
-        version = release(36) {
-            minorApiLevel = 1
-        }
-    }
+    compileSdk = 35
 
     defaultConfig {
         applicationId = "com.bpkpad.arsipnonkeu"
         minSdk = 24
-        targetSdk = 36
+        targetSdk = 35
         versionCode = 1
         versionName = "1.7"
 
@@ -127,6 +125,10 @@ android {
         isCoreLibraryDesugaringEnabled = true
     }
 
+    kotlinOptions {
+        jvmTarget = "17"
+    }
+
     buildFeatures {
         compose = true
         buildConfig = true
@@ -171,7 +173,10 @@ dependencies {
 
     // Import Excel sekarang dibaca manual dari ZIP/XML,
     // jadi fastexcel-reader tidak wajib.
-    // implementation("org.dhatim:fastexcel-reader:0.20.1")
+    // Room DB (Untuk Caching & Draft)
+    implementation(libs.room.runtime)
+    implementation(libs.room.ktx)
+    ksp(libs.room.compiler)
 
     coreLibraryDesugaring("com.android.tools:desugar_jdk_libs:2.1.5")
 
