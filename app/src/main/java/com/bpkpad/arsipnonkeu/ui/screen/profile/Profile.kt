@@ -8,6 +8,7 @@ import androidx.compose.foundation.shape.CircleShape
 import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.foundation.verticalScroll
 import androidx.compose.material.icons.Icons
+import androidx.compose.material.icons.automirrored.filled.ArrowBack
 import androidx.compose.material.icons.automirrored.filled.Logout
 import androidx.compose.material.icons.filled.Person
 import androidx.compose.material3.*
@@ -32,6 +33,7 @@ val PoppinsFont = FontFamily.Default
 fun ProfileScreen(
     userName: String = "Lorem Ipsum",
     userRole: String = "Arsiparis BPKPAD",
+    onBackClick: () -> Unit = {},
     onNavItemSelected: (String) -> Unit = {},
     onLogoutClick: () -> Unit = {}
 ) {
@@ -41,7 +43,15 @@ fun ProfileScreen(
         topBar = {
             TopBar(
                 title = "Profil Pengguna",
-                onProfileClick = {} 
+                showProfileButton = false,
+                navigationIcon = {
+                    IconButton(onClick = onBackClick) {
+                        Icon(
+                            imageVector = Icons.AutoMirrored.Filled.ArrowBack,
+                            contentDescription = "Back"
+                        )
+                    }
+                }
             )
         },
         containerColor = BackgroundGray

@@ -55,6 +55,7 @@ class MainActivity : ComponentActivity() {
 
                 var currentRoute by remember { mutableStateOf("login") }
                 var lastRoute by remember { mutableStateOf("dashboard") }
+                var routeBeforeProfile by remember { mutableStateOf("dashboard") }
 
                 var selectedYear by remember { mutableIntStateOf(2025) }
                 var selectedDocumentId by remember { mutableStateOf<String?>(null) }
@@ -87,7 +88,7 @@ class MainActivity : ComponentActivity() {
                         }
 
                         "profile" -> {
-                            "dashboard"
+                            routeBeforeProfile
                         }
 
                         else -> {
@@ -139,6 +140,7 @@ class MainActivity : ComponentActivity() {
                         "dashboard" -> {
                             DashboardScreen(
                                 onProfileClick = {
+                                    routeBeforeProfile = "dashboard"
                                     currentRoute = "profile"
                                 },
                                 onArchiveYearClick = { year ->
@@ -151,6 +153,10 @@ class MainActivity : ComponentActivity() {
                         "archive" -> {
                             ArchiveScreen(
                                 selectedYear = selectedYear,
+                                onProfileClick = {
+                                    routeBeforeProfile = "archive"
+                                    currentRoute = "profile"
+                                },
                                 onDocumentClick = { documentId ->
                                     selectedDocumentId = documentId
                                     lastRoute = "archive"
@@ -165,6 +171,10 @@ class MainActivity : ComponentActivity() {
                         "staging" -> {
                             StagingScreen(
                                 selectedYear = selectedYear,
+                                onProfileClick = {
+                                    routeBeforeProfile = "staging"
+                                    currentRoute = "profile"
+                                },
                                 onBackClick = {
                                     currentRoute = "archive"
                                 },
@@ -188,6 +198,10 @@ class MainActivity : ComponentActivity() {
                         "new_record" -> {
                             NewRecordScreen(
                                 selectedYear = selectedYear,
+                                onProfileClick = {
+                                    routeBeforeProfile = "new_record"
+                                    currentRoute = "profile"
+                                },
                                 onBackClick = {
                                     currentRoute = "staging"
                                 },
@@ -216,6 +230,10 @@ class MainActivity : ComponentActivity() {
                             if (documentId != null) {
                                 DocumentDetailScreen(
                                     documentId = documentId,
+                                    onProfileClick = {
+                                        routeBeforeProfile = "document_detail"
+                                        currentRoute = "profile"
+                                    },
                                     onBackClick = {
                                         currentRoute = lastRoute
                                     }
@@ -229,6 +247,9 @@ class MainActivity : ComponentActivity() {
                             ProfileScreen(
                                 userName = userName,
                                 userRole = userRole,
+                                onBackClick = {
+                                    currentRoute = routeBeforeProfile
+                                },
                                 onNavItemSelected = { route ->
                                     currentRoute = route
                                 },
@@ -251,6 +272,7 @@ class MainActivity : ComponentActivity() {
                         else -> {
                             DashboardScreen(
                                 onProfileClick = {
+                                    routeBeforeProfile = "dashboard"
                                     currentRoute = "profile"
                                 },
                                 onArchiveYearClick = { year ->

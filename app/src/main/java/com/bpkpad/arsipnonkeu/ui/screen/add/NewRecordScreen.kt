@@ -73,6 +73,7 @@ private val PoppinsFont = FontFamily.Default
 @Composable
 fun NewRecordScreen(
     selectedYear: Int,
+    onProfileClick: () -> Unit = {},
     onBackClick: () -> Unit = {},
     onSave: () -> Unit = {},
     viewModel: StagingViewModel
@@ -113,7 +114,7 @@ fun NewRecordScreen(
         topBar = {
             TopBar(
                 title = "Input Manual",
-                onProfileClick = {}
+                onProfileClick = onProfileClick
             )
         },
         bottomBar = {

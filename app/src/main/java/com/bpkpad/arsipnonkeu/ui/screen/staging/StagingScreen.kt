@@ -98,6 +98,7 @@ private val PoppinsFont = FontFamily.Default
 @Composable
 fun StagingScreen(
     selectedYear: Int,
+    onProfileClick: () -> Unit = {},
     onBackClick: () -> Unit = {},
     onManualClick: () -> Unit = {},
     onScanClick: () -> Unit = {},
@@ -133,7 +134,7 @@ fun StagingScreen(
         topBar = {
             TopBar(
                 title = "Staging Arsip",
-                onProfileClick = {}
+                onProfileClick = onProfileClick
             )
         },
         floatingActionButton = {

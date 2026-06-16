@@ -83,6 +83,7 @@ private val PoppinsFont = FontFamily.Default
 @Composable
 fun ArchiveScreen(
     selectedYear: Int,
+    onProfileClick: () -> Unit = {},
     onDocumentClick: (String) -> Unit = {},
     onStagingClick: () -> Unit = {},
     viewModel: ArchiveViewModel = remember { ArchiveViewModel() }
@@ -131,7 +132,7 @@ fun ArchiveScreen(
         topBar = {
             TopBar(
                 title = "Arsip $selectedYear",
-                onProfileClick = {}
+                onProfileClick = onProfileClick
             )
         },
         floatingActionButton = {

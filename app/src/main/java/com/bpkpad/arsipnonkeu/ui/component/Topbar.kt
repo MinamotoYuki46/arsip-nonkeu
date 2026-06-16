@@ -32,6 +32,7 @@ import com.bpkpad.arsipnonkeu.R
 fun TopBar(
     title: String = "BPKPAD Balangan",
     onProfileClick: () -> Unit = {},
+    showProfileButton: Boolean = true,
     navigationIcon: @Composable (() -> Unit)? = null
 ) {
     Column(
@@ -76,20 +77,24 @@ fun TopBar(
             }
 
             // Profile Button (Circle background #D5ECF8)
-            Box(
-                modifier = Modifier
-                    .size(40.dp)
-                    .clip(CircleShape)
-                    .background(Color(0xFFD5ECF8))
-                    .clickable(onClick = onProfileClick),
-                contentAlignment = Alignment.Center
-            ) {
-                Icon(
-                    imageVector = Icons.Outlined.Person,
-                    contentDescription = "Profile",
-                    tint = Color(0xFF40493D),
-                    modifier = Modifier.size(16.dp)
-                )
+            if (showProfileButton) {
+                Box(
+                    modifier = Modifier
+                        .size(40.dp)
+                        .clip(CircleShape)
+                        .background(Color(0xFFD5ECF8))
+                        .clickable(onClick = onProfileClick),
+                    contentAlignment = Alignment.Center
+                ) {
+                    Icon(
+                        imageVector = Icons.Outlined.Person,
+                        contentDescription = "Profile",
+                        tint = Color(0xFF40493D),
+                        modifier = Modifier.size(16.dp)
+                    )
+                }
+            } else {
+                Spacer(modifier = Modifier.size(40.dp))
             }
         }
 

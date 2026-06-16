@@ -78,6 +78,7 @@ private val PoppinsFont = FontFamily.Default
 @Composable
 fun DocumentDetailScreen(
     documentId: String,
+    onProfileClick: () -> Unit = {},
     onBackClick: () -> Unit = {},
     viewModel: DocumentDetailViewModel = remember { DocumentDetailViewModel() }
 ) {
@@ -137,7 +138,7 @@ fun DocumentDetailScreen(
         topBar = {
             TopBar(
                 title = "Detail Arsip",
-                onProfileClick = {}
+                onProfileClick = onProfileClick
             )
         },
         containerColor = BackgroundGray
