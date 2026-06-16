@@ -22,20 +22,32 @@ import androidx.compose.ui.text.style.TextAlign
 import androidx.compose.ui.tooling.preview.Preview
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
+import com.bpkpad.arsipnonkeu.domain.model.UserProfile
 import com.bpkpad.arsipnonkeu.ui.theme.BackgroundGray
+
+import androidx.lifecycle.viewmodel.compose.viewModel
 
 @Composable
 fun LoginScreen(
-    isLoading: Boolean = false,
-    externalError: String? = null,
-    onLoginSuccess: (String, String) -> Unit = { _, _ -> }
+    onLoginSuccess: (UserProfile) -> Unit = {},
+    viewModel: LoginViewModel = viewModel()
 ) {
+    val uiState by viewModel.uiState.collectAsState()
+    
     var username by remember { mutableStateOf("") }
     var password by remember { mutableStateOf("") }
     var passwordVisible by remember { mutableStateOf(false) }
     var localErrorMessage by remember { mutableStateOf<String?>(null) }
 
-    val errorMessage = externalError ?: localErrorMessage
+    val isLoading = uiState.isLoading
+    val errorMessage = uiState.error ?: localErrorMessage
+
+    LaunchedEffect(uiState.isLoggedIn, uiState.userProfile) {
+        val profile = uiState.userProfile
+        if (uiState.isLoggedIn && profile != null) {
+            onLoginSuccess(profile)
+        }
+    }
 
     Box(
         modifier = Modifier
@@ -138,7 +150,7 @@ fun LoginScreen(
                     Button(
                         onClick = {
                             if (username.isNotBlank() && password.isNotBlank()) {
-                                onLoginSuccess(username, password)
+                                viewModel.login(username, password)
                             } else {
                                 localErrorMessage = "Username dan password tidak boleh kosong"
                             }

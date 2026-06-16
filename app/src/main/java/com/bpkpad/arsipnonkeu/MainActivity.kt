@@ -43,15 +43,10 @@ class MainActivity : ComponentActivity() {
             ArsipBPKADTheme {
                 val scope = rememberCoroutineScope()
                 val authRepository = ArchiveModule.authRepository
-                val profileRepository = ArchiveModule.profileRepository
-                val activityLogRepository = ArchiveModule.activityLogRepository
 
                 var isLoggedIn by remember { mutableStateOf(false) }
                 var userName by remember { mutableStateOf("") }
                 var userRole by remember { mutableStateOf("") }
-
-                var isLoggingIn by remember { mutableStateOf(false) }
-                var loginError by remember { mutableStateOf<String?>(null) }
 
                 var currentRoute by remember { mutableStateOf("login") }
                 var lastRoute by remember { mutableStateOf("dashboard") }
@@ -99,40 +94,11 @@ class MainActivity : ComponentActivity() {
 
                 if (!isLoggedIn) {
                     LoginScreen(
-                        isLoading = isLoggingIn,
-                        externalError = loginError,
-                        onLoginSuccess = { username, password ->
-                            scope.launch {
-                                isLoggingIn = true
-                                loginError = null
-
-                                try {
-                                    authRepository.login(username, password)
-
-                                    val profile = profileRepository.getCurrentUserProfile()
-
-                                    if (profile != null) {
-                                        userName = profile.name
-                                        userRole = profile.role.name
-                                        isLoggedIn = true
-                                        currentRoute = "dashboard"
-
-                                        activityLogRepository.createActivityLog(
-                                            action = "LOGIN",
-                                            entity = "USER",
-                                            entityId = profile.id,
-                                            description = "User logged in to the application"
-                                        )
-                                    } else {
-                                        loginError = "Profil pengguna tidak ditemukan"
-                                        authRepository.logout()
-                                    }
-                                } catch (e: Exception) {
-                                    loginError = "Username atau password salah"
-                                } finally {
-                                    isLoggingIn = false
-                                }
-                            }
+                        onLoginSuccess = { profile ->
+                            userName = profile.name
+                            userRole = profile.role.name
+                            isLoggedIn = true
+                            currentRoute = "dashboard"
                         }
                     )
                 } else {
