@@ -150,6 +150,7 @@ dependencies {
     // Supabase
     implementation(platform(libs.supabase.bom))
     implementation(libs.supabase.postgrest)
+    implementation("io.github.jan-tennert.supabase:auth-kt:3.1.1")
     implementation(libs.supabase.functions)
     implementation(libs.ktor.client.android)
 
