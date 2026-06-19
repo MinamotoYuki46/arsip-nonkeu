@@ -50,6 +50,7 @@ import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.draw.clip
 import androidx.compose.ui.graphics.Color
+import androidx.compose.ui.res.stringResource
 import androidx.compose.ui.text.font.FontFamily
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.text.input.KeyboardType
@@ -58,6 +59,7 @@ import androidx.compose.ui.text.style.TextOverflow
 import androidx.compose.ui.tooling.preview.Preview
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
+import com.bpkpad.arsipnonkeu.R
 import com.bpkpad.arsipnonkeu.domain.model.ArchiveDocument
 import com.bpkpad.arsipnonkeu.domain.model.ArchiveDocumentListItem
 import com.bpkpad.arsipnonkeu.domain.model.DocumentCondition
@@ -142,7 +144,7 @@ fun DocumentDetailScreen(
     Scaffold(
         topBar = {
             TopBar(
-                title = "Detail Arsip",
+                title = stringResource(R.string.detail_title_topbar),
                 onProfileClick = onProfileClick
             )
         },
@@ -299,10 +301,10 @@ fun DocumentDetailScreen(
 
     if (showEditConfirmDialog) {
         ConfirmDialog(
-            title = "Konfirmasi Perubahan",
-            message = "Simpan perubahan pada data dokumen arsip ini?",
-            confirmText = "Simpan",
-            dismissText = "Batal",
+            title = stringResource(R.string.detail_edit_confirm_title),
+            message = stringResource(R.string.detail_edit_confirm_message),
+            confirmText = stringResource(R.string.dashboard_add_button),
+            dismissText = stringResource(R.string.dashboard_cancel_button),
             onConfirm = {
                 val currentDocument = uiState.item?.document
 
@@ -337,10 +339,10 @@ fun DocumentDetailScreen(
 
     if (showDeleteConfirmDialog) {
         ConfirmDialog(
-            title = "Konfirmasi Hapus",
-            message = "Hapus dokumen arsip ini? Data akan dihapus secara soft delete.",
-            confirmText = "Hapus",
-            dismissText = "Batal",
+            title = stringResource(R.string.detail_delete_confirm_title),
+            message = stringResource(R.string.detail_delete_confirm_message),
+            confirmText = stringResource(R.string.staging_delete_label),
+            dismissText = stringResource(R.string.dashboard_cancel_button),
             isDanger = true,
             onConfirm = {
                 viewModel.deleteDocument()
@@ -417,10 +419,14 @@ private fun DocumentInformationCard(
 ) {
     val document = item.document
 
-    DetailCard(title = "Informasi Dokumen") {
+    val copyLabelTrue = stringResource(R.string.staging_field_copy_true)
+    val copyLabelFalse = stringResource(R.string.staging_field_copy_false)
+    val unknownLabel = stringResource(R.string.staging_field_unknown)
+
+    DetailCard(title = stringResource(R.string.detail_section_info)) {
         if (isEditMode) {
             DetailDropdownField(
-                label = "Jenis Dokumen",
+                label = stringResource(R.string.staging_field_type_label),
                 value = editedDocumentType,
                 options = DocumentType.values().toList(),
                 optionLabel = { it.label },
@@ -428,7 +434,7 @@ private fun DocumentInformationCard(
             )
 
             DetailTextField(
-                label = "Nomor Dokumen",
+                label = stringResource(R.string.staging_field_number_label),
                 value = editedDocumentNumber,
                 onValueChange = onDocumentNumberChange
             )
@@ -440,25 +446,25 @@ private fun DocumentInformationCard(
             )
 
             DetailTextField(
-                label = "Judul Dokumen",
+                label = stringResource(R.string.manual_title_label),
                 value = editedTitle,
                 onValueChange = onTitleChange
             )
 
             DetailTextField(
-                label = "Deskripsi",
+                label = stringResource(R.string.staging_field_desc_label),
                 value = editedDescription,
                 onValueChange = onDescriptionChange,
                 minLines = 3
             )
 
             DetailReadOnlyField(
-                label = "Tahun",
+                label = stringResource(R.string.staging_field_year_label),
                 value = editedYear
             )
 
             DetailDropdownField(
-                label = "Bentuk Fisik",
+                label = stringResource(R.string.staging_field_physical_label),
                 value = editedPhysicalForm,
                 options = PhysicalForm.values().toList(),
                 optionLabel = { it.label },
@@ -466,38 +472,38 @@ private fun DocumentInformationCard(
             )
 
             DetailDropdownField(
-                label = "Kondisi",
+                label = stringResource(R.string.staging_field_condition_label),
                 value = editedCondition,
                 options = listOf<DocumentCondition?>(null) + DocumentCondition.values().toList(),
                 optionLabel = { condition ->
-                    condition?.label ?: "Tidak diketahui"
+                    condition?.label ?: unknownLabel
                 },
                 onValueChange = onConditionChange
             )
 
             DetailDropdownField(
-                label = "Status Keaslian",
+                label = stringResource(R.string.staging_field_copy_label),
                 value = editedIsCopy,
                 options = listOf<Boolean?>(null, false, true),
                 optionLabel = { isCopy ->
                     when (isCopy) {
-                        true -> "Kopi"
-                        false -> "Asli"
-                        null -> "Tidak diketahui"
+                        true -> copyLabelTrue
+                        false -> copyLabelFalse
+                        null -> unknownLabel
                     }
                 },
                 onValueChange = onIsCopyChange
             )
 
             DetailTextField(
-                label = "Jumlah Salinan",
+                label = stringResource(R.string.staging_field_count_label),
                 value = editedCopyCount,
                 onValueChange = onCopyCountChange,
                 keyboardType = KeyboardType.Number
             )
 
             DetailDropdownField(
-                label = "Status",
+                label = stringResource(R.string.staging_field_status_label),
                 value = editedStatus,
                 options = DocumentStatus.values().toList(),
                 optionLabel = { it.label },
@@ -505,34 +511,34 @@ private fun DocumentInformationCard(
             )
 
             DetailTextField(
-                label = "Asal Instansi",
+                label = stringResource(R.string.staging_field_origin_label),
                 value = editedOriginInstance,
                 onValueChange = onOriginInstanceChange
             )
         } else {
-            DetailRow("Jenis Dokumen", document.documentType.label)
-            DetailRow("Nomor Dokumen", document.documentNumber ?: "-")
+            DetailRow(stringResource(R.string.staging_field_type_label), document.documentType.label)
+            DetailRow(stringResource(R.string.staging_field_number_label), document.documentNumber ?: "-")
             DetailRow(
                 label = "Kode Klasifikasi",
                 value = viewModel.getLoadedArchiveClassificationLabel(document.classificationCode)
                     .ifBlank { document.classificationCode ?: "-" }
             )
-            DetailRow("Judul", document.title)
-            DetailRow("Deskripsi", document.description ?: "-")
-            DetailRow("Tahun", document.year.toString())
-            DetailRow("Bentuk Fisik", document.physicalForm.label)
-            DetailRow("Kondisi", document.condition?.label ?: "Tidak diketahui")
+            DetailRow(stringResource(R.string.staging_field_title_label), document.title)
+            DetailRow(stringResource(R.string.staging_field_desc_label), document.description ?: "-")
+            DetailRow(stringResource(R.string.staging_field_year_label), document.year.toString())
+            DetailRow(stringResource(R.string.staging_field_physical_label), document.physicalForm.label)
+            DetailRow(stringResource(R.string.staging_field_condition_label), document.condition?.label ?: unknownLabel)
             DetailRow(
-                label = "Status Keaslian",
+                label = stringResource(R.string.staging_field_copy_label),
                 value = when (document.isCopy) {
-                    true -> "Kopi"
-                    false -> "Asli"
-                    null -> "Tidak diketahui"
+                    true -> copyLabelTrue
+                    false -> copyLabelFalse
+                    null -> unknownLabel
                 }
             )
-            DetailRow("Jumlah Salinan", document.copyCount.toString())
-            DetailRow("Status", document.status.label)
-            DetailRow("Asal Instansi", document.originInstance ?: "-")
+            DetailRow(stringResource(R.string.staging_field_count_label), document.copyCount.toString())
+            DetailRow(stringResource(R.string.staging_field_status_label), document.status.label)
+            DetailRow(stringResource(R.string.staging_field_origin_label), document.originInstance ?: "-")
         }
     }
 }
@@ -545,34 +551,34 @@ private fun DocumentPlacementCard(
     val placement = item.currentPlacement
     val location = item.storageLocation
 
-    DetailCard(title = "Penempatan Arsip") {
+    DetailCard(title = stringResource(R.string.detail_section_placement)) {
         Row(
             modifier = Modifier.fillMaxWidth(),
             horizontalArrangement = Arrangement.spacedBy(8.dp)
         ) {
             LocationBadgeItem(
-                title = "Ruang",
+                title = stringResource(R.string.detail_placement_room),
                 code = location?.room ?: "-",
                 modifier = Modifier.weight(1f)
             )
 
             LocationBadgeItem(
-                title = "Rak",
+                title = stringResource(R.string.detail_placement_shelf),
                 code = location?.shelf ?: "-",
                 modifier = Modifier.weight(1f)
             )
 
             LocationBadgeItem(
-                title = "Box",
+                title = stringResource(R.string.detail_placement_box),
                 code = location?.boxNumber ?: "-",
                 modifier = Modifier.weight(1f),
                 isActiveColor = true
             )
         }
 
-        DetailRow("Tanggal Penempatan", DateFormatter.formatIsoToHuman(placement?.placedAt))
-        DetailRow("Tanggal Dipindah/Dikeluarkan", DateFormatter.formatIsoToHuman(placement?.removedAt))
-        DetailRow("Ditempatkan oleh", viewModel.getUserDisplayName(placement?.userId))
+        DetailRow(stringResource(R.string.detail_placed_at), DateFormatter.formatIsoToHuman(placement?.placedAt))
+        DetailRow(stringResource(R.string.detail_removed_at), DateFormatter.formatIsoToHuman(placement?.removedAt))
+        DetailRow(stringResource(R.string.detail_placed_by), viewModel.getUserDisplayName(placement?.userId))
     }
 }
 
@@ -583,12 +589,12 @@ private fun DocumentSystemCard(
 ) {
     val document = item.document
 
-    DetailCard(title = "Informasi Sistem") {
-        DetailRow("Dibuat oleh", viewModel.getUserDisplayName(document.createdBy))
-        DetailRow("Diubah oleh", viewModel.getUserDisplayName(document.updatedBy))
-        DetailRow("Dibuat pada", DateFormatter.formatIsoToHuman(document.createdAt))
-        DetailRow("Diubah pada", DateFormatter.formatIsoToHuman(document.updatedAt))
-        DetailRow("Dihapus pada", DateFormatter.formatIsoToHuman(document.deletedAt))
+    DetailCard(title = stringResource(R.string.detail_section_system)) {
+        DetailRow(stringResource(R.string.detail_created_by), viewModel.getUserDisplayName(document.createdBy))
+        DetailRow(stringResource(R.string.detail_updated_by), viewModel.getUserDisplayName(document.updatedBy))
+        DetailRow(stringResource(R.string.detail_created_at), DateFormatter.formatIsoToHuman(document.createdAt))
+        DetailRow(stringResource(R.string.detail_updated_at), DateFormatter.formatIsoToHuman(document.updatedAt))
+        DetailRow(stringResource(R.string.detail_deleted_at), DateFormatter.formatIsoToHuman(document.deletedAt))
     }
 }
 
@@ -623,7 +629,7 @@ private fun DetailActionButtons(
                 Spacer(modifier = Modifier.padding(4.dp))
 
                 Text(
-                    text = "Simpan Perubahan",
+                    text = stringResource(R.string.detail_save_changes),
                     color = Color.White
                 )
             }
@@ -636,7 +642,7 @@ private fun DetailActionButtons(
                 shape = RoundedCornerShape(9999.dp)
             ) {
                 Text(
-                    text = "Batal Edit",
+                    text = stringResource(R.string.detail_cancel_edit),
                     color = Color(0xFFBA1A1A)
                 )
             }
@@ -661,7 +667,7 @@ private fun DetailActionButtons(
                     Spacer(modifier = Modifier.padding(4.dp))
 
                     Text(
-                        text = "Edit Dokumen",
+                        text = stringResource(R.string.detail_edit_button),
                         color = Color.White
                     )
                 }
@@ -682,7 +688,7 @@ private fun DetailActionButtons(
                     Spacer(modifier = Modifier.padding(4.dp))
 
                     Text(
-                        text = "Hapus Dokumen",
+                        text = stringResource(R.string.detail_delete_button),
                         color = Color(0xFFBA1A1A)
                     )
                 }
@@ -696,7 +702,7 @@ private fun DetailActionButtons(
                 shape = RoundedCornerShape(9999.dp)
             ) {
                 Text(
-                    text = "Kembali",
+                    text = stringResource(R.string.detail_back_button),
                     color = Color.Black
                 )
             }

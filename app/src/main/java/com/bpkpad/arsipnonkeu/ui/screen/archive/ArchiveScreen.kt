@@ -53,6 +53,8 @@ import androidx.compose.ui.Modifier
 import androidx.compose.ui.draw.clip
 import androidx.compose.ui.draw.shadow
 import androidx.compose.ui.graphics.Color
+import androidx.compose.ui.platform.LocalContext
+import androidx.compose.ui.res.stringResource
 import androidx.compose.ui.text.font.FontFamily
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.text.style.TextAlign
@@ -62,6 +64,7 @@ import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
 import androidx.compose.ui.window.Dialog
 import androidx.compose.ui.window.DialogProperties
+import com.bpkpad.arsipnonkeu.R
 import com.bpkpad.arsipnonkeu.domain.model.ArchiveDocumentFilter
 import com.bpkpad.arsipnonkeu.domain.model.ArchiveDocumentListItem
 import com.bpkpad.arsipnonkeu.domain.model.DocumentCondition
@@ -93,6 +96,9 @@ fun ArchiveScreen(
 
     val context = LocalContext.current
 
+    val successMsg = stringResource(R.string.archive_export_success)
+    val failedMsg = stringResource(R.string.archive_export_failed)
+
     val excelExportLauncher = rememberLauncherForActivityResult(
         contract = ActivityResultContracts.CreateDocument(
             "application/vnd.openxmlformats-officedocument.spreadsheetml.sheet"
@@ -108,13 +114,13 @@ fun ArchiveScreen(
 
                     Toast.makeText(
                         context,
-                        "Data arsip berhasil diekspor",
+                        successMsg,
                         Toast.LENGTH_SHORT
                     ).show()
                 } catch (exception: Exception) {
                     Toast.makeText(
                         context,
-                        exception.message ?: "Gagal mengekspor data arsip",
+                        exception.message ?: failedMsg,
                         Toast.LENGTH_SHORT
                     ).show()
                 }
@@ -136,7 +142,7 @@ fun ArchiveScreen(
     Scaffold(
         topBar = {
             TopBar(
-                title = "Arsip $selectedYear",
+                title = stringResource(R.string.archive_title, selectedYear),
                 onProfileClick = onProfileClick
             )
         },
@@ -150,7 +156,7 @@ fun ArchiveScreen(
                 ) {
                     Icon(
                         imageVector = Icons.Default.Add,
-                        contentDescription = "Tambah dokumen"
+                        contentDescription = stringResource(R.string.archive_fab_desc)
                     )
                 }
             }
@@ -233,7 +239,7 @@ private fun ArchiveControlSection(
             verticalAlignment = Alignment.CenterVertically
         ) {
             Text(
-                text = "$resultCount dokumen • Tahun $selectedYear",
+                text = stringResource(R.string.archive_status_summary, resultCount, selectedYear),
                 fontSize = 13.sp,
                 fontWeight = FontWeight.Medium,
                 fontFamily = PoppinsFont,
@@ -271,7 +277,7 @@ private fun ArchiveControlSection(
                 Spacer(modifier = Modifier.width(8.dp))
 
                 Text(
-                    text = "Filter",
+                    text = stringResource(R.string.archive_filter_button),
                     fontSize = 14.sp,
                     fontWeight = FontWeight.SemiBold,
                     fontFamily = PoppinsFont,
@@ -298,7 +304,7 @@ private fun ArchiveControlSection(
                 Spacer(modifier = Modifier.width(8.dp))
 
                 Text(
-                    text = "Ekspor",
+                    text = stringResource(R.string.archive_export_button),
                     fontSize = 14.sp,
                     fontWeight = FontWeight.SemiBold,
                     fontFamily = PoppinsFont,
@@ -351,7 +357,7 @@ private fun ArchiveContentSection(
                 contentAlignment = Alignment.Center
             ) {
                 Text(
-                    text = "Tidak ada dokumen untuk filter saat ini.",
+                    text = stringResource(R.string.archive_empty_message),
                     color = Color(0xFF40493D),
                     fontSize = 14.sp,
                     fontFamily = PoppinsFont,
@@ -402,7 +408,7 @@ private fun SearchInput(
         modifier = Modifier.fillMaxWidth(),
         placeholder = {
             Text(
-                text = "Cari judul, nomor dokumen, kode, instansi, atau rak...",
+                text = stringResource(R.string.archive_search_placeholder),
                 fontSize = 14.sp,
                 fontFamily = PoppinsFont,
                 maxLines = 1,
@@ -455,7 +461,7 @@ private fun ArchiveFilterBottomSheet(
         ) {
             Column(verticalArrangement = Arrangement.spacedBy(4.dp)) {
                 Text(
-                    text = "Filter Dokumen",
+                    text = stringResource(R.string.archive_filter_sheet_title),
                     fontSize = 24.sp,
                     fontWeight = FontWeight.Bold,
                     fontFamily = PoppinsFont,
@@ -463,7 +469,7 @@ private fun ArchiveFilterBottomSheet(
                 )
 
                 Text(
-                    text = "Atur filter untuk mempersempit daftar arsip.",
+                    text = stringResource(R.string.archive_filter_sheet_subtitle),
                     fontSize = 14.sp,
                     fontFamily = PoppinsFont,
                     color = Color(0xFF40493D)
@@ -471,7 +477,7 @@ private fun ArchiveFilterBottomSheet(
             }
 
             FilterChipRow(
-                title = "Jenis Dokumen",
+                title = stringResource(R.string.archive_filter_type_label),
                 selected = filter?.documentType,
                 values = DocumentType.values().toList(),
                 label = { it.label },
@@ -479,7 +485,7 @@ private fun ArchiveFilterBottomSheet(
             )
 
             FilterChipRow(
-                title = "Status",
+                title = stringResource(R.string.archive_filter_status_label),
                 selected = filter?.status,
                 values = DocumentStatus.values().toList(),
                 label = { it.label },
@@ -487,7 +493,7 @@ private fun ArchiveFilterBottomSheet(
             )
 
             FilterChipRow(
-                title = "Bentuk Fisik",
+                title = stringResource(R.string.archive_filter_physical_label),
                 selected = filter?.physicalForm,
                 values = PhysicalForm.values().toList(),
                 label = { it.label },
@@ -495,7 +501,7 @@ private fun ArchiveFilterBottomSheet(
             )
 
             FilterChipRow(
-                title = "Kondisi",
+                title = stringResource(R.string.archive_filter_condition_label),
                 selected = filter?.condition,
                 values = DocumentCondition.values().toList(),
                 label = { it.label },
@@ -515,7 +521,7 @@ private fun ArchiveFilterBottomSheet(
                     border = BorderStroke(1.dp, Color(0xFF0D631B))
                 ) {
                     Text(
-                        text = "Reset",
+                        text = stringResource(R.string.archive_filter_reset),
                         fontSize = 14.sp,
                         fontWeight = FontWeight.SemiBold,
                         fontFamily = PoppinsFont,
@@ -532,7 +538,7 @@ private fun ArchiveFilterBottomSheet(
                     shape = RoundedCornerShape(9999.dp)
                 ) {
                     Text(
-                        text = "Terapkan",
+                        text = stringResource(R.string.archive_filter_apply),
                         fontSize = 14.sp,
                         fontWeight = FontWeight.SemiBold,
                         fontFamily = PoppinsFont,
@@ -569,7 +575,7 @@ private fun <T> FilterChipRow(
             horizontalArrangement = Arrangement.spacedBy(8.dp)
         ) {
             SimpleFilterChip(
-                label = "Semua",
+                label = stringResource(R.string.archive_filter_all),
                 isSelected = selected == null,
                 onClick = { onSelected(null) }
             )
@@ -695,19 +701,19 @@ private fun ArchiveDocumentCard(
             horizontalArrangement = Arrangement.spacedBy(16.dp)
         ) {
             MetadataItem(
-                label = "RUANGAN",
+                label = stringResource(R.string.archive_metadata_room),
                 value = location?.room ?: "-",
                 modifier = Modifier.weight(1f)
             )
 
             MetadataItem(
-                label = "RAK",
+                label = stringResource(R.string.archive_metadata_shelf),
                 value = location?.shelf ?: "-",
                 modifier = Modifier.weight(1f)
             )
 
             MetadataItem(
-                label = "NOMOR BOX",
+                label = stringResource(R.string.archive_metadata_box),
                 value = location?.boxNumber ?: "-",
                 modifier = Modifier.weight(1f)
             )
@@ -794,7 +800,7 @@ private fun ArchiveListFooter(totalFound: Int) {
             contentPadding = PaddingValues(horizontal = 32.dp, vertical = 12.dp)
         ) {
             Text(
-                text = "Semua data sudah ditampilkan",
+                text = stringResource(R.string.archive_footer_message),
                 fontSize = 13.sp,
                 fontWeight = FontWeight.SemiBold,
                 fontFamily = PoppinsFont,
@@ -823,7 +829,7 @@ private fun ExportDataDialog(
         ) {
             Column(verticalArrangement = Arrangement.spacedBy(16.dp)) {
                 Text(
-                    text = "Ekspor Data Arsip",
+                    text = stringResource(R.string.archive_export_dialog_title),
                     fontSize = 24.sp,
                     fontWeight = FontWeight.Bold,
                     fontFamily = PoppinsFont,
@@ -831,14 +837,14 @@ private fun ExportDataDialog(
                 )
 
                 Text(
-                    text = "Data yang diekspor mengikuti hasil filter yang sedang tampil.",
+                    text = stringResource(R.string.archive_export_dialog_message),
                     fontSize = 14.sp,
                     color = Color(0xFF40493D),
                     fontFamily = PoppinsFont
                 )
 
                 Text(
-                    text = "Tahun: $year\nJumlah dokumen: $documentCount",
+                    text = stringResource(R.string.archive_export_dialog_summary, year, documentCount),
                     fontSize = 14.sp,
                     fontWeight = FontWeight.Medium,
                     color = Color(0xFF40493D),
@@ -850,15 +856,16 @@ private fun ExportDataDialog(
                     modifier = Modifier.fillMaxWidth(),
                     colors = ButtonDefaults.buttonColors(containerColor = Color(0xFF0D631B))
                 ) {
-                    Text("Tutup")
+                    Text(stringResource(R.string.archive_export_dialog_close))
                 }
             }
         }
     }
 }
 
+@Composable
 private fun activeFilterText(filter: ArchiveDocumentFilter?): String {
-    if (filter == null) return "Tanpa filter"
+    if (filter == null) return stringResource(R.string.archive_filter_active_none)
 
     val count = listOfNotNull(
         filter.documentType,
@@ -869,9 +876,9 @@ private fun activeFilterText(filter: ArchiveDocumentFilter?): String {
     ).size
 
     return if (count == 0) {
-        "Tanpa filter"
+        stringResource(R.string.archive_filter_active_none)
     } else {
-        "$count filter aktif"
+        stringResource(R.string.archive_filter_active_count, count)
     }
 }
 

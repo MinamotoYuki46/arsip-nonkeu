@@ -18,11 +18,13 @@ import androidx.compose.ui.Modifier
 import androidx.compose.ui.draw.clip
 import androidx.compose.ui.draw.shadow
 import androidx.compose.ui.graphics.Color
+import androidx.compose.ui.res.stringResource
 import androidx.compose.ui.text.font.FontFamily
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.tooling.preview.Preview
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
+import com.bpkpad.arsipnonkeu.R
 import com.bpkpad.arsipnonkeu.ui.theme.BackgroundGray
 import com.bpkpad.arsipnonkeu.ui.component.BottomBar
 import com.bpkpad.arsipnonkeu.ui.component.TopBar
@@ -42,13 +44,13 @@ fun ProfileScreen(
     Scaffold(
         topBar = {
             TopBar(
-                title = "Profil Pengguna",
+                title = stringResource(R.string.profile_title),
                 showProfileButton = false,
                 navigationIcon = {
                     IconButton(onClick = onBackClick) {
                         Icon(
                             imageVector = Icons.AutoMirrored.Filled.ArrowBack,
-                            contentDescription = "Back"
+                            contentDescription = stringResource(R.string.detail_back_button)
                         )
                     }
                 }
@@ -83,7 +85,7 @@ fun ProfileScreen(
                 )
                 Spacer(modifier = Modifier.width(12.dp))
                 Text(
-                    text = "Keluar dari Akun",
+                    text = stringResource(R.string.profile_logout_button),
                     fontSize = 16.sp,
                     fontWeight = FontWeight.Bold
                 )

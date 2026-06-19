@@ -75,6 +75,7 @@ import androidx.compose.ui.Modifier
 import androidx.compose.ui.draw.clip
 import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.platform.LocalContext
+import androidx.compose.ui.res.stringResource
 import androidx.compose.ui.text.font.FontFamily
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.text.input.KeyboardType
@@ -83,6 +84,7 @@ import androidx.compose.ui.tooling.preview.Preview
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
 import androidx.lifecycle.viewmodel.compose.viewModel
+import com.bpkpad.arsipnonkeu.R
 import com.bpkpad.arsipnonkeu.domain.model.DocumentCondition
 import com.bpkpad.arsipnonkeu.domain.model.DocumentStatus
 import com.bpkpad.arsipnonkeu.domain.model.DocumentType
@@ -133,7 +135,7 @@ fun StagingScreen(
     Scaffold(
         topBar = {
             TopBar(
-                title = "Staging Arsip",
+                title = stringResource(R.string.staging_title),
                 onProfileClick = onProfileClick
             )
         },
@@ -303,19 +305,20 @@ private fun StorageLocationSection(
                 verticalArrangement = Arrangement.spacedBy(4.dp)
             ) {
                 Text(
-                    text = "Lokasi Penyimpanan",
+                    text = stringResource(R.string.staging_location_title),
                     fontSize = 16.sp,
                     fontWeight = FontWeight.Bold,
                     fontFamily = PoppinsFont,
                     color = Color(0xFF071E27)
                 )
 
+                val emptyLabel = stringResource(R.string.staging_location_empty)
                 Text(
                     text = locationLabel,
                     fontSize = 13.sp,
                     fontWeight = FontWeight.Medium,
                     fontFamily = PoppinsFont,
-                    color = if (locationLabel == "Belum ditentukan") {
+                    color = if (locationLabel == emptyLabel) {
                         Color(0xFFBA1A1A)
                     } else {
                         Color(0xFF0D631B)
@@ -351,26 +354,26 @@ private fun StorageLocationSection(
                 verticalArrangement = Arrangement.spacedBy(12.dp)
             ) {
                 DetailTextField(
-                    label = "Ruangan",
+                    label = stringResource(R.string.staging_room_label),
                     value = room,
                     onValueChange = onRoomChange,
-                    placeholder = "Contoh: Ruang Arsip"
+                    placeholder = stringResource(R.string.staging_room_placeholder)
                 )
 
                 Row(horizontalArrangement = Arrangement.spacedBy(12.dp)) {
                     DetailTextField(
-                        label = "Rak",
+                        label = stringResource(R.string.staging_shelf_label),
                         value = shelf,
                         onValueChange = onShelfChange,
-                        placeholder = "Rak 04-B",
+                        placeholder = stringResource(R.string.staging_shelf_placeholder),
                         modifier = Modifier.weight(1f)
                     )
 
                     DetailTextField(
-                        label = "Box",
+                        label = stringResource(R.string.staging_box_label),
                         value = boxNumber,
                         onValueChange = onBoxNumberChange,
-                        placeholder = "01",
+                        placeholder = stringResource(R.string.staging_box_placeholder),
                         modifier = Modifier.weight(1f)
                     )
                 }
@@ -396,7 +399,7 @@ private fun StagingContentSection(
             verticalAlignment = Alignment.CenterVertically
         ) {
             Text(
-                text = "Dokumen Staging",
+                text = stringResource(R.string.staging_content_title),
                 fontSize = 16.sp,
                 fontWeight = FontWeight.Bold,
                 fontFamily = PoppinsFont,
@@ -404,7 +407,7 @@ private fun StagingContentSection(
             )
 
             Text(
-                text = "${documents.size} dokumen",
+                text = stringResource(R.string.staging_document_count_summary, documents.size),
                 fontSize = 13.sp,
                 fontWeight = FontWeight.Medium,
                 fontFamily = PoppinsFont,
@@ -420,7 +423,7 @@ private fun StagingContentSection(
                 contentAlignment = Alignment.Center
             ) {
                 Text(
-                    text = "Belum ada dokumen di staging.\nGunakan tombol + untuk input manual, scan, atau import.",
+                    text = stringResource(R.string.staging_empty_message),
                     fontSize = 14.sp,
                     fontFamily = PoppinsFont,
                     color = Color(0xFF40493D)
@@ -508,7 +511,7 @@ private fun StagingDocumentCard(
 
         Icon(
             imageVector = Icons.Default.Delete,
-            contentDescription = "Hapus",
+            contentDescription = stringResource(R.string.staging_delete_label),
             tint = Color(0xFFBA1A1A),
             modifier = Modifier
                 .size(22.dp)
@@ -524,10 +527,10 @@ private fun StagingDocumentCard(
                 showDeleteDialog = false
             },
             title = {
-                Text("Hapus dari Staging")
+                Text(stringResource(R.string.staging_delete_dialog_title))
             },
             text = {
-                Text("Hapus dokumen ini dari daftar staging?")
+                Text(stringResource(R.string.staging_delete_dialog_message))
             },
             confirmButton = {
                 TextButton(
@@ -537,7 +540,7 @@ private fun StagingDocumentCard(
                     }
                 ) {
                     Text(
-                        text = "Hapus",
+                        text = stringResource(R.string.staging_delete_label),
                         color = Color(0xFFBA1A1A)
                     )
                 }
@@ -548,7 +551,7 @@ private fun StagingDocumentCard(
                         showDeleteDialog = false
                     }
                 ) {
-                    Text("Batal")
+                    Text(stringResource(R.string.dashboard_cancel_button))
                 }
             }
         )
@@ -601,6 +604,10 @@ private fun StagingDocumentDetailSheet(
     var selectedCondition by remember(document.id) { mutableStateOf(document.condition) }
     var selectedStatus by remember(document.id) { mutableStateOf(document.status) }
 
+    val copyLabelTrue = stringResource(R.string.staging_field_copy_true)
+    val copyLabelFalse = stringResource(R.string.staging_field_copy_false)
+    val unknownLabel = stringResource(R.string.staging_field_unknown)
+
     ModalBottomSheet(
         onDismissRequest = onDismiss,
         sheetState = sheetState,
@@ -617,7 +624,7 @@ private fun StagingDocumentDetailSheet(
         ) {
             item {
                 Text(
-                    text = if (isEditMode) "Edit Dokumen Staging" else "Detail Dokumen Staging",
+                    text = if (isEditMode) stringResource(R.string.staging_edit_sheet_title) else stringResource(R.string.staging_detail_sheet_title),
                     fontSize = 24.sp,
                     fontWeight = FontWeight.Bold,
                     fontFamily = PoppinsFont,
@@ -628,20 +635,20 @@ private fun StagingDocumentDetailSheet(
             if (isEditMode) {
                 item {
                     DetailTextField(
-                        label = "Judul (Maks 255 karakter)",
+                        label = stringResource(R.string.staging_field_title_label),
                         value = title,
                         onValueChange = { if (it.length <= 255) title = it },
-                        placeholder = "Judul dokumen",
+                        placeholder = stringResource(R.string.staging_field_title_placeholder),
                         error = title.isBlank()
                     )
                 }
 
                 item {
                     DetailTextField(
-                        label = "Nomor Dokumen",
+                        label = stringResource(R.string.staging_field_number_label),
                         value = documentNumber,
                         onValueChange = { if (it.length <= 50) documentNumber = it },
-                        placeholder = "Nomor dokumen"
+                        placeholder = stringResource(R.string.staging_field_number_placeholder)
                     )
                 }
 
@@ -658,27 +665,27 @@ private fun StagingDocumentDetailSheet(
 
                 item {
                     DetailTextField(
-                        label = "Deskripsi",
+                        label = stringResource(R.string.staging_field_desc_label),
                         value = description,
                         onValueChange = { if (it.length <= 1000) description = it },
-                        placeholder = "Deskripsi dokumen",
+                        placeholder = stringResource(R.string.staging_field_desc_placeholder),
                         singleLine = false
                     )
                 }
 
                 item {
                     DetailTextField(
-                        label = "Tahun",
+                        label = stringResource(R.string.staging_field_year_label),
                         value = year,
                         onValueChange = {},
-                        placeholder = "2025",
+                        placeholder = stringResource(R.string.staging_field_year_placeholder),
                         readOnly = true
                     )
                 }
 
                 item {
                     StagingDropdownField(
-                        label = "Jenis Dokumen",
+                        label = stringResource(R.string.staging_field_type_label),
                         value = selectedType,
                         options = DocumentType.values().toList(),
                         optionLabel = { it.label },
@@ -690,7 +697,7 @@ private fun StagingDocumentDetailSheet(
 
                 item {
                     StagingDropdownField(
-                        label = "Bentuk Fisik",
+                        label = stringResource(R.string.staging_field_physical_label),
                         value = selectedPhysicalForm,
                         options = PhysicalForm.values().toList(),
                         optionLabel = { it.label },
@@ -702,12 +709,12 @@ private fun StagingDocumentDetailSheet(
 
                 item {
                     StagingDropdownField(
-                        label = "Kondisi",
+                        label = stringResource(R.string.staging_field_condition_label),
                         value = selectedCondition,
                         options = DocumentCondition.values().toList(),
                         optionLabel = { it.label },
                         allowNull = true,
-                        nullLabel = "Tidak diketahui",
+                        nullLabel = unknownLabel,
                         onValueChange = { selected ->
                             selectedCondition = selected
                         }
@@ -716,12 +723,12 @@ private fun StagingDocumentDetailSheet(
 
                 item {
                     StagingDropdownField(
-                        label = "Keaslian",
+                        label = stringResource(R.string.staging_field_copy_label),
                         value = isCopy,
                         options = listOf(false, true),
-                        optionLabel = { if (it == true) "Kopi" else "Asli" },
+                        optionLabel = { if (it == true) copyLabelTrue else copyLabelFalse },
                         allowNull = true,
-                        nullLabel = "Tidak diketahui",
+                        nullLabel = unknownLabel,
                         onValueChange = { selected ->
                             isCopy = selected
                         }
@@ -730,7 +737,7 @@ private fun StagingDocumentDetailSheet(
 
                 item {
                     DetailTextField(
-                        label = "Jumlah Salinan",
+                        label = stringResource(R.string.staging_field_count_label),
                         value = copyCount,
                         onValueChange = { input ->
                             if (input.all { it.isDigit() }) {
@@ -744,7 +751,7 @@ private fun StagingDocumentDetailSheet(
 
                 item {
                     StagingDropdownField(
-                        label = "Status",
+                        label = stringResource(R.string.staging_field_status_label),
                         value = selectedStatus,
                         options = DocumentStatus.values().toList(),
                         optionLabel = { it.label },
@@ -756,15 +763,15 @@ private fun StagingDocumentDetailSheet(
 
                 item {
                     DetailTextField(
-                        label = "Asal Instansi",
+                        label = stringResource(R.string.staging_field_origin_label),
                         value = originInstance,
                         onValueChange = { if (it.length <= 100) originInstance = it },
-                        placeholder = "Bagian Umum"
+                        placeholder = stringResource(R.string.staging_field_origin_placeholder)
                     )
                 }
             } else {
-                item { DetailRow("Judul", document.title) }
-                item { DetailRow("Nomor Dokumen", document.documentNumber ?: "-") }
+                item { DetailRow(stringResource(R.string.staging_field_title_label), document.title) }
+                item { DetailRow(stringResource(R.string.staging_field_number_label), document.documentNumber ?: "-") }
                 item {
                     DetailRow(
                         label = "Kode Klasifikasi Dokumen",
@@ -772,24 +779,24 @@ private fun StagingDocumentDetailSheet(
                             .ifBlank { document.classificationCode ?: "-" }
                     )
                 }
-                item { DetailRow("Deskripsi", document.description ?: "-") }
-                item { DetailRow("Jenis Dokumen", document.documentType.label) }
-                item { DetailRow("Tahun", document.year.toString()) }
-                item { DetailRow("Bentuk Fisik", document.physicalForm.label) }
-                item { DetailRow("Kondisi", document.condition?.label ?: "Tidak diketahui") }
+                item { DetailRow(stringResource(R.string.staging_field_desc_label), document.description ?: "-") }
+                item { DetailRow(stringResource(R.string.staging_field_type_label), document.documentType.label) }
+                item { DetailRow(stringResource(R.string.staging_field_year_label), document.year.toString()) }
+                item { DetailRow(stringResource(R.string.staging_field_physical_label), document.physicalForm.label) }
+                item { DetailRow(stringResource(R.string.staging_field_condition_label), document.condition?.label ?: unknownLabel) }
                 item {
                     DetailRow(
-                        "Keaslian",
+                        stringResource(R.string.staging_field_copy_label),
                         when (document.isCopy) {
-                            true -> "Kopi"
-                            false -> "Asli"
-                            null -> "Tidak diketahui"
+                            true -> copyLabelTrue
+                            false -> copyLabelFalse
+                            null -> unknownLabel
                         }
                     )
                 }
-                item { DetailRow("Jumlah Salinan", document.copyCount.toString()) }
-                item { DetailRow("Status", document.status.label) }
-                item { DetailRow("Asal Instansi", document.originInstance ?: "-") }
+                item { DetailRow(stringResource(R.string.staging_field_count_label), document.copyCount.toString()) }
+                item { DetailRow(stringResource(R.string.staging_field_status_label), document.status.label) }
+                item { DetailRow(stringResource(R.string.staging_field_origin_label), document.originInstance ?: "-") }
                 item { DetailRow("Sumber", document.source.label) }
             }
 
@@ -943,7 +950,7 @@ private fun StagingDocumentDetailSheet(
                     }
                 ) {
                     Text(
-                        text = "Simpan",
+                        text = stringResource(R.string.dashboard_add_button),
                         color = Color(0xFF0D631B)
                     )
                 }
@@ -954,7 +961,7 @@ private fun StagingDocumentDetailSheet(
                         showSaveConfirmDialog = false
                     }
                 ) {
-                    Text("Batal")
+                    Text(stringResource(R.string.dashboard_cancel_button))
                 }
             }
         )
@@ -966,10 +973,10 @@ private fun StagingDocumentDetailSheet(
                 showDeleteDialog = false
             },
             title = {
-                Text("Hapus dari Staging")
+                Text(stringResource(R.string.staging_delete_dialog_title))
             },
             text = {
-                Text("Hapus dokumen ini dari staging? Data belum masuk ke arsip utama.")
+                Text(stringResource(R.string.staging_delete_confirm_message))
             },
             confirmButton = {
                 TextButton(
@@ -979,7 +986,7 @@ private fun StagingDocumentDetailSheet(
                     }
                 ) {
                     Text(
-                        text = "Hapus",
+                        text = stringResource(R.string.staging_delete_label),
                         color = Color(0xFFBA1A1A)
                     )
                 }
@@ -990,7 +997,7 @@ private fun StagingDocumentDetailSheet(
                         showDeleteDialog = false
                     }
                 ) {
-                    Text("Batal")
+                    Text(stringResource(R.string.dashboard_cancel_button))
                 }
             }
         )
@@ -1203,7 +1210,7 @@ private fun StagingBottomBar(
             shape = RoundedCornerShape(9999.dp)
         ) {
             Text(
-                text = "Simpan Semua ke Arsip",
+                text = stringResource(R.string.staging_push_button),
                 fontSize = 14.sp,
                 fontWeight = FontWeight.SemiBold,
                 fontFamily = PoppinsFont,
@@ -1213,7 +1220,7 @@ private fun StagingBottomBar(
 
         if (!isStorageLocationValid) {
             Text(
-                text = "Ruangan dan rak wajib diisi.",
+                text = stringResource(R.string.staging_error_location_invalid),
                 fontSize = 12.sp,
                 fontWeight = FontWeight.Medium,
                 fontFamily = PoppinsFont,
@@ -1233,24 +1240,24 @@ private fun ConfirmPushDialog(
     AlertDialog(
         onDismissRequest = onDismiss,
         title = {
-            Text("Simpan ke Arsip")
+            Text(stringResource(R.string.staging_push_confirm_title))
         },
         text = {
             Text(
-                text = "Simpan $documentCount dokumen staging ke lokasi:\n\n$locationLabel?"
+                text = stringResource(R.string.staging_push_confirm_message, documentCount, locationLabel)
             )
         },
         confirmButton = {
             TextButton(onClick = onConfirm) {
                 Text(
-                    text = "Simpan",
+                    text = stringResource(R.string.dashboard_add_button),
                     color = Color(0xFF0D631B)
                 )
             }
         },
         dismissButton = {
             TextButton(onClick = onDismiss) {
-                Text("Batal")
+                Text(stringResource(R.string.dashboard_cancel_button))
             }
         }
     )
@@ -1340,7 +1347,7 @@ private fun ErrorMessageCard(
         )
 
         Text(
-            text = "Tutup",
+            text = stringResource(R.string.staging_error_dismiss),
             modifier = Modifier.clickable(onClick = onDismiss),
             fontSize = 13.sp,
             fontWeight = FontWeight.Bold,

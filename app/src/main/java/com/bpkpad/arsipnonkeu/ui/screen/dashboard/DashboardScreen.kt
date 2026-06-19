@@ -15,12 +15,14 @@ import androidx.compose.ui.Modifier
 import androidx.compose.ui.draw.clip
 import androidx.compose.ui.draw.shadow
 import androidx.compose.ui.graphics.Color
+import androidx.compose.ui.res.stringResource
 import androidx.compose.ui.text.font.FontFamily
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.tooling.preview.Preview
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
 import androidx.lifecycle.viewmodel.compose.viewModel
+import com.bpkpad.arsipnonkeu.R
 import com.bpkpad.arsipnonkeu.domain.model.ArchiveYearSummary
 import com.bpkpad.arsipnonkeu.ui.component.LoadingIndicator
 import com.bpkpad.arsipnonkeu.ui.component.TopBar
@@ -46,7 +48,7 @@ fun DashboardScreen(
     Scaffold(
         topBar = {
             TopBar(
-                title = "BPKPAD Balangan",
+                title = stringResource(R.string.dashboard_title),
                 onProfileClick = onProfileClick
             )
         },
@@ -94,21 +96,24 @@ fun DashboardScreen(
         
         AlertDialog(
             onDismissRequest = { showAddYearDialog = false },
-            title = { Text("Tambah Tahun Arsip Baru") },
+            title = { Text(stringResource(R.string.dashboard_add_year_dialog_title)) },
             text = {
                 Column(verticalArrangement = Arrangement.spacedBy(8.dp)) {
-                    Text("Masukkan tahun baru yang ingin didaftarkan ke sistem.")
+                    Text(stringResource(R.string.dashboard_add_year_dialog_message))
                     OutlinedTextField(
                         value = yearInput,
                         onValueChange = { if (it.length <= 4 && it.all { char -> char.isDigit() }) yearInput = it },
-                        label = { Text("Tahun") },
-                        placeholder = { Text("Contoh: 2027") },
+                        label = { Text(stringResource(R.string.dashboard_year_label)) },
+                        placeholder = { Text(stringResource(R.string.dashboard_year_placeholder)) },
                         modifier = Modifier.fillMaxWidth(),
                         singleLine = true,
                         isError = isDuplicate,
                         supportingText = {
                             if (isDuplicate) {
-                                Text("Tahun $yearInput sudah ada dalam daftar.", color = MaterialTheme.colorScheme.error)
+                                Text(
+                                    text = stringResource(R.string.dashboard_error_duplicate_year, yearInput),
+                                    color = MaterialTheme.colorScheme.error
+                                )
                             }
                         }
                     )
@@ -125,12 +130,12 @@ fun DashboardScreen(
                     },
                     enabled = yearInput.length == 4 && !isDuplicate
                 ) {
-                    Text("Tambah", color = Color(0xFF0D631B))
+                    Text(stringResource(R.string.dashboard_add_button), color = Color(0xFF0D631B))
                 }
             },
             dismissButton = {
                 TextButton(onClick = { showAddYearDialog = false }) {
-                    Text("Batal")
+                    Text(stringResource(R.string.dashboard_cancel_button))
                 }
             }
         )
@@ -149,7 +154,7 @@ private fun DashboardHeaderSection() {
         horizontalAlignment = Alignment.Start
     ) {
         Text(
-            text = "Archival\nRepository",
+            text = stringResource(R.string.dashboard_header_title),
             fontSize = 40.sp,
             lineHeight = 48.sp,
             fontFamily = PoppinsFont,
@@ -158,7 +163,7 @@ private fun DashboardHeaderSection() {
         )
 
         Text(
-            text = "Pilih tahun arsip untuk melihat daftar dokumen.",
+            text = stringResource(R.string.dashboard_header_subtitle),
             fontSize = 14.sp,
             lineHeight = 20.sp,
             fontFamily = PoppinsFont,
@@ -284,7 +289,7 @@ private fun AddYearCard(
         Spacer(modifier = Modifier.height(8.dp))
         
         Text(
-            text = "Tambah Tahun",
+            text = stringResource(R.string.dashboard_add_year_card),
             fontSize = 16.sp,
             fontFamily = PoppinsFont,
             fontWeight = FontWeight.Bold,
@@ -325,7 +330,7 @@ private fun YearCard(
             verticalAlignment = Alignment.Bottom
         ) {
             Text(
-                text = "${summary.documentCount} dokumen",
+                text = stringResource(R.string.dashboard_document_count, summary.documentCount),
                 fontSize = 18.sp,
                 lineHeight = 18.sp,
                 fontFamily = PoppinsFont,

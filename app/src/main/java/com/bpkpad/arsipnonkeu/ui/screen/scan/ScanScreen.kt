@@ -60,6 +60,7 @@ import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.platform.LocalContext
 import androidx.compose.ui.platform.LocalInspectionMode
 import androidx.compose.ui.platform.LocalLifecycleOwner
+import androidx.compose.ui.res.stringResource
 import androidx.compose.ui.text.font.FontFamily
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.text.style.TextAlign
@@ -68,6 +69,7 @@ import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
 import androidx.compose.ui.viewinterop.AndroidView
 import androidx.core.content.ContextCompat
+import com.bpkpad.arsipnonkeu.R
 import com.bpkpad.arsipnonkeu.domain.model.DocumentType
 import com.bpkpad.arsipnonkeu.ui.component.LoadingIndicator
 import com.bpkpad.arsipnonkeu.ui.screen.staging.StagingViewModel
@@ -180,6 +182,8 @@ private fun ScanCameraContent(
     }
 
     if (!isPreviewMode) {
+        val cameraErrorMsg = stringResource(R.string.scan_error_capture)
+
         DisposableEffect(Unit) {
             val cameraProviderFuture = ProcessCameraProvider.getInstance(context)
 
@@ -204,7 +208,7 @@ private fun ScanCameraContent(
                     Log.e("ScanScreen", "Camera binding failed", exception)
                     Toast.makeText(
                         context,
-                        exception.message ?: "Gagal membuka kamera",
+                        exception.message ?: cameraErrorMsg,
                         Toast.LENGTH_LONG
                     ).show()
                 }
@@ -256,6 +260,9 @@ private fun ScanCameraContent(
             )
         }
 
+        val errorReadMsg = stringResource(R.string.scan_error_read)
+        val errorCaptureMsg = stringResource(R.string.scan_error_capture)
+
         CaptureButton(
             enabled = !uiState.isProcessing,
             onCaptureClick = {
@@ -265,9 +272,10 @@ private fun ScanCameraContent(
                     cameraExecutor = cameraExecutor,
                     onSuccess = onImageCaptured,
                     onError = { message ->
+                        val finalMsg = if (message.contains("file")) errorReadMsg else errorCaptureMsg
                         Toast.makeText(
                             context,
-                            message,
+                            finalMsg,
                             Toast.LENGTH_LONG
                         ).show()
                     }
@@ -318,7 +326,7 @@ private fun ScanOverlayTopBar(
                 verticalArrangement = Arrangement.spacedBy(2.dp)
             ) {
                 Text(
-                    text = "Scan Dokumen",
+                    text = stringResource(R.string.scan_title),
                     fontSize = 20.sp,
                     fontWeight = FontWeight.Bold,
                     fontFamily = PoppinsFont,
@@ -326,7 +334,7 @@ private fun ScanOverlayTopBar(
                 )
 
                 Text(
-                    text = "Pilih jenis dokumen sebelum mengambil foto.",
+                    text = stringResource(R.string.scan_subtitle),
                     fontSize = 12.sp,
                     fontFamily = PoppinsFont,
                     color = Color.White.copy(alpha = 0.85f)
@@ -343,7 +351,7 @@ private fun ScanOverlayTopBar(
             ) {
                 Icon(
                     imageVector = Icons.Default.Close,
-                    contentDescription = "Tutup",
+                    contentDescription = stringResource(R.string.staging_error_dismiss),
                     tint = Color.White
                 )
             }
@@ -365,7 +373,7 @@ private fun DocumentTypeScanSelector(
         verticalArrangement = Arrangement.spacedBy(8.dp)
     ) {
         Text(
-            text = "Jenis dokumen untuk prompt AI",
+            text = stringResource(R.string.scan_prompt_label),
             fontSize = 12.sp,
             fontWeight = FontWeight.SemiBold,
             fontFamily = PoppinsFont,
@@ -440,7 +448,7 @@ private fun ScanGuideFrame(
             )
     ) {
         Text(
-            text = "Posisikan dokumen di dalam area ini",
+            text = stringResource(R.string.scan_guide_text),
             modifier = Modifier
                 .align(Alignment.TopCenter)
                 .padding(top = 16.dp)
@@ -493,7 +501,7 @@ private fun CaptureButton(
     ) {
         Icon(
             imageVector = Icons.Default.CameraAlt,
-            contentDescription = "Ambil foto",
+            contentDescription = stringResource(R.string.staging_scan),
             tint = Color(0xFF0D631B),
             modifier = Modifier.size(30.dp)
         )
@@ -520,7 +528,7 @@ private fun ProcessingOverlay(
         )
 
         Text(
-            text = "Memproses OCR dan AI...",
+            text = stringResource(R.string.scan_processing),
             fontSize = 14.sp,
             fontWeight = FontWeight.SemiBold,
             fontFamily = PoppinsFont,
@@ -553,7 +561,7 @@ private fun ErrorMessageBox(
             )
 
             Text(
-                text = "Tutup",
+                text = stringResource(R.string.staging_error_dismiss),
                 modifier = Modifier.clickable(onClick = onDismiss),
                 fontSize = 13.sp,
                 fontWeight = FontWeight.Bold,
@@ -584,7 +592,7 @@ private fun CameraPermissionDeniedContent(
                 horizontalAlignment = Alignment.CenterHorizontally
             ) {
                 Text(
-                    text = "Izin kamera diperlukan untuk scan dokumen.",
+                    text = stringResource(R.string.scan_permission_title),
                     fontSize = 18.sp,
                     fontWeight = FontWeight.Bold,
                     fontFamily = PoppinsFont,
@@ -593,7 +601,7 @@ private fun CameraPermissionDeniedContent(
                 )
 
                 Text(
-                    text = "Aktifkan izin kamera agar aplikasi dapat mengambil foto dokumen.",
+                    text = stringResource(R.string.scan_permission_message),
                     fontSize = 14.sp,
                     fontFamily = PoppinsFont,
                     color = Color.White.copy(alpha = 0.82f),
@@ -606,7 +614,7 @@ private fun CameraPermissionDeniedContent(
                         containerColor = Color(0xFF0D631B)
                     )
                 ) {
-                    Text("Buka Pengaturan")
+                    Text(stringResource(R.string.scan_permission_settings))
                 }
 
                 OutlinedButton(
@@ -617,7 +625,7 @@ private fun CameraPermissionDeniedContent(
                     )
                 ) {
                     Text(
-                        text = "Kembali",
+                        text = stringResource(R.string.detail_back_button),
                         color = Color.White
                     )
                 }

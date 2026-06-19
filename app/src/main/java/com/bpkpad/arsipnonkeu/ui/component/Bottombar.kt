@@ -18,12 +18,14 @@ import androidx.compose.ui.Modifier
 import androidx.compose.ui.draw.clip
 import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.graphics.vector.ImageVector
+import androidx.compose.ui.res.stringResource
 import androidx.compose.ui.text.font.FontFamily
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.text.style.TextAlign
 import androidx.compose.ui.tooling.preview.Preview
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
+import com.bpkpad.arsipnonkeu.R
 
 // Menggunakan Font Poppins (Pastikan PoppinsFont sudah didefinisikan di Theme/Type.kt)
 // Jika belum, gunakan FontFamily.Default untuk sementara
@@ -41,11 +43,11 @@ fun BottomBar(
     onItemSelected: (String) -> Unit = {}
 ) {
     val items = listOf(
-        BottomNavItem("Main", Icons.Outlined.GridView, "dashboard"),
-        BottomNavItem("Docs", Icons.Outlined.Inventory2, "archive"),
-        BottomNavItem("Search", Icons.Outlined.Search, "search"),
-        BottomNavItem("New", Icons.Outlined.PostAdd, "new_record"),
-        BottomNavItem("Profile", Icons.Outlined.Person, "profile")
+        BottomNavItem(stringResource(R.string.bottom_nav_main), Icons.Outlined.GridView, "dashboard"),
+        BottomNavItem(stringResource(R.string.bottom_nav_docs), Icons.Outlined.Inventory2, "archive"),
+        BottomNavItem(stringResource(R.string.bottom_nav_search), Icons.Outlined.Search, "search"),
+        BottomNavItem(stringResource(R.string.bottom_nav_new), Icons.Outlined.PostAdd, "new_record"),
+        BottomNavItem(stringResource(R.string.bottom_nav_profile), Icons.Outlined.Person, "profile")
     )
 
     Row(

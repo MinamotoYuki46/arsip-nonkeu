@@ -51,6 +51,7 @@ import androidx.compose.runtime.setValue
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.draw.clip
 import androidx.compose.ui.graphics.Color
+import androidx.compose.ui.res.stringResource
 import androidx.compose.ui.text.font.FontFamily
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.text.input.KeyboardType
@@ -58,6 +59,7 @@ import androidx.compose.ui.text.style.TextOverflow
 import androidx.compose.ui.tooling.preview.Preview
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
+import com.bpkpad.arsipnonkeu.R
 import com.bpkpad.arsipnonkeu.domain.model.DocumentCondition
 import com.bpkpad.arsipnonkeu.domain.model.DocumentStatus
 import com.bpkpad.arsipnonkeu.domain.model.DocumentType
@@ -113,7 +115,7 @@ fun NewRecordScreen(
     Scaffold(
         topBar = {
             TopBar(
-                title = "Input Manual",
+                title = stringResource(R.string.staging_manual_input),
                 onProfileClick = onProfileClick
             )
         },
@@ -144,11 +146,11 @@ fun NewRecordScreen(
         ) {
             item {
                 FormSection(
-                    title = "Identitas Dokumen",
-                    description = "Data utama yang dipakai untuk mengenali dokumen arsip."
+                    title = stringResource(R.string.manual_id_section_title),
+                    description = stringResource(R.string.manual_id_section_desc)
                 ) {
                     StagingDropdownField(
-                        label = "Jenis Dokumen",
+                        label = stringResource(R.string.staging_field_type_label),
                         value = documentType,
                         options = DocumentType.values().toList(),
                         optionLabel = { it.label },
@@ -158,10 +160,10 @@ fun NewRecordScreen(
                     )
 
                     DetailTextField(
-                        label = "Nomor Dokumen",
+                        label = stringResource(R.string.staging_field_number_label),
                         value = documentNumber,
                         onValueChange = { if (it.length <= 50) documentNumber = it },
-                        placeholder = "Contoh: 001/UMUM/2025"
+                        placeholder = stringResource(R.string.manual_number_placeholder)
                     )
 
                     ArchiveClassificationField(
@@ -174,18 +176,18 @@ fun NewRecordScreen(
                     )
 
                     DetailTextField(
-                        label = "Judul Dokumen (Maks 255)",
+                        label = stringResource(R.string.manual_title_label),
                         value = title,
                         onValueChange = { if (it.length <= 255) title = it },
-                        placeholder = "Masukkan judul dokumen",
+                        placeholder = stringResource(R.string.manual_title_placeholder),
                         error = title.isBlank()
                     )
 
                     DetailTextField(
-                        label = "Deskripsi",
+                        label = stringResource(R.string.staging_field_desc_label),
                         value = description,
                         onValueChange = { if (it.length <= 1000) description = it },
-                        placeholder = "Masukkan deskripsi dokumen",
+                        placeholder = stringResource(R.string.manual_desc_placeholder),
                         singleLine = false
                     )
                 }
@@ -193,19 +195,19 @@ fun NewRecordScreen(
 
             item {
                 FormSection(
-                    title = "Klasifikasi dan Kondisi",
-                    description = "Informasi fisik dan status dokumen sebelum masuk ke arsip utama."
+                    title = stringResource(R.string.manual_class_section_title),
+                    description = stringResource(R.string.manual_class_section_desc)
                 ) {
                     DetailTextField(
-                        label = "Tahun",
+                        label = stringResource(R.string.staging_field_year_label),
                         value = year,
                         onValueChange = {},
-                        placeholder = "2025",
+                        placeholder = stringResource(R.string.staging_field_year_placeholder),
                         readOnly = true
                     )
 
                     StagingDropdownField(
-                        label = "Bentuk Fisik",
+                        label = stringResource(R.string.staging_field_physical_label),
                         value = physicalForm,
                         options = PhysicalForm.values().toList(),
                         optionLabel = { it.label },
@@ -215,19 +217,19 @@ fun NewRecordScreen(
                     )
 
                     StagingDropdownField(
-                        label = "Kondisi",
+                        label = stringResource(R.string.staging_field_condition_label),
                         value = condition,
                         options = DocumentCondition.values().toList(),
                         optionLabel = { it.label },
                         allowNull = true,
-                        nullLabel = "Tidak diketahui",
+                        nullLabel = stringResource(R.string.staging_field_unknown),
                         onValueChange = { selected ->
                             condition = selected
                         }
                     )
 
                     DetailTextField(
-                        label = "Jumlah Salinan",
+                        label = stringResource(R.string.staging_field_count_label),
                         value = copyCount,
                         onValueChange = { input ->
                             if (input.all { it.isDigit() }) {
@@ -239,7 +241,7 @@ fun NewRecordScreen(
                     )
 
                     StagingDropdownField(
-                        label = "Status",
+                        label = stringResource(R.string.staging_field_status_label),
                         value = status,
                         options = DocumentStatus.values().toList(),
                         optionLabel = { it.label },
@@ -252,14 +254,14 @@ fun NewRecordScreen(
 
             item {
                 FormSection(
-                    title = "Asal Dokumen",
-                    description = "Informasi sumber atau instansi asal dokumen."
+                    title = stringResource(R.string.manual_origin_section_title),
+                    description = stringResource(R.string.manual_origin_section_desc)
                 ) {
                     DetailTextField(
-                        label = "Asal Instansi",
+                        label = stringResource(R.string.staging_field_origin_label),
                         value = originInstance,
                         onValueChange = { if (it.length <= 100) originInstance = it },
-                        placeholder = "Contoh: Bagian Umum"
+                        placeholder = stringResource(R.string.manual_origin_placeholder)
                     )
                 }
             }
@@ -303,10 +305,10 @@ fun NewRecordScreen(
                 showSaveConfirmDialog = false
             },
             title = {
-                Text("Simpan ke Staging")
+                Text(stringResource(R.string.staging_save_confirm_title))
             },
             text = {
-                Text("Simpan dokumen ini ke daftar staging? Data belum masuk ke arsip utama.")
+                Text(stringResource(R.string.manual_class_section_desc))
             },
             confirmButton = {
                 TextButton(
@@ -331,7 +333,7 @@ fun NewRecordScreen(
                     }
                 ) {
                     Text(
-                        text = "Simpan",
+                        text = stringResource(R.string.dashboard_add_button),
                         color = Color(0xFF0D631B)
                     )
                 }
@@ -342,7 +344,7 @@ fun NewRecordScreen(
                         showSaveConfirmDialog = false
                     }
                 ) {
-                    Text("Batal")
+                    Text(stringResource(R.string.dashboard_cancel_button))
                 }
             }
         )
@@ -354,10 +356,10 @@ fun NewRecordScreen(
                 showCancelConfirmDialog = false
             },
             title = {
-                Text("Batalkan Input")
+                Text(stringResource(R.string.manual_cancel_dialog_title))
             },
             text = {
-                Text("Batalkan input manual? Perubahan yang belum disimpan akan hilang.")
+                Text(stringResource(R.string.manual_cancel_dialog_message))
             },
             confirmButton = {
                 TextButton(
@@ -367,7 +369,7 @@ fun NewRecordScreen(
                     }
                 ) {
                     Text(
-                        text = "Batalkan",
+                        text = stringResource(R.string.manual_cancel_button),
                         color = Color(0xFFBA1A1A)
                     )
                 }
@@ -378,7 +380,7 @@ fun NewRecordScreen(
                         showCancelConfirmDialog = false
                     }
                 ) {
-                    Text("Lanjut Input")
+                    Text(stringResource(R.string.manual_continue_button))
                 }
             }
         )
@@ -441,7 +443,7 @@ private fun ManualInputBottomBar(
     ) {
         if (!isFormValid) {
             Text(
-                text = "Judul, tahun, dan jumlah salinan wajib valid.",
+                text = stringResource(R.string.manual_error_invalid),
                 fontSize = 12.sp,
                 fontWeight = FontWeight.Medium,
                 fontFamily = PoppinsFont,
@@ -462,7 +464,7 @@ private fun ManualInputBottomBar(
                 border = BorderStroke(1.dp, Color(0xFF0D631B))
             ) {
                 Text(
-                    text = "Batal",
+                    text = stringResource(R.string.dashboard_cancel_button),
                     fontSize = 14.sp,
                     fontWeight = FontWeight.SemiBold,
                     fontFamily = PoppinsFont,
@@ -488,7 +490,7 @@ private fun ManualInputBottomBar(
                 Spacer(modifier = Modifier.padding(horizontal = 4.dp))
 
                 Text(
-                    text = "Simpan",
+                    text = stringResource(R.string.dashboard_add_button),
                     fontSize = 14.sp,
                     fontWeight = FontWeight.SemiBold,
                     fontFamily = PoppinsFont,
@@ -507,12 +509,12 @@ private fun ValidationInfoCard(
     copyCount: String
 ) {
     val message = when {
-        title.isBlank() -> "Judul dokumen belum diisi."
-        year.length != 4 || year.toIntOrNull() == null -> "Tahun harus berupa 4 digit angka."
+        title.isBlank() -> stringResource(R.string.manual_validation_empty_title)
+        year.length != 4 || year.toIntOrNull() == null -> stringResource(R.string.manual_validation_invalid_year)
         copyCount.toIntOrNull() == null || (copyCount.toIntOrNull() ?: 0) <= 0 -> {
-            "Jumlah salinan harus berupa angka lebih dari 0."
+            stringResource(R.string.manual_validation_invalid_count)
         }
-        else -> "Form sudah valid dan siap disimpan ke staging."
+        else -> stringResource(R.string.manual_validation_valid)
     }
 
     Box(

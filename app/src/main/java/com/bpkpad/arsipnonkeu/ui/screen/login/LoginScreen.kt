@@ -14,6 +14,7 @@ import androidx.compose.runtime.*
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.graphics.Color
+import androidx.compose.ui.res.stringResource
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.text.input.KeyboardType
 import androidx.compose.ui.text.input.PasswordVisualTransformation
@@ -22,6 +23,7 @@ import androidx.compose.ui.text.style.TextAlign
 import androidx.compose.ui.tooling.preview.Preview
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
+import com.bpkpad.arsipnonkeu.R
 import com.bpkpad.arsipnonkeu.domain.model.UserProfile
 import com.bpkpad.arsipnonkeu.ui.theme.BackgroundGray
 
@@ -90,13 +92,13 @@ fun LoginScreen(
             // Header
             Column(horizontalAlignment = Alignment.CenterHorizontally) {
                 Text(
-                    text = "SIMPANKAN",
+                    text = stringResource(R.string.login_app_name),
                     fontSize = 32.sp,
                     fontWeight = FontWeight.Bold,
                     color = Color(0xFF0D631B)
                 )
                 Text(
-                    text = "BPKPAD Balangan",
+                    text = stringResource(R.string.login_subtitle),
                     fontSize = 16.sp,
                     color = Color(0xFF40493D)
                 )
@@ -116,7 +118,7 @@ fun LoginScreen(
                     verticalArrangement = Arrangement.spacedBy(16.dp)
                 ) {
                     Text(
-                        text = "Selamat Datang",
+                        text = stringResource(R.string.login_welcome),
                         fontSize = 20.sp,
                         fontWeight = FontWeight.Bold,
                         color = Color(0xFF071E27)
@@ -128,8 +130,8 @@ fun LoginScreen(
                             username = it
                             localErrorMessage = null
                         },
-                        label = { Text("Username") },
-                        placeholder = { Text("Masukkan username") },
+                        label = { Text(stringResource(R.string.login_username_label)) },
+                        placeholder = { Text(stringResource(R.string.login_username_placeholder)) },
                         modifier = Modifier.fillMaxWidth(),
                         leadingIcon = { Icon(Icons.Default.Person, contentDescription = null) },
                         shape = RoundedCornerShape(16.dp),
@@ -144,8 +146,8 @@ fun LoginScreen(
                             password = it
                             localErrorMessage = null
                         },
-                        label = { Text("Password") },
-                        placeholder = { Text("Masukkan password") },
+                        label = { Text(stringResource(R.string.login_password_label)) },
+                        placeholder = { Text(stringResource(R.string.login_password_placeholder)) },
                         modifier = Modifier.fillMaxWidth(),
                         leadingIcon = { Icon(Icons.Default.Lock, contentDescription = null) },
                         trailingIcon = {
@@ -174,12 +176,14 @@ fun LoginScreen(
                         )
                     }
 
+                    val localErrorMsg = stringResource(R.string.login_error_empty)
+
                     Button(
                         onClick = {
                             if (username.isNotBlank() && password.isNotBlank()) {
                                 viewModel.login(username, password)
                             } else {
-                                localErrorMessage = "Username dan password tidak boleh kosong"
+                                localErrorMessage = localErrorMsg
                             }
                         },
                         modifier = Modifier
@@ -196,7 +200,7 @@ fun LoginScreen(
                                 strokeWidth = 2.dp
                             )
                         } else {
-                            Text("Masuk", fontSize = 16.sp, fontWeight = FontWeight.Bold, color = Color.White)
+                            Text(stringResource(R.string.login_button), fontSize = 16.sp, fontWeight = FontWeight.Bold, color = Color.White)
                         }
                     }
                 }
