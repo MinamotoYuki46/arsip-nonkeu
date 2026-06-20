@@ -26,7 +26,6 @@ import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
 import com.bpkpad.arsipnonkeu.R
 import com.bpkpad.arsipnonkeu.ui.theme.BackgroundGray
-import com.bpkpad.arsipnonkeu.ui.component.BottomBar
 import com.bpkpad.arsipnonkeu.ui.component.TopBar
 
 val PoppinsFont = FontFamily.Default
@@ -39,8 +38,6 @@ fun ProfileScreen(
     onNavItemSelected: (String) -> Unit = {},
     onLogoutClick: () -> Unit = {}
 ) {
-    val selectedRoute = "profile"
-
     Scaffold(
         topBar = {
             TopBar(
@@ -67,10 +64,8 @@ fun ProfileScreen(
             verticalArrangement = Arrangement.spacedBy(40.dp),
             horizontalAlignment = Alignment.CenterHorizontally
         ) {
-            // ── Header Section (Avatar + Name + Badges) ──────────────
             ProfileDisplaySection(userName, userRole)
 
-            // ── Logout Button ─────────────────────────────
             Button(
                 onClick = onLogoutClick,
                 modifier = Modifier
@@ -101,7 +96,6 @@ private fun ProfileDisplaySection(name: String, role: String) {
         verticalArrangement = Arrangement.spacedBy(20.dp),
         modifier = Modifier.fillMaxWidth()
     ) {
-        // Avatar Frame
         Box(
             modifier = Modifier
                 .size(160.dp)
@@ -119,7 +113,6 @@ private fun ProfileDisplaySection(name: String, role: String) {
             )
         }
 
-        // Info
         Column(horizontalAlignment = Alignment.CenterHorizontally, verticalArrangement = Arrangement.spacedBy(8.dp)) {
             Text(
                 text = name,

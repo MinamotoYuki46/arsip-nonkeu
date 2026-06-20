@@ -24,6 +24,7 @@ import androidx.compose.ui.unit.sp
 import androidx.lifecycle.viewmodel.compose.viewModel
 import com.bpkpad.arsipnonkeu.R
 import com.bpkpad.arsipnonkeu.domain.model.ArchiveYearSummary
+import com.bpkpad.arsipnonkeu.ui.component.ArsipTextField
 import com.bpkpad.arsipnonkeu.ui.component.LoadingIndicator
 import com.bpkpad.arsipnonkeu.ui.component.TopBar
 import com.bpkpad.arsipnonkeu.ui.theme.BackgroundGray
@@ -100,23 +101,21 @@ fun DashboardScreen(
             text = {
                 Column(verticalArrangement = Arrangement.spacedBy(8.dp)) {
                     Text(stringResource(R.string.dashboard_add_year_dialog_message))
-                    OutlinedTextField(
+                    ArsipTextField(
                         value = yearInput,
                         onValueChange = { if (it.length <= 4 && it.all { char -> char.isDigit() }) yearInput = it },
-                        label = { Text(stringResource(R.string.dashboard_year_label)) },
-                        placeholder = { Text(stringResource(R.string.dashboard_year_placeholder)) },
-                        modifier = Modifier.fillMaxWidth(),
-                        singleLine = true,
+                        label = stringResource(R.string.dashboard_year_label),
+                        placeholder = stringResource(R.string.dashboard_year_placeholder),
                         isError = isDuplicate,
-                        supportingText = {
-                            if (isDuplicate) {
-                                Text(
-                                    text = stringResource(R.string.dashboard_error_duplicate_year, yearInput),
-                                    color = MaterialTheme.colorScheme.error
-                                )
-                            }
-                        }
+                        singleLine = true
                     )
+                    if (isDuplicate) {
+                        Text(
+                            text = stringResource(R.string.dashboard_error_duplicate_year, yearInput),
+                            color = MaterialTheme.colorScheme.error,
+                            fontSize = 12.sp
+                        )
+                    }
                 }
             },
             confirmButton = {

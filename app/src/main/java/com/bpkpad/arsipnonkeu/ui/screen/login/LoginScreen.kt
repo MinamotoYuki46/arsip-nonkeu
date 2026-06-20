@@ -26,33 +26,9 @@ import androidx.compose.ui.unit.sp
 import com.bpkpad.arsipnonkeu.R
 import com.bpkpad.arsipnonkeu.domain.model.UserProfile
 import com.bpkpad.arsipnonkeu.ui.theme.BackgroundGray
+import com.bpkpad.arsipnonkeu.ui.component.ArsipTextField
 
 import androidx.lifecycle.viewmodel.compose.viewModel
-
-@Composable
-private fun detailTextFieldColors() = OutlinedTextFieldDefaults.colors(
-    focusedTextColor = Color.Black,
-    unfocusedTextColor = Color.Black,
-    disabledTextColor = Color.Black,
-
-    focusedLabelColor = Color.Black,
-    unfocusedLabelColor = Color.Black,
-    disabledLabelColor = Color.Black,
-
-    focusedPlaceholderColor = Color.Black,
-    unfocusedPlaceholderColor = Color.Black,
-    disabledPlaceholderColor = Color.Black,
-
-    focusedBorderColor = Color.Black,
-    unfocusedBorderColor = Color.Black,
-    disabledBorderColor = Color.Black,
-
-    cursorColor = Color.Black,
-
-    focusedContainerColor = Color.Transparent,
-    unfocusedContainerColor = Color.Transparent,
-    disabledContainerColor = Color.Transparent
-)
 
 @Composable
 fun LoginScreen(
@@ -124,31 +100,26 @@ fun LoginScreen(
                         color = Color(0xFF071E27)
                     )
 
-                    OutlinedTextField(
+                    ArsipTextField(
                         value = username,
                         onValueChange = { 
                             username = it
                             localErrorMessage = null
                         },
-                        label = { Text(stringResource(R.string.login_username_label)) },
-                        placeholder = { Text(stringResource(R.string.login_username_placeholder)) },
-                        modifier = Modifier.fillMaxWidth(),
+                        label = stringResource(R.string.login_username_label),
+                        placeholder = stringResource(R.string.login_username_placeholder),
                         leadingIcon = { Icon(Icons.Default.Person, contentDescription = null) },
-                        shape = RoundedCornerShape(16.dp),
-                        singleLine = true,
-                        enabled = !isLoading,
-                        colors = detailTextFieldColors()
+                        enabled = !isLoading
                     )
 
-                    OutlinedTextField(
+                    ArsipTextField(
                         value = password,
                         onValueChange = { 
                             password = it
                             localErrorMessage = null
                         },
-                        label = { Text(stringResource(R.string.login_password_label)) },
-                        placeholder = { Text(stringResource(R.string.login_password_placeholder)) },
-                        modifier = Modifier.fillMaxWidth(),
+                        label = stringResource(R.string.login_password_label),
+                        placeholder = stringResource(R.string.login_password_placeholder),
                         leadingIcon = { Icon(Icons.Default.Lock, contentDescription = null) },
                         trailingIcon = {
                             IconButton(onClick = { passwordVisible = !passwordVisible }) {
@@ -160,10 +131,7 @@ fun LoginScreen(
                         },
                         visualTransformation = if (passwordVisible) VisualTransformation.None else PasswordVisualTransformation(),
                         keyboardOptions = KeyboardOptions(keyboardType = KeyboardType.Password),
-                        shape = RoundedCornerShape(16.dp),
-                        singleLine = true,
-                        enabled = !isLoading,
-                        colors = detailTextFieldColors()
+                        enabled = !isLoading
                     )
 
                     if (errorMessage != null) {
