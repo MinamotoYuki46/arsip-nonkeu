@@ -241,12 +241,19 @@ class MainActivity : ComponentActivity() {
                                         try {
                                             authRepository.logout()
                                         } catch (e: Exception) {
-                                            // Handle error during logout if needed
+                                            // Tetap lanjut logout secara lokal
+                                            println("LOGOUT_REMOTE_ERROR: ${e.message}")
+                                        } finally {
+                                            // Reset state utama aplikasi
+                                            userName = ""
+                                            userRole = ""
+                                            isLoggedIn = false
+                                            currentRoute = "login"
+                                            
+                                            // Reset navigasi
+                                            lastRoute = "dashboard"
+                                            routeBeforeProfile = "dashboard"
                                         }
-                                        isLoggedIn = false
-                                        currentRoute = "login"
-                                        userName = ""
-                                        userRole = ""
                                     }
                                 }
                             )

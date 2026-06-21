@@ -11,6 +11,8 @@
     <string name="login_password_label">Password</string>
     <string name="login_password_placeholder">Masukkan password</string>
     <string name="login_error_empty">Username dan password tidak boleh kosong</string>
+    <string name="login_error_network">Gagal terhubung ke server. Periksa koneksi internet Anda.</string>
+    <string name="login_error_invalid">Username atau password salah</string>
     <string name="login_button">Masuk</string>
 
     <!-- Dashboard Screen -->
@@ -158,6 +160,7 @@
     <!-- Profile Screen -->
     <string name="profile_title">Profil Pengguna</string>
     <string name="profile_logout_button">Keluar dari Akun</string>
+    <string name="profile_logout_error">Gagal keluar secara sistem, tetapi sesi lokal telah dihapus.</string>
 
     <!-- Scan Screen -->
     <string name="scan_title">Scan Dokumen</string>

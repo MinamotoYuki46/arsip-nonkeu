@@ -7,6 +7,7 @@ import com.bpkpad.arsipnonkeu.domain.model.UserProfile
 import com.bpkpad.arsipnonkeu.domain.repository.ActivityLogRepository
 import com.bpkpad.arsipnonkeu.domain.repository.AuthRepository
 import com.bpkpad.arsipnonkeu.domain.repository.ProfileRepository
+import com.bpkpad.arsipnonkeu.utils.ErrorHandler
 import kotlinx.coroutines.flow.MutableStateFlow
 import kotlinx.coroutines.flow.StateFlow
 import kotlinx.coroutines.flow.asStateFlow
@@ -44,10 +45,16 @@ class LoginViewModel(
             try {
                 authRepository.login(username, password)
             } catch (e: Exception) {
+                val errorMsg = if (e.message?.contains("Invalid login credentials", ignoreCase = true) == true) {
+                    "Username atau password salah"
+                } else {
+                    ErrorHandler.getErrorMessage(e)
+                }
+
                 _uiState.update {
                     it.copy(
                         isLoading = false,
-                        error = "Username atau password salah"
+                        error = errorMsg
                     )
                 }
                 return@launch
@@ -62,7 +69,7 @@ class LoginViewModel(
                 _uiState.update {
                     it.copy(
                         isLoading = false,
-                        error = "Login berhasil, tetapi gagal mengambil profil pengguna"
+                        error = ErrorHandler.getErrorMessage(e)
                     )
                 }
                 return@launch
