@@ -3,9 +3,7 @@ package com.bpkpad.arsipnonkeu.data.local.datasource
 import com.bpkpad.arsipnonkeu.data.local.dao.ArchiveDocumentDao
 import com.bpkpad.arsipnonkeu.data.local.mapper.toDomain
 import com.bpkpad.arsipnonkeu.data.local.mapper.toEntity
-import com.bpkpad.arsipnonkeu.domain.model.ArchiveDocument
-import com.bpkpad.arsipnonkeu.domain.model.ArchiveDocumentListItem
-import com.bpkpad.arsipnonkeu.domain.model.ArchiveYearSummary
+import com.bpkpad.arsipnonkeu.domain.model.*
 import kotlinx.coroutines.flow.Flow
 import kotlinx.coroutines.flow.map
 
@@ -13,11 +11,18 @@ class ArchiveLocalDataSource(private val archiveDocumentDao: ArchiveDocumentDao)
     fun observeArchiveDocumentListItems(year: Int): Flow<List<ArchiveDocumentListItem>> {
         return archiveDocumentDao.getArchiveDocumentsByYear(year).map { entities ->
             entities.map { entity ->
-                // Untuk tahap awal, placement dan location null dulu di local
+                val domain = entity.toDomain()
                 ArchiveDocumentListItem(
-                    document = entity.toDomain(),
+                    document = domain,
                     currentPlacement = null,
-                    storageLocation = null
+                    storageLocation = domain.room?.let { room ->
+                        StorageLocation(
+                            id = "", // ID is not strictly needed for export display
+                            room = room,
+                            shelf = domain.shelf,
+                            boxNumber = domain.boxNumber
+                        )
+                    }
                 )
             }
         }

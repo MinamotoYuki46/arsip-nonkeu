@@ -15,7 +15,8 @@ class BpkpadApplication : Application() {
             applicationContext,
             AppDatabase::class.java,
             "arsip_bpkpad.db"
-        ).build()
+        ).fallbackToDestructiveMigration()
+            .build()
         
         // Initialize ArchiveModule with database
         ArchiveModule.initialize(database)

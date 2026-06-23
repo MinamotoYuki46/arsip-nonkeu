@@ -55,7 +55,9 @@ class ArchiveRepositoryImpl(
     }
 
     override suspend fun refreshArchiveDocuments(year: Int) {
-        val query = supabase.postgrest["archive_documents"].select {
+        val query = supabase.postgrest["archive_documents"].select(
+            columns = Columns.raw("*, storage_locations(*)")
+        ) {
             filter {
                 eq("year", year)
                 filter("deleted_at", FilterOperator.IS, "null")

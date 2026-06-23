@@ -15,7 +15,7 @@ import com.bpkpad.arsipnonkeu.data.local.entity.UserProfileEntity
         ArchiveDocumentEntity::class,
         ArchiveClassificationEntity::class
     ],
-    version = 1,
+    version = 2,
     exportSchema = false
 )
 abstract class AppDatabase : RoomDatabase() {
