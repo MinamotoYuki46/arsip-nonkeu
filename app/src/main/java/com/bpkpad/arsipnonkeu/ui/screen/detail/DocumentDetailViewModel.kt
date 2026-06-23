@@ -14,6 +14,8 @@ import com.bpkpad.arsipnonkeu.domain.usecase.GetArchiveDocumentDetailUseCase
 import kotlinx.coroutines.flow.MutableStateFlow
 import kotlinx.coroutines.flow.StateFlow
 import kotlinx.coroutines.flow.asStateFlow
+import kotlinx.coroutines.flow.update
+import com.bpkpad.arsipnonkeu.utils.ErrorHandler
 import kotlinx.coroutines.launch
 
 data class DocumentDetailUiState(
@@ -55,10 +57,12 @@ class DocumentDetailViewModel(
                     isClassificationLoading = false
                 )
             } catch (e: Exception) {
-                _uiState.value = _uiState.value.copy(
-                    isClassificationLoading = false,
-                    errorMessage = e.message ?: "Gagal memuat klasifikasi"
-                )
+                _uiState.update {
+                    it.copy(
+                        isClassificationLoading = false,
+                        errorMessage = ErrorHandler.getErrorMessage(e)
+                    )
+                }
             }
         }
     }
@@ -122,10 +126,12 @@ class DocumentDetailViewModel(
                     loadUserProfiles(userIds)
                 }
             } catch (exception: Exception) {
-                _uiState.value = _uiState.value.copy(
-                    isLoading = false,
-                    errorMessage = exception.message ?: "Gagal memuat detail dokumen"
-                )
+                _uiState.update {
+                    it.copy(
+                        isLoading = false,
+                        errorMessage = ErrorHandler.getErrorMessage(exception)
+                    )
+                }
             }
         }
     }
@@ -133,6 +139,21 @@ class DocumentDetailViewModel(
     fun updateDocument(
         updatedDocument: ArchiveDocument
     ) {
+        // Validasi input
+        if (updatedDocument.title.isBlank()) {
+            _uiState.value = _uiState.value.copy(
+                errorMessage = "Judul dokumen wajib diisi"
+            )
+            return
+        }
+
+        if (updatedDocument.copyCount < 0) {
+            _uiState.value = _uiState.value.copy(
+                errorMessage = "Jumlah salinan harus bernilai positif"
+            )
+            return
+        }
+
         viewModelScope.launch {
             _uiState.value = _uiState.value.copy(
                 isLoading = true,
@@ -151,10 +172,12 @@ class DocumentDetailViewModel(
                     successMessage = "Dokumen berhasil diperbarui"
                 )
             } catch (exception: Exception) {
-                _uiState.value = _uiState.value.copy(
-                    isLoading = false,
-                    errorMessage = exception.message ?: "Gagal memperbarui dokumen"
-                )
+                _uiState.update {
+                    it.copy(
+                        isLoading = false,
+                        errorMessage = ErrorHandler.getErrorMessage(exception)
+                    )
+                }
             }
         }
     }
@@ -178,10 +201,12 @@ class DocumentDetailViewModel(
                     successMessage = "Dokumen berhasil dihapus"
                 )
             } catch (exception: Exception) {
-                _uiState.value = _uiState.value.copy(
-                    isLoading = false,
-                    errorMessage = exception.message ?: "Gagal menghapus dokumen"
-                )
+                _uiState.update {
+                    it.copy(
+                        isLoading = false,
+                        errorMessage = ErrorHandler.getErrorMessage(exception)
+                    )
+                }
             }
         }
     }

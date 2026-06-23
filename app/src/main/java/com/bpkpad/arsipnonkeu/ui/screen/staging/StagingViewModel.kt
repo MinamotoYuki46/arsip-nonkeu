@@ -19,8 +19,10 @@ import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.flow.MutableStateFlow
 import kotlinx.coroutines.flow.StateFlow
 import kotlinx.coroutines.flow.asStateFlow
+import kotlinx.coroutines.flow.update
 import kotlinx.coroutines.launch
 import kotlinx.coroutines.withContext
+import com.bpkpad.arsipnonkeu.utils.ErrorHandler
 import java.util.UUID
 
 data class StagingDocument(
@@ -136,10 +138,12 @@ class StagingViewModel(
                     isLoading = false
                 )
             } catch (e: Exception) {
-                _uiState.value = _uiState.value.copy(
-                    isLoading = false,
-                    errorMessage = e.message ?: "Gagal memuat dokumen staging"
-                )
+                _uiState.update {
+                    it.copy(
+                        isLoading = false,
+                        errorMessage = ErrorHandler.getErrorMessage(e)
+                    )
+                }
             }
         }
     }
@@ -224,9 +228,11 @@ class StagingViewModel(
                     isSuccess = false
                 )
             } catch (e: Exception) {
-                _uiState.value = _uiState.value.copy(
-                    errorMessage = e.message ?: "Gagal memperbarui dokumen"
-                )
+                _uiState.update {
+                    it.copy(
+                        errorMessage = ErrorHandler.getErrorMessage(e)
+                    )
+                }
             }
         }
     }
@@ -247,9 +253,11 @@ class StagingViewModel(
                     isSuccess = false
                 )
             } catch (e: Exception) {
-                _uiState.value = _uiState.value.copy(
-                    errorMessage = e.message ?: "Gagal menghapus dokumen"
-                )
+                _uiState.update {
+                    it.copy(
+                        errorMessage = ErrorHandler.getErrorMessage(e)
+                    )
+                }
             }
         }
     }
@@ -294,9 +302,11 @@ class StagingViewModel(
                     isSuccess = false
                 )
             } catch (e: Exception) {
-                _uiState.value = _uiState.value.copy(
-                    errorMessage = e.message ?: "Gagal menambah dokumen"
-                )
+                _uiState.update {
+                    it.copy(
+                        errorMessage = ErrorHandler.getErrorMessage(e)
+                    )
+                }
             }
         }
     }
@@ -335,9 +345,11 @@ class StagingViewModel(
                     isSuccess = false
                 )
             } catch (e: Exception) {
-                _uiState.value = _uiState.value.copy(
-                    errorMessage = e.message ?: "Gagal menambah dokumen scan"
-                )
+                _uiState.update {
+                    it.copy(
+                        errorMessage = ErrorHandler.getErrorMessage(e)
+                    )
+                }
             }
         }
 
@@ -378,9 +390,11 @@ class StagingViewModel(
                     isSuccess = false
                 )
             } catch (e: Exception) {
-                _uiState.value = _uiState.value.copy(
-                    errorMessage = e.message ?: "Gagal menambah dokumen scan terurai"
-                )
+                _uiState.update {
+                    it.copy(
+                        errorMessage = ErrorHandler.getErrorMessage(e)
+                    )
+                }
             }
         }
 
@@ -429,10 +443,12 @@ class StagingViewModel(
                     }
                 )
             } catch (throwable: Throwable) {
-                _uiState.value = _uiState.value.copy(
-                    isLoading = false,
-                    errorMessage = throwable.message ?: "Gagal mengimpor file Excel"
-                )
+                _uiState.update {
+                    it.copy(
+                        isLoading = false,
+                        errorMessage = ErrorHandler.getErrorMessage(throwable)
+                    )
+                }
             }
         }
     }
@@ -522,10 +538,12 @@ class StagingViewModel(
                     boxNumber = ""
                 )
             } catch (throwable: Throwable) {
-                _uiState.value = _uiState.value.copy(
-                    isLoading = false,
-                    errorMessage = throwable.message ?: "Gagal menyimpan ke arsip utama"
-                )
+                _uiState.update {
+                    it.copy(
+                        isLoading = false,
+                        errorMessage = ErrorHandler.getErrorMessage(throwable)
+                    )
+                }
             }
         }
     }
@@ -547,10 +565,12 @@ class StagingViewModel(
                     isClassificationLoading = false
                 )
             } catch (throwable: Throwable) {
-                _uiState.value = _uiState.value.copy(
-                    isClassificationLoading = false,
-                    errorMessage = throwable.message ?: "Gagal memuat kode klasifikasi arsip"
-                )
+                _uiState.update {
+                    it.copy(
+                        isClassificationLoading = false,
+                        errorMessage = ErrorHandler.getErrorMessage(throwable)
+                    )
+                }
             }
         }
     }

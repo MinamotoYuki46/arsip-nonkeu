@@ -269,6 +269,7 @@ private fun ValidationInfoCard(
 ) {
     val message = when {
         title.isBlank() -> stringResource(R.string.manual_validation_empty_title)
+        title.length > 255 -> stringResource(R.string.manual_validation_title_too_long)
         year.length != 4 || year.toIntOrNull() == null -> stringResource(R.string.manual_validation_invalid_year)
         copyCount.toIntOrNull() == null || (copyCount.toIntOrNull() ?: 0) <= 0 -> stringResource(R.string.manual_validation_invalid_count)
         else -> stringResource(R.string.manual_validation_valid)

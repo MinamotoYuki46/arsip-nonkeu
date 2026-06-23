@@ -182,6 +182,7 @@
     <string name="bottom_nav_search">Search</string>
     <string name="bottom_nav_new">New</string>
     <string name="bottom_nav_profile">Profile</string>
+    <string name="manual_validation_title_too_long">Judul terlalu panjang. Maks 255 karakter</string>
 
     <string-array name="com_google_android_gms_fonts_certs">
         <item>@array/com_google_android_gms_fonts_certs_dev</item>

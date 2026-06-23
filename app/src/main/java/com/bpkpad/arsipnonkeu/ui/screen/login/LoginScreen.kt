@@ -32,6 +32,7 @@ import androidx.lifecycle.viewmodel.compose.viewModel
 
 @Composable
 fun LoginScreen(
+    skipAutoLogin: Boolean = false,
     onLoginSuccess: (UserProfile) -> Unit = {},
     viewModel: LoginViewModel = viewModel()
 ) {
@@ -46,6 +47,7 @@ fun LoginScreen(
     val errorMessage = uiState.error ?: localErrorMessage
 
     LaunchedEffect(uiState.isLoggedIn, uiState.userProfile) {
+        if (skipAutoLogin) return@LaunchedEffect
         val profile = uiState.userProfile
         if (uiState.isLoggedIn && profile != null) {
             onLoginSuccess(profile)

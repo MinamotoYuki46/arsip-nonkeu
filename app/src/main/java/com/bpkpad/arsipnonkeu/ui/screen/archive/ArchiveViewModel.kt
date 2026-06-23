@@ -10,6 +10,7 @@ import com.bpkpad.arsipnonkeu.domain.model.DocumentStatus
 import com.bpkpad.arsipnonkeu.domain.model.DocumentType
 import com.bpkpad.arsipnonkeu.domain.model.PhysicalForm
 import com.bpkpad.arsipnonkeu.domain.repository.ArchiveRepository
+import com.bpkpad.arsipnonkeu.utils.ErrorHandler
 import kotlinx.coroutines.ExperimentalCoroutinesApi
 import kotlinx.coroutines.flow.MutableStateFlow
 import kotlinx.coroutines.flow.StateFlow
@@ -70,9 +71,12 @@ class ArchiveViewModel(
             val doc = item.document
             
             val matchesKeyword = if (!filter.keyword.isNullOrBlank()) {
-                val kw = filter.keyword.lowercase()
+                val kw = filter.keyword.trim().lowercase()
                 doc.title.lowercase().contains(kw) || 
-                doc.documentNumber?.lowercase()?.contains(kw) == true
+                doc.documentNumber?.lowercase()?.contains(kw) == true ||
+                doc.classificationCode?.lowercase()?.contains(kw) == true ||
+                doc.originInstance?.lowercase()?.contains(kw) == true ||
+                doc.description?.lowercase()?.contains(kw) == true
             } else true
 
             val matchesType = filter.documentType == null || doc.documentType == filter.documentType
@@ -111,7 +115,7 @@ class ArchiveViewModel(
                 _uiState.update { 
                     it.copy(
                         isLoading = false, 
-                        errorMessage = e.message ?: "Gagal memperbarui data dari server" 
+                        errorMessage = ErrorHandler.getErrorMessage(e)
                     ) 
                 }
             }

@@ -12,28 +12,28 @@ import androidx.compose.runtime.mutableStateOf
 import androidx.compose.runtime.remember
 import androidx.compose.runtime.setValue
 import androidx.lifecycle.viewmodel.compose.viewModel
-import androidx.compose.runtime.rememberCoroutineScope
-import com.bpkpad.arsipnonkeu.di.ArchiveModule
-import com.bpkpad.arsipnonkeu.domain.model.UserProfile
 import com.bpkpad.arsipnonkeu.ui.screen.add.NewRecordScreen
 import com.bpkpad.arsipnonkeu.ui.screen.archive.ArchiveScreen
 import com.bpkpad.arsipnonkeu.ui.screen.dashboard.DashboardScreen
 import com.bpkpad.arsipnonkeu.ui.screen.detail.DocumentDetailScreen
 import com.bpkpad.arsipnonkeu.ui.screen.login.LoginScreen
 import com.bpkpad.arsipnonkeu.ui.screen.profile.ProfileScreen
+import com.bpkpad.arsipnonkeu.ui.screen.scan.ScanScreen
 import com.bpkpad.arsipnonkeu.ui.screen.staging.StagingScreen
 import com.bpkpad.arsipnonkeu.ui.screen.staging.StagingViewModel
-import com.bpkpad.arsipnonkeu.ui.theme.ArsipBPKADTheme
-import com.bpkpad.arsipnonkeu.ui.screen.scan.ScanScreen
 import com.bpkpad.arsipnonkeu.ui.screen.staging.StagingViewModelFactory
-import kotlinx.coroutines.launch
+import com.bpkpad.arsipnonkeu.ui.theme.ArsipBPKADTheme
 
 /**
  * MainActivity - Entry point of the BPKPAD Balangan application.
  *
- * This version still uses simple manual navigation with route state.
+ * This version uses simple manual navigation with route state.
  * Android system back is handled using BackHandler.
+ *
+ * Logout is handled locally first and does not depend on network request,
+ * so logout remains safe when the device is offline.
  */
+
 class MainActivity : ComponentActivity() {
     override fun onCreate(savedInstanceState: Bundle?) {
         installSplashScreen()
@@ -43,9 +43,6 @@ class MainActivity : ComponentActivity() {
 
         setContent {
             ArsipBPKADTheme {
-                val scope = rememberCoroutineScope()
-                val authRepository = ArchiveModule.authRepository
-
                 var isLoggedIn by remember { mutableStateOf(false) }
                 var userName by remember { mutableStateOf("") }
                 var userRole by remember { mutableStateOf("") }
@@ -57,10 +54,28 @@ class MainActivity : ComponentActivity() {
                 var selectedYear by remember { mutableIntStateOf(2025) }
                 var selectedDocumentId by remember { mutableStateOf<String?>(null) }
 
+                var isExplicitlyLoggedOut by remember { mutableStateOf(false) }
+
                 val stagingViewModel: StagingViewModel = viewModel(
                     key = selectedYear.toString(),
                     factory = StagingViewModelFactory(applicationContext, selectedYear)
                 )
+
+                fun performLocalLogout() {
+                    isExplicitlyLoggedOut = true
+
+                    userName = ""
+                    userRole = ""
+
+                    selectedDocumentId = null
+                    selectedYear = 2025
+
+                    lastRoute = "dashboard"
+                    routeBeforeProfile = "dashboard"
+
+                    currentRoute = "login"
+                    isLoggedIn = false
+                }
 
                 BackHandler(enabled = currentRoute != "dashboard" && currentRoute != "login") {
                     currentRoute = when (currentRoute) {
@@ -96,11 +111,21 @@ class MainActivity : ComponentActivity() {
 
                 if (!isLoggedIn) {
                     LoginScreen(
+                        skipAutoLogin = isExplicitlyLoggedOut,
                         onLoginSuccess = { profile ->
+                            isExplicitlyLoggedOut = false
+
                             userName = profile.name
                             userRole = profile.role.name
-                            isLoggedIn = true
+
+                            selectedDocumentId = null
+                            selectedYear = 2025
+
+                            lastRoute = "dashboard"
+                            routeBeforeProfile = "dashboard"
+
                             currentRoute = "dashboard"
+                            isLoggedIn = true
                         }
                     )
                 } else {
@@ -158,8 +183,8 @@ class MainActivity : ComponentActivity() {
                                         currentRoute = "scan"
                                     },
                                     onImportClick = {
-                                        // Sementara import langsung ditangani di StagingScreen.
-                                        // Tidak perlu pindah halaman dulu.
+                                        // Import langsung ditangani di StagingScreen.
+                                        // Tidak perlu pindah halaman.
                                     },
                                     onPushAllClick = {
                                         currentRoute = "dashboard"
@@ -237,39 +262,13 @@ class MainActivity : ComponentActivity() {
                                     currentRoute = route
                                 },
                                 onLogoutClick = {
-                                    scope.launch {
-                                        try {
-                                            authRepository.logout()
-                                        } catch (e: Exception) {
-                                            // Tetap lanjut logout secara lokal
-                                            println("LOGOUT_REMOTE_ERROR: ${e.message}")
-                                        } finally {
-                                            // Reset state utama aplikasi
-                                            userName = ""
-                                            userRole = ""
-                                            isLoggedIn = false
-                                            currentRoute = "login"
-                                            
-                                            // Reset navigasi
-                                            lastRoute = "dashboard"
-                                            routeBeforeProfile = "dashboard"
-                                        }
-                                    }
+                                    performLocalLogout()
                                 }
                             )
                         }
 
                         else -> {
-                            DashboardScreen(
-                                onProfileClick = {
-                                    routeBeforeProfile = "dashboard"
-                                    currentRoute = "profile"
-                                },
-                                onArchiveYearClick = { year ->
-                                    selectedYear = year
-                                    currentRoute = "archive"
-                                }
-                            )
+                            currentRoute = "dashboard"
                         }
                     }
                 }
