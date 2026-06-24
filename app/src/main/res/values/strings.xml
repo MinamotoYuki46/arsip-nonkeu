@@ -2,6 +2,188 @@
 <resources>
     <string name="app_name">Non-Keu</string>
 
+    <!-- Login Screen -->
+    <string name="login_app_name">SIMPANKAN</string>
+    <string name="login_subtitle">BPKPAD Balangan</string>
+    <string name="login_welcome">Selamat Datang</string>
+    <string name="login_username_label">Username</string>
+    <string name="login_username_placeholder">Masukkan username</string>
+    <string name="login_password_label">Password</string>
+    <string name="login_password_placeholder">Masukkan password</string>
+    <string name="login_error_empty">Username dan password tidak boleh kosong</string>
+    <string name="login_error_network">Gagal terhubung ke server. Periksa koneksi internet Anda.</string>
+    <string name="login_error_invalid">Username atau password salah</string>
+    <string name="login_button">Masuk</string>
+
+    <!-- Dashboard Screen -->
+    <string name="dashboard_title">BPKPAD Balangan</string>
+    <string name="dashboard_add_year_dialog_title">Tambah Tahun Arsip Baru</string>
+    <string name="dashboard_add_year_dialog_message">Masukkan tahun baru yang ingin didaftarkan ke sistem.</string>
+    <string name="dashboard_year_label">Tahun</string>
+    <string name="dashboard_year_placeholder">Contoh: 2027</string>
+    <string name="dashboard_error_duplicate_year">Tahun %1$s sudah ada dalam daftar.</string>
+    <string name="dashboard_add_button">Tambah</string>
+    <string name="dashboard_cancel_button">Batal</string>
+    <string name="dashboard_header_title">Archival\nRepository</string>
+    <string name="dashboard_header_subtitle">Pilih tahun arsip untuk melihat daftar dokumen.</string>
+    <string name="dashboard_add_year_card">Tambah Tahun</string>
+    <string name="dashboard_document_count">%1$d dokumen</string>
+
+    <!-- Archive Screen -->
+    <string name="archive_title">Arsip %1$d</string>
+    <string name="archive_fab_desc">Tambah dokumen</string>
+    <string name="archive_filter_button">Filter</string>
+    <string name="archive_export_button">Ekspor</string>
+    <string name="archive_status_summary">%1$d dokumen • Tahun %2$d</string>
+    <string name="archive_empty_message">Tidak ada dokumen untuk filter saat ini.</string>
+    <string name="archive_search_placeholder">Cari judul, nomor dokumen, kode, instansi, atau rak...</string>
+    <string name="archive_filter_sheet_title">Filter Dokumen</string>
+    <string name="archive_filter_sheet_subtitle">Atur filter untuk mempersempit daftar arsip.</string>
+    <string name="archive_filter_type_label">Jenis Dokumen</string>
+    <string name="archive_filter_status_label">Status</string>
+    <string name="archive_filter_physical_label">Bentuk Fisik</string>
+    <string name="archive_filter_condition_label">Kondisi</string>
+    <string name="archive_filter_reset">Reset</string>
+    <string name="archive_filter_apply">Terapkan</string>
+    <string name="archive_filter_all">Semua</string>
+    <string name="archive_metadata_room">RUANGAN</string>
+    <string name="archive_metadata_shelf">RAK</string>
+    <string name="archive_metadata_box">NOMOR BOX</string>
+    <string name="archive_footer_message">Semua data sudah ditampilkan</string>
+    <string name="archive_export_dialog_title">Ekspor Data Arsip</string>
+    <string name="archive_export_dialog_message">Data yang diekspor mengikuti hasil filter yang sedang tampil.</string>
+    <string name="archive_export_dialog_summary">Tahun: %1$d\nJumlah dokumen: %2$d</string>
+    <string name="archive_export_dialog_close">Tutup</string>
+    <string name="archive_filter_active_none">Tanpa filter</string>
+    <string name="archive_filter_active_count">%1$d filter aktif</string>
+    <string name="archive_export_success">Data arsip berhasil diekspor</string>
+    <string name="archive_export_failed">Gagal mengekspor data arsip</string>
+
+    <!-- Staging Screen -->
+    <string name="staging_title">Staging Arsip</string>
+    <string name="staging_manual_input">Input Manual</string>
+    <string name="staging_scan">Scan</string>
+    <string name="staging_import">Import</string>
+    <string name="staging_push_button">Simpan Semua ke Arsip</string>
+    <string name="staging_error_location_invalid">Ruangan dan rak wajib diisi.</string>
+    <string name="staging_location_title">Lokasi Penyimpanan</string>
+    <string name="staging_location_empty">Belum ditentukan</string>
+    <string name="staging_room_label">Ruangan</string>
+    <string name="staging_room_placeholder">Contoh: Ruang Arsip</string>
+    <string name="staging_shelf_label">Rak</string>
+    <string name="staging_shelf_placeholder">Rak 04-B</string>
+    <string name="staging_box_label">Box</string>
+    <string name="staging_box_placeholder">01</string>
+    <string name="staging_content_title">Dokumen Staging</string>
+    <string name="staging_document_count_summary">%1$d dokumen</string>
+    <string name="staging_empty_message">Belum ada dokumen di staging.\nGunakan tombol + untuk input manual, scan, atau import.</string>
+    <string name="staging_delete_label">Hapus</string>
+    <string name="staging_delete_dialog_title">Hapus dari Staging</string>
+    <string name="staging_delete_dialog_message">Hapus dokumen ini dari daftar staging?</string>
+    <string name="staging_detail_sheet_title">Detail Dokumen Staging</string>
+    <string name="staging_edit_sheet_title">Edit Dokumen Staging</string>
+    <string name="staging_field_title_label">Judul (Maks 255 karakter)</string>
+    <string name="staging_field_title_placeholder">Judul dokumen</string>
+    <string name="staging_field_number_label">Nomor Dokumen</string>
+    <string name="staging_field_number_placeholder">Nomor dokumen</string>
+    <string name="staging_field_desc_label">Deskripsi</string>
+    <string name="staging_field_desc_placeholder">Deskripsi dokumen</string>
+    <string name="staging_field_year_label">Tahun</string>
+    <string name="staging_field_year_placeholder">2025</string>
+    <string name="staging_field_type_label">Jenis Dokumen</string>
+    <string name="staging_field_physical_label">Bentuk Fisik</string>
+    <string name="staging_field_condition_label">Kondisi</string>
+    <string name="staging_field_unknown">Tidak diketahui</string>
+    <string name="staging_field_copy_label">Keaslian</string>
+    <string name="staging_field_copy_true">Kopi</string>
+    <string name="staging_field_copy_false">Asli</string>
+    <string name="staging_field_count_label">Jumlah Salinan</string>
+    <string name="staging_field_status_label">Status</string>
+    <string name="staging_field_origin_label">Asal Instansi</string>
+    <string name="staging_field_origin_placeholder">Bagian Umum</string>
+    <string name="staging_save_confirm_title">Simpan Perubahan</string>
+    <string name="staging_save_confirm_message">Simpan perubahan pada dokumen staging ini?</string>
+    <string name="staging_delete_confirm_message">Hapus dokumen ini dari staging? Data belum masuk ke arsip utama.</string>
+    <string name="staging_warning_confirm">Tetap Simpan</string>
+    <string name="staging_error_dismiss">Tutup</string>
+    <string name="staging_push_confirm_title">Simpan ke Arsip</string>
+    <string name="staging_push_confirm_message">Simpan %1$d dokumen staging ke lokasi:\n\n%2$s?</string>
+
+    <!-- Manual Input (NewRecordScreen) -->
+    <string name="manual_id_section_title">Identitas Dokumen</string>
+    <string name="manual_id_section_desc">Data utama yang dipakai untuk mengenali dokumen arsip.</string>
+    <string name="manual_number_placeholder">Contoh: 001/UMUM/2025</string>
+    <string name="manual_title_label">Judul Dokumen (Maks 255)</string>
+    <string name="manual_title_placeholder">Masukkan judul dokumen</string>
+    <string name="manual_desc_placeholder">Masukkan deskripsi dokumen</string>
+    <string name="manual_class_section_title">Klasifikasi dan Kondisi</string>
+    <string name="manual_class_section_desc">Informasi fisik dan status dokumen sebelum masuk ke arsip utama.</string>
+    <string name="manual_origin_section_title">Asal Dokumen</string>
+    <string name="manual_origin_section_desc">Informasi sumber atau instansi asal dokumen.</string>
+    <string name="manual_origin_placeholder">Contoh: Bagian Umum</string>
+    <string name="manual_error_invalid">Judul, tahun, dan jumlah salinan wajib valid.</string>
+    <string name="manual_validation_empty_title">Judul dokumen belum diisi.</string>
+    <string name="manual_validation_invalid_year">Tahun harus berupa 4 digit angka.</string>
+    <string name="manual_validation_invalid_count">Jumlah salinan harus berupa angka lebih dari 0.</string>
+    <string name="manual_validation_valid">Form sudah valid dan siap disimpan ke staging.</string>
+    <string name="manual_cancel_dialog_title">Batalkan Input</string>
+    <string name="manual_cancel_dialog_message">Batalkan input manual? Perubahan yang belum disimpan akan hilang.</string>
+    <string name="manual_cancel_button">Batalkan</string>
+    <string name="manual_continue_button">Lanjut Input</string>
+
+    <!-- Document Detail Screen -->
+    <string name="detail_title_topbar">Detail Arsip</string>
+    <string name="detail_section_info">Informasi Dokumen</string>
+    <string name="detail_section_placement">Penempatan Arsip</string>
+    <string name="detail_section_system">Informasi Sistem</string>
+    <string name="detail_edit_confirm_title">Konfirmasi Perubahan</string>
+    <string name="detail_edit_confirm_message">Simpan perubahan pada data dokumen arsip ini?</string>
+    <string name="detail_delete_confirm_title">Konfirmasi Hapus</string>
+    <string name="detail_delete_confirm_message">Hapus dokumen arsip ini? Data akan dihapus secara soft delete.</string>
+    <string name="detail_placed_at">Tanggal Penempatan</string>
+    <string name="detail_removed_at">Tanggal Dipindah/Dikeluarkan</string>
+    <string name="detail_placed_by">Ditempatkan oleh</string>
+    <string name="detail_created_by">Dibuat oleh</string>
+    <string name="detail_updated_by">Diubah oleh</string>
+    <string name="detail_created_at">Dibuat pada</string>
+    <string name="detail_updated_at">Diubah pada</string>
+    <string name="detail_deleted_at">Dihapus pada</string>
+    <string name="detail_save_changes">Simpan Perubahan</string>
+    <string name="detail_cancel_edit">Batal Edit</string>
+    <string name="detail_edit_button">Edit Dokumen</string>
+    <string name="detail_delete_button">Hapus Dokumen</string>
+    <string name="detail_back_button">Kembali</string>
+    <string name="detail_placement_room">RUANG</string>
+    <string name="detail_placement_shelf">RAK</string>
+    <string name="detail_placement_box">BOX</string>
+
+    <!-- Profile Screen -->
+    <string name="profile_title">Profil Pengguna</string>
+    <string name="profile_logout_button">Keluar dari Akun</string>
+    <string name="profile_logout_error">Gagal keluar secara sistem, tetapi sesi lokal telah dihapus.</string>
+
+    <!-- Scan Screen -->
+    <string name="scan_title">Scan Dokumen</string>
+    <string name="scan_subtitle">Pilih jenis dokumen sebelum mengambil foto.</string>
+    <string name="scan_prompt_label">Jenis dokumen untuk prompt AI</string>
+    <string name="scan_guide_text">Posisikan dokumen di dalam area ini</string>
+    <string name="scan_processing">Memproses OCR dan AI...</string>
+    <string name="scan_permission_title">Izin kamera diperlukan untuk scan dokumen.</string>
+    <string name="scan_permission_message">Aktifkan izin kamera agar aplikasi dapat mengambil foto dokumen.</string>
+    <string name="scan_permission_settings">Buka Pengaturan</string>
+    <string name="scan_error_read">Gagal membaca file hasil kamera</string>
+    <string name="scan_error_capture">Gagal mengambil gambar</string>
+
+    <!-- Components -->
+    <string name="topbar_logo_desc">Logo BPKPAD</string>
+    <string name="topbar_profile_desc">Profile</string>
+    <string name="bottom_nav_main">Main</string>
+    <string name="bottom_nav_docs">Docs</string>
+    <string name="bottom_nav_search">Search</string>
+    <string name="bottom_nav_new">New</string>
+    <string name="bottom_nav_profile">Profile</string>
+    <string name="manual_validation_title_too_long">Judul terlalu panjang. Maks 255 karakter</string>
+
     <string-array name="com_google_android_gms_fonts_certs">
         <item>@array/com_google_android_gms_fonts_certs_dev</item>
         <item>@array/com_google_android_gms_fonts_certs_prod</item>

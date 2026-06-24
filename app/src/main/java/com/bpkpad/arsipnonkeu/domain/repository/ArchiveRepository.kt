@@ -4,8 +4,22 @@ import com.bpkpad.arsipnonkeu.domain.model.ArchiveDocument
 import com.bpkpad.arsipnonkeu.domain.model.ArchiveDocumentFilter
 import com.bpkpad.arsipnonkeu.domain.model.ArchiveDocumentListItem
 import com.bpkpad.arsipnonkeu.domain.model.ArchiveYearSummary
+import kotlinx.coroutines.flow.Flow
 
 interface ArchiveRepository {
+    // Read operations (Local First via Flow)
+    fun observeArchiveYearSummaries(): Flow<List<ArchiveYearSummary>>
+
+    fun observeArchiveDocumentListItems(year: Int): Flow<List<ArchiveDocumentListItem>>
+
+    // Refresh operations (Fetch from Remote to Local)
+    suspend fun refreshArchiveYearSummaries()
+
+    suspend fun refreshArchiveDocuments(year: Int)
+
+    suspend fun refreshArchiveDocumentById(id: String)
+
+    // Legacy/Sync operations
     suspend fun getArchiveYearSummaries(): List<ArchiveYearSummary>
 
     suspend fun getArchiveDocumentListItems(
@@ -20,6 +34,7 @@ interface ArchiveRepository {
         id: String
     ): ArchiveDocument?
 
+    // Write operations (Remote first then Local)
     suspend fun createArchiveDocument(
         document: ArchiveDocument
     )
@@ -36,6 +51,19 @@ interface ArchiveRepository {
         documents: List<ArchiveDocument>,
         room: String,
         shelf: String,
-        boxNumber: String?
+        boxNumber: String?,
+        actorId: String? = null
     )
+
+    suspend fun checkStorageLocationExists(
+        room: String,
+        shelf: String,
+        boxNumber: String?
+    ): Boolean
+
+    suspend fun checkDocumentDuplicate(
+        title: String,
+        documentNumber: String?,
+        year: Int
+    ): Boolean
 }

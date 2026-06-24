@@ -1,10 +1,10 @@
 package com.bpkpad.arsipnonkeu.domain.usecase
 
-import com.bpkpad.arsipnonkeu.data.repository.FakeArchiveClassificationRepository
 import com.bpkpad.arsipnonkeu.domain.model.ArchiveClassification
+import com.bpkpad.arsipnonkeu.domain.repository.ArchiveClassificationRepository
 
 class GetArchiveClassificationsUseCase(
-    private val repository: FakeArchiveClassificationRepository
+    private val repository: ArchiveClassificationRepository
 ) {
 
     suspend operator fun invoke(

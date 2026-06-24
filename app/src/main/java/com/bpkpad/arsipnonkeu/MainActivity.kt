@@ -5,6 +5,7 @@ import androidx.activity.ComponentActivity
 import androidx.activity.compose.BackHandler
 import androidx.activity.compose.setContent
 import androidx.activity.enableEdgeToEdge
+import androidx.core.splashscreen.SplashScreen.Companion.installSplashScreen
 import androidx.compose.runtime.getValue
 import androidx.compose.runtime.mutableIntStateOf
 import androidx.compose.runtime.mutableStateOf
@@ -15,37 +16,68 @@ import com.bpkpad.arsipnonkeu.ui.screen.add.NewRecordScreen
 import com.bpkpad.arsipnonkeu.ui.screen.archive.ArchiveScreen
 import com.bpkpad.arsipnonkeu.ui.screen.dashboard.DashboardScreen
 import com.bpkpad.arsipnonkeu.ui.screen.detail.DocumentDetailScreen
+import com.bpkpad.arsipnonkeu.ui.screen.login.LoginScreen
+import com.bpkpad.arsipnonkeu.ui.screen.profile.ProfileScreen
+import com.bpkpad.arsipnonkeu.ui.screen.scan.ScanScreen
 import com.bpkpad.arsipnonkeu.ui.screen.staging.StagingScreen
 import com.bpkpad.arsipnonkeu.ui.screen.staging.StagingViewModel
-import com.bpkpad.arsipnonkeu.ui.theme.ArsipBPKADTheme
-import com.bpkpad.arsipnonkeu.ui.screen.scan.ScanScreen
 import com.bpkpad.arsipnonkeu.ui.screen.staging.StagingViewModelFactory
+import com.bpkpad.arsipnonkeu.ui.theme.ArsipBPKADTheme
 
 /**
  * MainActivity - Entry point of the BPKPAD Balangan application.
  *
- * This version still uses simple manual navigation with route state.
+ * This version uses simple manual navigation with route state.
  * Android system back is handled using BackHandler.
+ *
+ * Logout is handled locally first and does not depend on network request,
+ * so logout remains safe when the device is offline.
  */
+
 class MainActivity : ComponentActivity() {
     override fun onCreate(savedInstanceState: Bundle?) {
+        installSplashScreen()
         super.onCreate(savedInstanceState)
 
         enableEdgeToEdge()
 
         setContent {
             ArsipBPKADTheme {
-                var currentRoute by remember { mutableStateOf("dashboard") }
+                var isLoggedIn by remember { mutableStateOf(false) }
+                var userName by remember { mutableStateOf("") }
+                var userRole by remember { mutableStateOf("") }
+
+                var currentRoute by remember { mutableStateOf("login") }
                 var lastRoute by remember { mutableStateOf("dashboard") }
+                var routeBeforeProfile by remember { mutableStateOf("dashboard") }
 
                 var selectedYear by remember { mutableIntStateOf(2025) }
                 var selectedDocumentId by remember { mutableStateOf<String?>(null) }
 
+                var isExplicitlyLoggedOut by remember { mutableStateOf(false) }
+
                 val stagingViewModel: StagingViewModel = viewModel(
-                    factory = StagingViewModelFactory(applicationContext)
+                    key = selectedYear.toString(),
+                    factory = StagingViewModelFactory(applicationContext, selectedYear)
                 )
 
-                BackHandler(enabled = currentRoute != "dashboard") {
+                fun performLocalLogout() {
+                    isExplicitlyLoggedOut = true
+
+                    userName = ""
+                    userRole = ""
+
+                    selectedDocumentId = null
+                    selectedYear = 2025
+
+                    lastRoute = "dashboard"
+                    routeBeforeProfile = "dashboard"
+
+                    currentRoute = "login"
+                    isLoggedIn = false
+                }
+
+                BackHandler(enabled = currentRoute != "dashboard" && currentRoute != "login") {
                     currentRoute = when (currentRoute) {
                         "archive" -> {
                             "dashboard"
@@ -59,8 +91,6 @@ class MainActivity : ComponentActivity() {
                             "staging"
                         }
 
-
-
                         "document_detail" -> {
                             lastRoute
                         }
@@ -69,110 +99,177 @@ class MainActivity : ComponentActivity() {
                             "staging"
                         }
 
+                        "profile" -> {
+                            routeBeforeProfile
+                        }
+
                         else -> {
                             "dashboard"
                         }
                     }
                 }
 
-                when (currentRoute) {
-                    "dashboard" -> {
-                        DashboardScreen(
-                            onArchiveYearClick = { year ->
-                                selectedYear = year
-                                currentRoute = "archive"
-                            }
-                        )
-                    }
+                if (!isLoggedIn) {
+                    LoginScreen(
+                        skipAutoLogin = isExplicitlyLoggedOut,
+                        onLoginSuccess = { profile ->
+                            isExplicitlyLoggedOut = false
 
-                    "archive" -> {
-                        ArchiveScreen(
-                            selectedYear = selectedYear,
-                            onDocumentClick = { documentId ->
-                                selectedDocumentId = documentId
-                                lastRoute = "archive"
-                                currentRoute = "document_detail"
-                            },
-                            onStagingClick = {
-                                currentRoute = "staging"
-                            }
-                        )
-                    }
+                            userName = profile.name
+                            userRole = profile.role.name
 
-                    "staging" -> {
-                        StagingScreen(
-                            onBackClick = {
-                                currentRoute = "archive"
-                            },
-                            onManualClick = {
-                                currentRoute = "new_record"
-                            },
-                            onScanClick = {
-                                currentRoute = "scan"
-                            },
-                            onImportClick = {
-                                // Sementara import langsung ditangani di StagingScreen.
-                                // Tidak perlu pindah halaman dulu.
-                            },
-                            onPushAllClick = {
-                                currentRoute = "dashboard"
-                            },
-                            viewModel = stagingViewModel
-                        )
-                    }
+                            selectedDocumentId = null
+                            selectedYear = 2025
 
+                            lastRoute = "dashboard"
+                            routeBeforeProfile = "dashboard"
 
-
-                    "new_record" -> {
-                        NewRecordScreen(
-                            onBackClick = {
-                                currentRoute = "staging"
-                            },
-                            onSave = {
-                                currentRoute = "staging"
-                            },
-                            viewModel = stagingViewModel
-                        )
-                    }
-
-                    "scan" -> {
-                        ScanScreen(
-                            onBackClick = {
-                                currentRoute = "staging"
-                            },
-                            onScanCompleted = {
-                                currentRoute = "staging"
-                            },
-                            stagingViewModel = stagingViewModel
-                        )
-                    }
-
-                    "document_detail" -> {
-                        val documentId = selectedDocumentId
-
-                        if (documentId != null) {
-                            DocumentDetailScreen(
-                                documentId = documentId,
-                                onBackClick = {
-                                    currentRoute = lastRoute
+                            currentRoute = "dashboard"
+                            isLoggedIn = true
+                        }
+                    )
+                } else {
+                    when (currentRoute) {
+                        "dashboard" -> {
+                            DashboardScreen(
+                                userRole = userRole,
+                                onProfileClick = {
+                                    routeBeforeProfile = "dashboard"
+                                    currentRoute = "profile"
+                                },
+                                onArchiveYearClick = { year ->
+                                    selectedYear = year
+                                    currentRoute = "archive"
                                 }
                             )
-                        } else {
-                            currentRoute = lastRoute
                         }
-                    }
 
-//                    "profile" -> {
-//                        currentRoute = "dashboard"
-//                    }
+                        "archive" -> {
+                            ArchiveScreen(
+                                selectedYear = selectedYear,
+                                userRole = userRole,
+                                onProfileClick = {
+                                    routeBeforeProfile = "archive"
+                                    currentRoute = "profile"
+                                },
+                                onDocumentClick = { documentId ->
+                                    selectedDocumentId = documentId
+                                    lastRoute = "archive"
+                                    currentRoute = "document_detail"
+                                },
+                                onStagingClick = {
+                                    currentRoute = "staging"
+                                }
+                            )
+                        }
 
-                    else -> {
-                        DashboardScreen(
-                            onArchiveYearClick = { year ->
-                                selectedYear = year
-                                currentRoute = "archive"
+                        "staging" -> {
+                            if (!userRole.equals("ARSIPARIS", ignoreCase = true)) {
+                                currentRoute = "dashboard"
+                            } else {
+                                StagingScreen(
+                                    selectedYear = selectedYear,
+                                    onProfileClick = {
+                                        routeBeforeProfile = "staging"
+                                        currentRoute = "profile"
+                                    },
+                                    onBackClick = {
+                                        currentRoute = "archive"
+                                    },
+                                    onManualClick = {
+                                        currentRoute = "new_record"
+                                    },
+                                    onScanClick = {
+                                        currentRoute = "scan"
+                                    },
+                                    onImportClick = {
+                                        // Import langsung ditangani di StagingScreen.
+                                        // Tidak perlu pindah halaman.
+                                    },
+                                    onPushAllClick = {
+                                        currentRoute = "dashboard"
+                                    },
+                                    viewModel = stagingViewModel
+                                )
                             }
-                        )
+                        }
+
+                        "new_record" -> {
+                            if (!userRole.equals("ARSIPARIS", ignoreCase = true)) {
+                                currentRoute = "dashboard"
+                            } else {
+                                NewRecordScreen(
+                                    selectedYear = selectedYear,
+                                    onProfileClick = {
+                                        routeBeforeProfile = "new_record"
+                                        currentRoute = "profile"
+                                    },
+                                    onBackClick = {
+                                        currentRoute = "staging"
+                                    },
+                                    onSave = {
+                                        currentRoute = "staging"
+                                    },
+                                    viewModel = stagingViewModel
+                                )
+                            }
+                        }
+
+                        "scan" -> {
+                            if (!userRole.equals("ARSIPARIS", ignoreCase = true)) {
+                                currentRoute = "dashboard"
+                            } else {
+                                ScanScreen(
+                                    onBackClick = {
+                                        currentRoute = "staging"
+                                    },
+                                    onScanCompleted = {
+                                        currentRoute = "staging"
+                                    },
+                                    stagingViewModel = stagingViewModel
+                                )
+                            }
+                        }
+
+                        "document_detail" -> {
+                            val documentId = selectedDocumentId
+
+                            if (documentId != null) {
+                                DocumentDetailScreen(
+                                    documentId = documentId,
+                                    userRole = userRole,
+                                    onProfileClick = {
+                                        routeBeforeProfile = "document_detail"
+                                        currentRoute = "profile"
+                                    },
+                                    onBackClick = {
+                                        currentRoute = lastRoute
+                                    }
+                                )
+                            } else {
+                                currentRoute = lastRoute
+                            }
+                        }
+
+                        "profile" -> {
+                            ProfileScreen(
+                                userName = userName,
+                                userRole = userRole,
+                                onBackClick = {
+                                    currentRoute = routeBeforeProfile
+                                },
+                                onNavItemSelected = { route ->
+                                    currentRoute = route
+                                },
+                                onLogoutClick = {
+                                    performLocalLogout()
+                                }
+                            )
+                        }
+
+                        else -> {
+                            currentRoute = "dashboard"
+                        }
                     }
                 }
             }

@@ -6,25 +6,26 @@ import androidx.compose.foundation.clickable
 import androidx.compose.foundation.layout.*
 import androidx.compose.foundation.lazy.LazyColumn
 import androidx.compose.foundation.shape.RoundedCornerShape
-import androidx.compose.material3.CircularProgressIndicator
-import androidx.compose.material3.Scaffold
-import androidx.compose.material3.Text
-import androidx.compose.runtime.Composable
-import androidx.compose.runtime.LaunchedEffect
-import androidx.compose.runtime.collectAsState
-import androidx.compose.runtime.getValue
+import androidx.compose.material.icons.Icons
+import androidx.compose.material.icons.filled.Add
+import androidx.compose.material3.*
+import androidx.compose.runtime.*
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.draw.clip
 import androidx.compose.ui.draw.shadow
 import androidx.compose.ui.graphics.Color
+import androidx.compose.ui.res.stringResource
 import androidx.compose.ui.text.font.FontFamily
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.tooling.preview.Preview
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
 import androidx.lifecycle.viewmodel.compose.viewModel
+import com.bpkpad.arsipnonkeu.R
 import com.bpkpad.arsipnonkeu.domain.model.ArchiveYearSummary
+import com.bpkpad.arsipnonkeu.ui.component.ArsipTextField
+import com.bpkpad.arsipnonkeu.ui.component.LoadingIndicator
 import com.bpkpad.arsipnonkeu.ui.component.TopBar
 import com.bpkpad.arsipnonkeu.ui.theme.BackgroundGray
 
@@ -32,11 +33,14 @@ val PoppinsFont = FontFamily.Default
 
 @Composable
 fun DashboardScreen(
+    userRole: String = "",
     onProfileClick: () -> Unit = {},
     onArchiveYearClick: (Int) -> Unit = {},
     viewModel: DashboardViewModel = viewModel()
 ) {
     val uiState by viewModel.uiState.collectAsState()
+    
+    var showAddYearDialog by remember { mutableStateOf(false) }
 
     LaunchedEffect(Unit) {
         viewModel.loadYears()
@@ -45,7 +49,7 @@ fun DashboardScreen(
     Scaffold(
         topBar = {
             TopBar(
-                title = "BPKPAD Balangan",
+                title = stringResource(R.string.dashboard_title),
                 onProfileClick = onProfileClick
             )
         },
@@ -67,7 +71,9 @@ fun DashboardScreen(
                     isLoading = uiState.isLoading,
                     years = uiState.years,
                     errorMessage = uiState.errorMessage,
-                    onYearClick = onArchiveYearClick
+                    userRole = userRole,
+                    onYearClick = onArchiveYearClick,
+                    onAddYearClick = { showAddYearDialog = true }
                 )
             }
 
@@ -79,6 +85,59 @@ fun DashboardScreen(
                 Spacer(modifier = Modifier.height(16.dp))
             }
         }
+    }
+
+    if (showAddYearDialog) {
+        var yearInput by remember { mutableStateOf("") }
+        val isDuplicate = remember(yearInput, uiState.years) {
+            yearInput.toIntOrNull()?.let { inputYear ->
+                uiState.years.any { it.year == inputYear }
+            } ?: false
+        }
+        
+        AlertDialog(
+            onDismissRequest = { showAddYearDialog = false },
+            title = { Text(stringResource(R.string.dashboard_add_year_dialog_title)) },
+            text = {
+                Column(verticalArrangement = Arrangement.spacedBy(8.dp)) {
+                    Text(stringResource(R.string.dashboard_add_year_dialog_message))
+                    ArsipTextField(
+                        value = yearInput,
+                        onValueChange = { if (it.length <= 4 && it.all { char -> char.isDigit() }) yearInput = it },
+                        label = stringResource(R.string.dashboard_year_label),
+                        placeholder = stringResource(R.string.dashboard_year_placeholder),
+                        isError = isDuplicate,
+                        singleLine = true
+                    )
+                    if (isDuplicate) {
+                        Text(
+                            text = stringResource(R.string.dashboard_error_duplicate_year, yearInput),
+                            color = MaterialTheme.colorScheme.error,
+                            fontSize = 12.sp
+                        )
+                    }
+                }
+            },
+            confirmButton = {
+                TextButton(
+                    onClick = {
+                        val year = yearInput.toIntOrNull()
+                        if (year != null && year > 1900 && !isDuplicate) {
+                            viewModel.addNewYear(year)
+                            showAddYearDialog = false
+                        }
+                    },
+                    enabled = yearInput.length == 4 && !isDuplicate
+                ) {
+                    Text(stringResource(R.string.dashboard_add_button), color = Color(0xFF0D631B))
+                }
+            },
+            dismissButton = {
+                TextButton(onClick = { showAddYearDialog = false }) {
+                    Text(stringResource(R.string.dashboard_cancel_button))
+                }
+            }
+        )
     }
 }
 
@@ -94,7 +153,7 @@ private fun DashboardHeaderSection() {
         horizontalAlignment = Alignment.Start
     ) {
         Text(
-            text = "Archival\nRepository",
+            text = stringResource(R.string.dashboard_header_title),
             fontSize = 40.sp,
             lineHeight = 48.sp,
             fontFamily = PoppinsFont,
@@ -103,7 +162,7 @@ private fun DashboardHeaderSection() {
         )
 
         Text(
-            text = "Pilih tahun arsip untuk melihat daftar dokumen.",
+            text = stringResource(R.string.dashboard_header_subtitle),
             fontSize = 14.sp,
             lineHeight = 20.sp,
             fontFamily = PoppinsFont,
@@ -118,7 +177,9 @@ private fun AnnualArchivesSection(
     isLoading: Boolean,
     years: List<ArchiveYearSummary>,
     errorMessage: String?,
-    onYearClick: (Int) -> Unit
+    userRole: String,
+    onYearClick: (Int) -> Unit,
+    onAddYearClick: () -> Unit
 ) {
     Column(
         verticalArrangement = Arrangement.spacedBy(16.dp),
@@ -132,7 +193,7 @@ private fun AnnualArchivesSection(
                         .height(120.dp),
                     contentAlignment = Alignment.Center
                 ) {
-                    CircularProgressIndicator()
+                    LoadingIndicator()
                 }
             }
 
@@ -145,19 +206,12 @@ private fun AnnualArchivesSection(
                 )
             }
 
-            years.isEmpty() -> {
-                Text(
-                    text = "Belum ada data arsip.",
-                    fontSize = 14.sp,
-                    fontFamily = PoppinsFont,
-                    color = Color(0xFF40493D)
-                )
-            }
-
             else -> {
                 YearCardGrid(
                     years = years,
-                    onYearClick = onYearClick
+                    userRole = userRole,
+                    onYearClick = onYearClick,
+                    onAddYearClick = onAddYearClick
                 )
             }
         }
@@ -167,23 +221,36 @@ private fun AnnualArchivesSection(
 @Composable
 private fun YearCardGrid(
     years: List<ArchiveYearSummary>,
-    onYearClick: (Int) -> Unit
+    userRole: String,
+    onYearClick: (Int) -> Unit,
+    onAddYearClick: () -> Unit
 ) {
     Column(
         modifier = Modifier.fillMaxWidth(),
         verticalArrangement = Arrangement.spacedBy(12.dp)
     ) {
-        years.chunked(2).forEach { rowItems ->
+        // Combiner years with an "Add" placeholder only if ARSIPARIS
+        val isArsiparis = userRole.equals("ARSIPARIS", ignoreCase = true)
+        val items = if (isArsiparis) years + null else years
+        
+        items.chunked(2).forEach { rowItems ->
             Row(
                 modifier = Modifier.fillMaxWidth(),
                 horizontalArrangement = Arrangement.spacedBy(12.dp)
             ) {
                 rowItems.forEach { summary ->
-                    YearCard(
-                        summary = summary,
-                        onClick = { onYearClick(summary.year) },
-                        modifier = Modifier.weight(1f)
-                    )
+                    if (summary != null) {
+                        YearCard(
+                            summary = summary,
+                            onClick = { onYearClick(summary.year) },
+                            modifier = Modifier.weight(1f)
+                        )
+                    } else if (isArsiparis) {
+                        AddYearCard(
+                            onClick = onAddYearClick,
+                            modifier = Modifier.weight(1f)
+                        )
+                    }
                 }
 
                 if (rowItems.size == 1) {
@@ -191,6 +258,42 @@ private fun YearCardGrid(
                 }
             }
         }
+    }
+}
+
+@Composable
+private fun AddYearCard(
+    onClick: () -> Unit,
+    modifier: Modifier = Modifier
+) {
+    Column(
+        modifier = modifier
+            .height(120.dp)
+            .shadow(elevation = 1.dp, shape = RoundedCornerShape(18.dp))
+            .clip(RoundedCornerShape(18.dp))
+            .background(Color.White)
+            .border(0.5.dp, Color(0xFFBFCABA), RoundedCornerShape(18.dp))
+            .clickable(onClick = onClick)
+            .padding(16.dp),
+        verticalArrangement = Arrangement.Center,
+        horizontalAlignment = Alignment.CenterHorizontally
+    ) {
+        Icon(
+            imageVector = Icons.Default.Add,
+            contentDescription = null,
+            modifier = Modifier.size(32.dp),
+            tint = Color(0xFF0D631B)
+        )
+        
+        Spacer(modifier = Modifier.height(8.dp))
+        
+        Text(
+            text = stringResource(R.string.dashboard_add_year_card),
+            fontSize = 16.sp,
+            fontFamily = PoppinsFont,
+            fontWeight = FontWeight.Bold,
+            color = Color(0xFF0D631B)
+        )
     }
 }
 
@@ -226,7 +329,7 @@ private fun YearCard(
             verticalAlignment = Alignment.Bottom
         ) {
             Text(
-                text = "${summary.documentCount} dokumen",
+                text = stringResource(R.string.dashboard_document_count, summary.documentCount),
                 fontSize = 18.sp,
                 lineHeight = 18.sp,
                 fontFamily = PoppinsFont,

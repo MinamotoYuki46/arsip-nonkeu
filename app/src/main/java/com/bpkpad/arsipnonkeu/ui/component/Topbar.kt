@@ -14,6 +14,7 @@ import androidx.compose.ui.Modifier
 import androidx.compose.ui.draw.clip
 import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.res.painterResource
+import androidx.compose.ui.res.stringResource
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.tooling.preview.Preview
 import androidx.compose.ui.unit.dp
@@ -32,6 +33,7 @@ import com.bpkpad.arsipnonkeu.R
 fun TopBar(
     title: String = "BPKPAD Balangan",
     onProfileClick: () -> Unit = {},
+    showProfileButton: Boolean = true,
     navigationIcon: @Composable (() -> Unit)? = null
 ) {
     Column(
@@ -61,7 +63,7 @@ fun TopBar(
                 // Logo Balangan
                 Image(
                     painter = painterResource(id = R.drawable.logo_balangan),
-                    contentDescription = "Logo BPKPAD",
+                    contentDescription = stringResource(R.string.topbar_logo_desc),
                     modifier = Modifier.size(width = 28.dp, height = 38.dp)
                 )
 
@@ -76,20 +78,24 @@ fun TopBar(
             }
 
             // Profile Button (Circle background #D5ECF8)
-            Box(
-                modifier = Modifier
-                    .size(40.dp)
-                    .clip(CircleShape)
-                    .background(Color(0xFFD5ECF8))
-                    .clickable(onClick = onProfileClick),
-                contentAlignment = Alignment.Center
-            ) {
-                Icon(
-                    imageVector = Icons.Outlined.Person,
-                    contentDescription = "Profile",
-                    tint = Color(0xFF40493D),
-                    modifier = Modifier.size(16.dp)
-                )
+            if (showProfileButton) {
+                Box(
+                    modifier = Modifier
+                        .size(40.dp)
+                        .clip(CircleShape)
+                        .background(Color(0xFFD5ECF8))
+                        .clickable(onClick = onProfileClick),
+                    contentAlignment = Alignment.Center
+                ) {
+                    Icon(
+                        imageVector = Icons.Outlined.Person,
+                        contentDescription = stringResource(R.string.topbar_profile_desc),
+                        tint = Color(0xFF40493D),
+                        modifier = Modifier.size(16.dp)
+                    )
+                }
+            } else {
+                Spacer(modifier = Modifier.size(40.dp))
             }
         }
 

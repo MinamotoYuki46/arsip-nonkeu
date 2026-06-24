@@ -11,6 +11,8 @@ import com.bpkpad.arsipnonkeu.domain.model.DocumentType
 import com.bpkpad.arsipnonkeu.domain.model.PhysicalForm
 import com.bpkpad.arsipnonkeu.domain.model.StorageLocation
 import com.bpkpad.arsipnonkeu.domain.repository.ArchiveRepository
+import kotlinx.coroutines.flow.Flow
+import kotlinx.coroutines.flow.flowOf
 
 class FakeArchiveRepository : ArchiveRepository {
 
@@ -227,6 +229,41 @@ class FakeArchiveRepository : ArchiveRepository {
         )
     )
 
+    override fun observeArchiveYearSummaries(): Flow<List<ArchiveYearSummary>> {
+        return flowOf(
+            documents
+                .filter { it.deletedAt == null }
+                .groupBy { it.year }
+                .map { (year, documentsInYear) ->
+                    ArchiveYearSummary(
+                        year = year,
+                        documentCount = documentsInYear.size
+                    )
+                }
+                .sortedByDescending { it.year }
+        )
+    }
+
+    override fun observeArchiveDocumentListItems(year: Int): Flow<List<ArchiveDocumentListItem>> {
+        return flowOf(
+            documents
+                .filter { it.deletedAt == null && it.year == year }
+                .map { buildListItem(it) }
+        )
+    }
+
+    override suspend fun refreshArchiveYearSummaries() {
+        // No-op for fake
+    }
+
+    override suspend fun refreshArchiveDocuments(year: Int) {
+        // No-op for fake
+    }
+
+    override suspend fun refreshArchiveDocumentById(id: String) {
+        // No-op for fake
+    }
+
     override suspend fun getArchiveYearSummaries(): List<ArchiveYearSummary> {
         return documents
             .filter { it.deletedAt == null }
@@ -353,7 +390,8 @@ class FakeArchiveRepository : ArchiveRepository {
         documents: List<ArchiveDocument>,
         room: String,
         shelf: String,
-        boxNumber: String?
+        boxNumber: String?,
+        actorId: String?
     ) {
         var location = storageLocations.firstOrNull {
             it.room == room && it.shelf == shelf && it.boxNumber == boxNumber
@@ -373,7 +411,8 @@ class FakeArchiveRepository : ArchiveRepository {
             val docId = if (doc.id.isBlank()) generateDocumentId() else doc.id
             val docToInsert = doc.copy(
                 id = docId,
-                createdAt = doc.createdAt ?: "2025-02-17"
+                createdAt = doc.createdAt ?: "2025-02-17T10:00:00Z",
+                createdBy = actorId ?: "Sistem"
             )
             this.documents.add(docToInsert)
 
@@ -382,11 +421,36 @@ class FakeArchiveRepository : ArchiveRepository {
                     id = "place-${(placements.size + 1).toString().padStart(3, '0')}",
                     archiveDocumentId = docToInsert.id,
                     storageLocationId = location.id,
-                    placedAt = docToInsert.createdAt ?: "2025-02-17",
+                    placedAt = docToInsert.createdAt ?: "2025-02-17T10:00:00Z",
                     removedAt = null,
-                    userId = null,
+                    userId = actorId ?: "Sistem",
                 )
             )
+        }
+    }
+
+    override suspend fun checkStorageLocationExists(
+        room: String,
+        shelf: String,
+        boxNumber: String?
+    ): Boolean {
+        return storageLocations.any {
+            it.room.equals(room, ignoreCase = true) &&
+                    it.shelf.equals(shelf, ignoreCase = true) &&
+                    it.boxNumber.equals(boxNumber, ignoreCase = true)
+        }
+    }
+
+    override suspend fun checkDocumentDuplicate(
+        title: String,
+        documentNumber: String?,
+        year: Int
+    ): Boolean {
+        return documents.any {
+            it.deletedAt == null &&
+                    it.title.equals(title, ignoreCase = true) &&
+                    it.documentNumber.equals(documentNumber, ignoreCase = true) &&
+                    it.year == year
         }
     }
 

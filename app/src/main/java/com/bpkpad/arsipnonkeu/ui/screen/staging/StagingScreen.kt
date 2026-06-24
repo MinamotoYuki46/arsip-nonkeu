@@ -2,110 +2,57 @@ package com.bpkpad.arsipnonkeu.ui.screen.staging
 
 import androidx.activity.compose.rememberLauncherForActivityResult
 import androidx.activity.result.contract.ActivityResultContracts
-import androidx.compose.animation.AnimatedVisibility
-import androidx.compose.animation.expandVertically
-import androidx.compose.animation.fadeIn
-import androidx.compose.animation.fadeOut
-import androidx.compose.animation.shrinkVertically
+import androidx.compose.animation.*
 import androidx.compose.foundation.BorderStroke
 import androidx.compose.foundation.background
 import androidx.compose.foundation.border
 import androidx.compose.foundation.clickable
-import androidx.compose.foundation.horizontalScroll
-import androidx.compose.foundation.layout.Arrangement
-import androidx.compose.foundation.layout.Box
-import androidx.compose.foundation.layout.Column
-import androidx.compose.foundation.layout.PaddingValues
-import androidx.compose.foundation.layout.Row
-import androidx.compose.foundation.layout.Spacer
-import androidx.compose.foundation.layout.fillMaxSize
-import androidx.compose.foundation.layout.fillMaxWidth
-import androidx.compose.foundation.layout.height
-import androidx.compose.foundation.layout.navigationBarsPadding
-import androidx.compose.foundation.layout.padding
-import androidx.compose.foundation.layout.size
-import androidx.compose.foundation.layout.width
+import androidx.compose.foundation.layout.*
 import androidx.compose.foundation.lazy.LazyColumn
 import androidx.compose.foundation.lazy.items
-import androidx.compose.foundation.rememberScrollState
 import androidx.compose.foundation.shape.CircleShape
 import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.foundation.text.KeyboardOptions
 import androidx.compose.material.icons.Icons
-import androidx.compose.material.icons.filled.Add
-import androidx.compose.material.icons.filled.Close
-import androidx.compose.material.icons.filled.Delete
-import androidx.compose.material.icons.filled.Edit
-import androidx.compose.material.icons.filled.KeyboardArrowDown
-import androidx.compose.material.icons.filled.KeyboardArrowUp
-import androidx.compose.material.icons.filled.Search
+import androidx.compose.material.icons.filled.*
 import androidx.compose.material.icons.outlined.Edit
-import androidx.compose.material3.AlertDialog
-import androidx.compose.material3.Button
-import androidx.compose.material3.ButtonDefaults
-import androidx.compose.material3.CircularProgressIndicator
-import androidx.compose.material3.DropdownMenuItem
-import androidx.compose.material3.ExperimentalMaterial3Api
-import androidx.compose.material3.ExposedDropdownMenuBox
-import androidx.compose.material3.ExposedDropdownMenuDefaults
-import androidx.compose.material3.ExtendedFloatingActionButton
-import androidx.compose.material3.FloatingActionButton
-import androidx.compose.material3.HorizontalDivider
-import androidx.compose.material3.Icon
-import androidx.compose.material3.LocalTextStyle
-import androidx.compose.material3.ModalBottomSheet
-import androidx.compose.material3.OutlinedButton
-import androidx.compose.material3.OutlinedTextField
-import androidx.compose.material3.OutlinedTextFieldDefaults
-import androidx.compose.material3.Scaffold
-import androidx.compose.material3.Text
-import androidx.compose.material3.TextButton
-import androidx.compose.material3.rememberModalBottomSheetState
-import androidx.compose.runtime.Composable
-import androidx.compose.runtime.LaunchedEffect
-import androidx.compose.runtime.collectAsState
-import androidx.compose.runtime.getValue
-import androidx.compose.runtime.mutableStateOf
-import androidx.compose.runtime.remember
+import androidx.compose.material3.*
+import androidx.compose.runtime.*
 import androidx.compose.runtime.saveable.rememberSaveable
-import androidx.compose.runtime.setValue
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.draw.clip
 import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.platform.LocalContext
+import androidx.compose.ui.res.stringResource
 import androidx.compose.ui.text.font.FontFamily
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.text.input.KeyboardType
+import androidx.compose.ui.text.style.TextAlign
 import androidx.compose.ui.text.style.TextOverflow
 import androidx.compose.ui.tooling.preview.Preview
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
 import androidx.lifecycle.viewmodel.compose.viewModel
-import com.bpkpad.arsipnonkeu.domain.model.DocumentCondition
-import com.bpkpad.arsipnonkeu.domain.model.DocumentStatus
-import com.bpkpad.arsipnonkeu.domain.model.DocumentType
-import com.bpkpad.arsipnonkeu.domain.model.PhysicalForm
-import com.bpkpad.arsipnonkeu.ui.component.ArchiveClassificationField
-import com.bpkpad.arsipnonkeu.ui.component.ArchiveClassificationSelectorSheet
-import com.bpkpad.arsipnonkeu.ui.component.TopBar
+import com.bpkpad.arsipnonkeu.R
+import com.bpkpad.arsipnonkeu.domain.model.*
+import com.bpkpad.arsipnonkeu.ui.component.*
 import com.bpkpad.arsipnonkeu.ui.theme.BackgroundGray
 
 private val PoppinsFont = FontFamily.Default
 
 @Composable
 fun StagingScreen(
+    selectedYear: Int,
+    onProfileClick: () -> Unit = {},
     onBackClick: () -> Unit = {},
     onManualClick: () -> Unit = {},
     onScanClick: () -> Unit = {},
     onImportClick: () -> Unit = {},
     onPushAllClick: () -> Unit = {},
-    viewModel: StagingViewModel = viewModel(
-        factory = StagingViewModelFactory(LocalContext.current.applicationContext)
-    )
+    viewModel: StagingViewModel
 ) {
     val uiState by viewModel.uiState.collectAsState()
-
     val context = LocalContext.current
 
     val excelImportLauncher = rememberLauncherForActivityResult(
@@ -121,46 +68,18 @@ fun StagingScreen(
     var isLocationExpanded by remember { mutableStateOf(false) }
     var showPushConfirmDialog by remember { mutableStateOf(false) }
 
-    fun hasInvalidStagingDocument(): Boolean {
-        return uiState.documents.any { document ->
-            document.title.isBlank() ||
-                    document.year !in 1900..2100 ||
-                    document.copyCount <= 0
-        }
-    }
-
-    fun saveCurrentDocumentsToLocalDrafts() {
-        uiState.documents.forEach { document ->
-            val archiveCode = document.classificationCode
-                ?.takeIf { it.isNotBlank() }
-                ?: document.documentNumber
-                    ?.takeIf { it.isNotBlank() }
-                ?: document.id
-
-            viewModel.saveCurrentStaging(
-                archiveCode = archiveCode,
-                title = document.title,
-                documentType = document.documentType.name,
-                physicalForm = document.physicalForm.name,
-                condition = document.condition?.name ?: "UNKNOWN",
-                status = document.status.name,
-                locationText = uiState.storageLocationLabel,
-                description = document.description.orEmpty()
-            )
-        }
-    }
-
     LaunchedEffect(uiState.isSuccess) {
         if (uiState.isSuccess) {
             onPushAllClick()
+            viewModel.clearMessage()
         }
     }
 
     Scaffold(
         topBar = {
             TopBar(
-                title = "Staging Arsip",
-                onProfileClick = {}
+                title = stringResource(R.string.staging_title),
+                onProfileClick = onProfileClick
             )
         },
         floatingActionButton = {
@@ -173,16 +92,11 @@ fun StagingScreen(
                 },
                 onScanClick = {
                     isFabExpanded = false
-                    viewModel.addDummyScanDocument()
                     onScanClick()
                 },
                 onImportClick = {
                     isFabExpanded = false
-                    excelImportLauncher.launch(
-                        arrayOf(
-                            "application/vnd.openxmlformats-officedocument.spreadsheetml.sheet"
-                        )
-                    )
+                    excelImportLauncher.launch(arrayOf("application/vnd.openxmlformats-officedocument.spreadsheetml.sheet"))
                     onImportClick()
                 }
             )
@@ -192,9 +106,7 @@ fun StagingScreen(
                 isLoading = uiState.isLoading,
                 documentCount = uiState.documents.size,
                 isStorageLocationValid = uiState.isStorageLocationValid,
-                onPushAllClick = {
-                    showPushConfirmDialog = true
-                }
+                onPushAllClick = { showPushConfirmDialog = true }
             )
         },
         containerColor = BackgroundGray
@@ -216,18 +128,29 @@ fun StagingScreen(
                 onBoxNumberChange = viewModel::onBoxNumberChange
             )
 
-            if (uiState.errorMessage != null) {
-                ErrorMessageCard(
-                    message = uiState.errorMessage.orEmpty(),
-                    onDismiss = viewModel::clearMessage
+            uiState.errorMessage?.let {
+                ArsipMessageCard(
+                    message = it,
+                    variant = MessageVariant.DANGER,
+                    onDismiss = viewModel::clearMessage,
+                    modifier = Modifier.padding(horizontal = 32.dp, vertical = 8.dp)
+                )
+            }
+
+            uiState.duplicateWarning?.let {
+                ArsipMessageCard(
+                    message = it,
+                    variant = MessageVariant.WARNING,
+                    onDismiss = viewModel::clearMessage,
+                    onConfirm = { viewModel.pushAllToArchive() },
+                    confirmText = stringResource(R.string.staging_warning_confirm),
+                    modifier = Modifier.padding(horizontal = 32.dp, vertical = 8.dp)
                 )
             }
 
             StagingContentSection(
                 documents = uiState.documents,
-                onDocumentClick = { documentId ->
-                    viewModel.selectDocument(documentId)
-                },
+                onDocumentClick = { documentId -> viewModel.selectDocument(documentId) },
                 onDeleteDocument = viewModel::deleteDocument
             )
         }
@@ -236,59 +159,27 @@ fun StagingScreen(
     if (uiState.selectedDocument != null) {
         StagingDocumentDetailSheet(
             document = uiState.selectedDocument!!,
+            selectedYear = selectedYear,
             onDismiss = viewModel::clearSelectedDocument,
             viewModel = viewModel,
-            onSave = { documentType,
-                       documentNumber,
-                       documentCode,
-                       title,
-                       description,
-                       year,
-                       physicalForm,
-                       condition,
-                       copyCount,
-                       isCopy,
-                       status,
-                       originInstance ->
-                viewModel.updateSelectedDocument(
-                    documentType = documentType,
-                    documentNumber = documentNumber,
-                    classificationCode = documentCode,
-                    title = title,
-                    description = description,
-                    year = year,
-                    physicalForm = physicalForm,
-                    condition = condition,
-                    copyCount = copyCount,
-                    isCopy = isCopy,
-                    status = status,
-                    originInstance = originInstance
-                )
+            onSave = { type, num, code, title, desc, year, form, cond, count, copy, stat, inst ->
+                viewModel.updateSelectedDocument(type, num, code, title, desc, year, form, cond, count, copy, stat, inst)
             },
             onDelete = viewModel::deleteSelectedDocument
         )
     }
 
     if (showPushConfirmDialog) {
-        ConfirmPushDialog(
-            documentCount = uiState.documents.size,
-            locationLabel = uiState.storageLocationLabel,
+        ArsipConfirmDialog(
+            onDismissRequest = { showPushConfirmDialog = false },
             onConfirm = {
                 showPushConfirmDialog = false
-
-                if (
-                    uiState.isStorageLocationValid &&
-                    uiState.documents.isNotEmpty() &&
-                    !hasInvalidStagingDocument()
-                ) {
-                    saveCurrentDocumentsToLocalDrafts()
-                }
-
                 viewModel.pushAllToArchive()
             },
-            onDismiss = {
-                showPushConfirmDialog = false
-            }
+            title = stringResource(R.string.staging_push_confirm_title),
+            message = stringResource(R.string.staging_push_confirm_message, uiState.documents.size, uiState.storageLocationLabel),
+            confirmText = stringResource(R.string.dashboard_add_button),
+            dismissText = stringResource(R.string.dashboard_cancel_button)
         )
     }
 }
@@ -323,49 +214,35 @@ private fun StorageLocationSection(
             horizontalArrangement = Arrangement.SpaceBetween,
             verticalAlignment = Alignment.CenterVertically
         ) {
-            Column(
-                modifier = Modifier.weight(1f),
-                verticalArrangement = Arrangement.spacedBy(4.dp)
-            ) {
+            Column(modifier = Modifier.weight(1f), verticalArrangement = Arrangement.spacedBy(4.dp)) {
                 Text(
-                    text = "Lokasi Penyimpanan",
+                    text = stringResource(R.string.staging_location_title),
                     fontSize = 16.sp,
                     fontWeight = FontWeight.Bold,
                     fontFamily = PoppinsFont,
                     color = Color(0xFF071E27)
                 )
 
+                val emptyLabel = stringResource(R.string.staging_location_empty)
                 Text(
                     text = locationLabel,
                     fontSize = 13.sp,
                     fontWeight = FontWeight.Medium,
                     fontFamily = PoppinsFont,
-                    color = if (locationLabel == "Belum ditentukan") {
-                        Color(0xFFBA1A1A)
-                    } else {
-                        Color(0xFF0D631B)
-                    },
+                    color = if (locationLabel == emptyLabel) Color(0xFFBA1A1A) else Color(0xFF0D631B),
                     maxLines = 1,
                     overflow = TextOverflow.Ellipsis
                 )
             }
 
             Icon(
-                imageVector = if (isExpanded) {
-                    Icons.Default.KeyboardArrowUp
-                } else {
-                    Icons.Default.KeyboardArrowDown
-                },
+                imageVector = if (isExpanded) Icons.Default.KeyboardArrowUp else Icons.Default.KeyboardArrowDown,
                 contentDescription = null,
                 tint = Color(0xFF0D631B)
             )
         }
 
-        AnimatedVisibility(
-            visible = isExpanded,
-            enter = fadeIn() + expandVertically(),
-            exit = fadeOut() + shrinkVertically()
-        ) {
+        AnimatedVisibility(visible = isExpanded, enter = fadeIn() + expandVertically(), exit = fadeOut() + shrinkVertically()) {
             Column(
                 modifier = Modifier
                     .fillMaxWidth()
@@ -375,27 +252,25 @@ private fun StorageLocationSection(
                     .padding(16.dp),
                 verticalArrangement = Arrangement.spacedBy(12.dp)
             ) {
-                DetailTextField(
-                    label = "Ruangan",
+                ArsipTextField(
+                    label = stringResource(R.string.staging_room_label),
                     value = room,
                     onValueChange = onRoomChange,
-                    placeholder = "Contoh: Ruang Arsip"
+                    placeholder = stringResource(R.string.staging_room_placeholder)
                 )
-
                 Row(horizontalArrangement = Arrangement.spacedBy(12.dp)) {
-                    DetailTextField(
-                        label = "Rak",
+                    ArsipTextField(
+                        label = stringResource(R.string.staging_shelf_label),
                         value = shelf,
                         onValueChange = onShelfChange,
-                        placeholder = "Rak 04-B",
+                        placeholder = stringResource(R.string.staging_shelf_placeholder),
                         modifier = Modifier.weight(1f)
                     )
-
-                    DetailTextField(
-                        label = "Box",
+                    ArsipTextField(
+                        label = stringResource(R.string.staging_box_label),
                         value = boxNumber,
                         onValueChange = onBoxNumberChange,
-                        placeholder = "01",
+                        placeholder = stringResource(R.string.staging_box_placeholder),
                         modifier = Modifier.weight(1f)
                     )
                 }
@@ -410,26 +285,21 @@ private fun StagingContentSection(
     onDocumentClick: (String) -> Unit,
     onDeleteDocument: (String) -> Unit
 ) {
-    Column(
-        modifier = Modifier.fillMaxSize()
-    ) {
+    Column(modifier = Modifier.fillMaxSize()) {
         Row(
-            modifier = Modifier
-                .fillMaxWidth()
-                .padding(horizontal = 32.dp, vertical = 8.dp),
+            modifier = Modifier.fillMaxWidth().padding(horizontal = 32.dp, vertical = 8.dp),
             horizontalArrangement = Arrangement.SpaceBetween,
             verticalAlignment = Alignment.CenterVertically
         ) {
             Text(
-                text = "Dokumen Staging",
+                text = stringResource(R.string.staging_content_title),
                 fontSize = 16.sp,
                 fontWeight = FontWeight.Bold,
                 fontFamily = PoppinsFont,
                 color = Color(0xFF071E27)
             )
-
             Text(
-                text = "${documents.size} dokumen",
+                text = stringResource(R.string.staging_document_count_summary, documents.size),
                 fontSize = 13.sp,
                 fontWeight = FontWeight.Medium,
                 fontFamily = PoppinsFont,
@@ -438,43 +308,23 @@ private fun StagingContentSection(
         }
 
         if (documents.isEmpty()) {
-            Box(
-                modifier = Modifier
-                    .fillMaxSize()
-                    .padding(32.dp),
-                contentAlignment = Alignment.Center
-            ) {
+            Box(modifier = Modifier.fillMaxSize().padding(32.dp), contentAlignment = Alignment.Center) {
                 Text(
-                    text = "Belum ada dokumen di staging.\nGunakan tombol + untuk input manual, scan, atau import.",
+                    text = stringResource(R.string.staging_empty_message),
                     fontSize = 14.sp,
                     fontFamily = PoppinsFont,
-                    color = Color(0xFF40493D)
+                    color = Color(0xFF40493D),
+                    textAlign = TextAlign.Center
                 )
             }
         } else {
             LazyColumn(
                 modifier = Modifier.fillMaxSize(),
-                contentPadding = PaddingValues(
-                    start = 32.dp,
-                    end = 32.dp,
-                    top = 8.dp,
-                    bottom = 120.dp
-                ),
+                contentPadding = PaddingValues(start = 32.dp, end = 32.dp, top = 8.dp, bottom = 120.dp),
                 verticalArrangement = Arrangement.spacedBy(12.dp)
             ) {
-                items(
-                    items = documents,
-                    key = { it.id }
-                ) { document ->
-                    StagingDocumentCard(
-                        document = document,
-                        onClick = {
-                            onDocumentClick(document.id)
-                        },
-                        onDeleteClick = {
-                            onDeleteDocument(document.id)
-                        }
-                    )
+                items(items = documents, key = { it.id }) { document ->
+                    StagingDocumentCard(document = document, onClick = { onDocumentClick(document.id) }, onDeleteClick = { onDeleteDocument(document.id) })
                 }
             }
         }
@@ -500,10 +350,7 @@ private fun StagingDocumentCard(
         horizontalArrangement = Arrangement.SpaceBetween,
         verticalAlignment = Alignment.CenterVertically
     ) {
-        Column(
-            modifier = Modifier.weight(1f),
-            verticalArrangement = Arrangement.spacedBy(6.dp)
-        ) {
+        Column(modifier = Modifier.weight(1f), verticalArrangement = Arrangement.spacedBy(6.dp)) {
             Text(
                 text = document.title,
                 fontSize = 15.sp,
@@ -513,7 +360,6 @@ private fun StagingDocumentCard(
                 maxLines = 2,
                 overflow = TextOverflow.Ellipsis
             )
-
             Text(
                 text = document.documentNumber ?: document.classificationCode ?: "-",
                 fontSize = 13.sp,
@@ -524,58 +370,29 @@ private fun StagingDocumentCard(
                 overflow = TextOverflow.Ellipsis
             )
         }
-
         Spacer(modifier = Modifier.width(12.dp))
-
-        SmallBadge(text = document.source.label)
-
+        ArsipBadge(text = document.source.label, variant = BadgeVariant.SUCCESS)
         Spacer(modifier = Modifier.width(8.dp))
-
         Icon(
             imageVector = Icons.Default.Delete,
-            contentDescription = "Hapus",
+            contentDescription = stringResource(R.string.staging_delete_label),
             tint = Color(0xFFBA1A1A),
-            modifier = Modifier
-                .size(22.dp)
-                .clickable {
-                    showDeleteDialog = true
-                }
+            modifier = Modifier.size(22.dp).clickable { showDeleteDialog = true }
         )
     }
 
     if (showDeleteDialog) {
-        AlertDialog(
-            onDismissRequest = {
+        ArsipConfirmDialog(
+            onDismissRequest = { showDeleteDialog = false },
+            onConfirm = {
                 showDeleteDialog = false
+                onDeleteClick()
             },
-            title = {
-                Text("Hapus dari Staging")
-            },
-            text = {
-                Text("Hapus dokumen ini dari daftar staging?")
-            },
-            confirmButton = {
-                TextButton(
-                    onClick = {
-                        showDeleteDialog = false
-                        onDeleteClick()
-                    }
-                ) {
-                    Text(
-                        text = "Hapus",
-                        color = Color(0xFFBA1A1A)
-                    )
-                }
-            },
-            dismissButton = {
-                TextButton(
-                    onClick = {
-                        showDeleteDialog = false
-                    }
-                ) {
-                    Text("Batal")
-                }
-            }
+            title = stringResource(R.string.staging_delete_dialog_title),
+            message = stringResource(R.string.staging_delete_dialog_message),
+            confirmText = stringResource(R.string.staging_delete_label),
+            dismissText = stringResource(R.string.dashboard_cancel_button),
+            isDanger = true
         )
     }
 }
@@ -584,22 +401,10 @@ private fun StagingDocumentCard(
 @Composable
 private fun StagingDocumentDetailSheet(
     document: StagingDocument,
+    selectedYear: Int,
     onDismiss: () -> Unit,
     viewModel: StagingViewModel,
-    onSave: (
-        documentType: DocumentType,
-        documentNumber: String?,
-        documentCode: String?,
-        title: String,
-        description: String?,
-        year: Int,
-        physicalForm: PhysicalForm,
-        condition: DocumentCondition?,
-        copyCount: Int,
-        isCopy: Boolean?,
-        status: DocumentStatus,
-        originInstance: String?
-    ) -> Unit,
+    onSave: (DocumentType, String?, String?, String, String?, Int, PhysicalForm, DocumentCondition?, Int, Boolean?, DocumentStatus, String?) -> Unit,
     onDelete: () -> Unit
 ) {
     val uiState by viewModel.uiState.collectAsState()
@@ -615,7 +420,7 @@ private fun StagingDocumentDetailSheet(
     var documentNumber by remember(document.id) { mutableStateOf(document.documentNumber.orEmpty()) }
     var documentCode by remember(document.id) { mutableStateOf(document.classificationCode.orEmpty()) }
     var description by remember(document.id) { mutableStateOf(document.description.orEmpty()) }
-    var year by remember(document.id) { mutableStateOf(document.year.toString()) }
+    var year by remember(document.id) { mutableStateOf(selectedYear.toString()) }
     var copyCount by remember(document.id) { mutableStateOf(document.copyCount.toString()) }
     var isCopy by remember(document.id) { mutableStateOf(document.isCopy) }
     var originInstance by remember(document.id) { mutableStateOf(document.originInstance.orEmpty()) }
@@ -625,23 +430,19 @@ private fun StagingDocumentDetailSheet(
     var selectedCondition by remember(document.id) { mutableStateOf(document.condition) }
     var selectedStatus by remember(document.id) { mutableStateOf(document.status) }
 
-    ModalBottomSheet(
-        onDismissRequest = onDismiss,
-        sheetState = sheetState,
-        containerColor = Color.White
-    ) {
+    val copyLabelTrue = stringResource(R.string.staging_field_copy_true)
+    val copyLabelFalse = stringResource(R.string.staging_field_copy_false)
+    val unknownLabel = stringResource(R.string.staging_field_unknown)
+
+    ModalBottomSheet(onDismissRequest = onDismiss, sheetState = sheetState, containerColor = Color.White) {
         LazyColumn(
             modifier = Modifier.fillMaxWidth(),
-            contentPadding = PaddingValues(
-                start = 24.dp,
-                end = 24.dp,
-                bottom = 32.dp
-            ),
+            contentPadding = PaddingValues(start = 24.dp, end = 24.dp, bottom = 32.dp),
             verticalArrangement = Arrangement.spacedBy(16.dp)
         ) {
             item {
                 Text(
-                    text = if (isEditMode) "Edit Dokumen Staging" else "Detail Dokumen Staging",
+                    text = if (isEditMode) stringResource(R.string.staging_edit_sheet_title) else stringResource(R.string.staging_detail_sheet_title),
                     fontSize = 24.sp,
                     fontWeight = FontWeight.Bold,
                     fontFamily = PoppinsFont,
@@ -650,180 +451,52 @@ private fun StagingDocumentDetailSheet(
             }
 
             if (isEditMode) {
-                item {
-                    DetailTextField(
-                        label = "Judul",
-                        value = title,
-                        onValueChange = { title = it },
-                        placeholder = "Judul dokumen"
-                    )
-                }
-
-                item {
-                    DetailTextField(
-                        label = "Nomor Dokumen",
-                        value = documentNumber,
-                        onValueChange = { documentNumber = it },
-                        placeholder = "Nomor dokumen"
-                    )
-                }
-
+                item { ArsipTextField(label = stringResource(R.string.staging_field_title_label), value = title, onValueChange = { if (it.length <= 255) title = it }, placeholder = stringResource(R.string.staging_field_title_placeholder), isError = title.isBlank()) }
+                item { ArsipTextField(label = stringResource(R.string.staging_field_number_label), value = documentNumber, onValueChange = { if (it.length <= 50) documentNumber = it }, placeholder = stringResource(R.string.staging_field_number_placeholder)) }
                 item {
                     ArchiveClassificationField(
                         selectedCode = documentCode,
                         selectedLabel = viewModel.getLoadedArchiveClassificationLabel(documentCode),
                         isRequired = false,
-                        onClick = {
-                            showClassificationSheet = true
-                        }
+                        onClick = { showClassificationSheet = true }
                     )
                 }
-
-                item {
-                    DetailTextField(
-                        label = "Deskripsi",
-                        value = description,
-                        onValueChange = { description = it },
-                        placeholder = "Deskripsi dokumen",
-                        singleLine = false
-                    )
-                }
-
-                item {
-                    DetailTextField(
-                        label = "Tahun",
-                        value = year,
-                        onValueChange = { input ->
-                            if (input.length <= 4 && input.all { it.isDigit() }) {
-                                year = input
-                            }
-                        },
-                        placeholder = "2025"
-                    )
-                }
-
-                item {
-                    StagingDropdownField(
-                        label = "Jenis Dokumen",
-                        value = selectedType,
-                        options = DocumentType.values().toList(),
-                        optionLabel = { it.label },
-                        onValueChange = { selected ->
-                            selectedType = selected ?: selectedType
-                        }
-                    )
-                }
-
-                item {
-                    StagingDropdownField(
-                        label = "Bentuk Fisik",
-                        value = selectedPhysicalForm,
-                        options = PhysicalForm.values().toList(),
-                        optionLabel = { it.label },
-                        onValueChange = { selected ->
-                            selectedPhysicalForm = selected ?: selectedPhysicalForm
-                        }
-                    )
-                }
-
-                item {
-                    StagingDropdownField(
-                        label = "Kondisi",
-                        value = selectedCondition,
-                        options = DocumentCondition.values().toList(),
-                        optionLabel = { it.label },
-                        allowNull = true,
-                        nullLabel = "Tidak diketahui",
-                        onValueChange = { selected ->
-                            selectedCondition = selected
-                        }
-                    )
-                }
-
-                item {
-                    StagingDropdownField(
-                        label = "Keaslian",
-                        value = isCopy,
-                        options = listOf(false, true),
-                        optionLabel = { if (it == true) "Kopi" else "Asli" },
-                        allowNull = true,
-                        nullLabel = "Tidak diketahui",
-                        onValueChange = { selected ->
-                            isCopy = selected
-                        }
-                    )
-                }
-
-                item {
-                    DetailTextField(
-                        label = "Jumlah Salinan",
-                        value = copyCount,
-                        onValueChange = { input ->
-                            if (input.all { it.isDigit() }) {
-                                copyCount = input
-                            }
-                        },
-                        placeholder = "1",
-                        keyboardType = KeyboardType.Number
-                    )
-                }
-
-                item {
-                    StagingDropdownField(
-                        label = "Status",
-                        value = selectedStatus,
-                        options = DocumentStatus.values().toList(),
-                        optionLabel = { it.label },
-                        onValueChange = { selected ->
-                            selectedStatus = selected ?: selectedStatus
-                        }
-                    )
-                }
-
-                item {
-                    DetailTextField(
-                        label = "Asal Instansi",
-                        value = originInstance,
-                        onValueChange = { originInstance = it },
-                        placeholder = "Bagian Umum"
-                    )
-                }
+                item { ArsipTextField(label = stringResource(R.string.staging_field_desc_label), value = description, onValueChange = { if (it.length <= 1000) description = it }, placeholder = stringResource(R.string.staging_field_desc_placeholder), singleLine = false, minLines = 3) }
+                item { ArsipTextField(label = stringResource(R.string.staging_field_year_label), value = year, onValueChange = {}, placeholder = stringResource(R.string.staging_field_year_placeholder), readOnly = true) }
+                item { ArsipDropdownField(label = stringResource(R.string.staging_field_type_label), value = selectedType, options = DocumentType.entries.toList(), optionLabel = { it.label }, onValueChange = { it?.let { selectedType = it } }) }
+                item { ArsipDropdownField(label = stringResource(R.string.staging_field_physical_label), value = selectedPhysicalForm, options = PhysicalForm.entries.toList(), optionLabel = { it.label }, onValueChange = { it?.let { selectedPhysicalForm = it } }) }
+                item { ArsipDropdownField(label = stringResource(R.string.staging_field_condition_label), value = selectedCondition, options = DocumentCondition.entries.toList(), optionLabel = { it.label }, allowNull = true, nullLabel = unknownLabel, onValueChange = { selectedCondition = it }) }
+                item { ArsipDropdownField(label = stringResource(R.string.staging_field_copy_label), value = isCopy, options = listOf(false, true), optionLabel = { if (it == true) copyLabelTrue else copyLabelFalse }, allowNull = true, nullLabel = unknownLabel, onValueChange = { isCopy = it }) }
+                item { ArsipTextField(label = stringResource(R.string.staging_field_count_label), value = copyCount, onValueChange = { if (it.all { it.isDigit() }) copyCount = it }, placeholder = "1", keyboardOptions = KeyboardOptions(keyboardType = KeyboardType.Number)) }
+                item { ArsipDropdownField(label = stringResource(R.string.staging_field_status_label), value = selectedStatus, options = DocumentStatus.entries.toList(), optionLabel = { it.label }, onValueChange = { it?.let { selectedStatus = it } }) }
+                item { ArsipTextField(label = stringResource(R.string.staging_field_origin_label), value = originInstance, onValueChange = { if (it.length <= 100) originInstance = it }, placeholder = stringResource(R.string.staging_field_origin_placeholder)) }
             } else {
-                item { DetailRow("Judul", document.title) }
-                item { DetailRow("Nomor Dokumen", document.documentNumber ?: "-") }
+                item { ArsipDetailRow(stringResource(R.string.staging_field_title_label), document.title) }
+                item { ArsipDetailRow(stringResource(R.string.staging_field_number_label), document.documentNumber ?: "-") }
+                item { ArsipDetailRow("Kode Klasifikasi Dokumen", viewModel.getLoadedArchiveClassificationLabel(document.classificationCode).ifBlank { document.classificationCode ?: "-" }) }
+                item { ArsipDetailRow(stringResource(R.string.staging_field_desc_label), document.description ?: "-") }
+                item { ArsipDetailRow(stringResource(R.string.staging_field_type_label), document.documentType.label) }
+                item { ArsipDetailRow(stringResource(R.string.staging_field_year_label), document.year.toString()) }
+                item { ArsipDetailRow(stringResource(R.string.staging_field_physical_label), document.physicalForm.label) }
+                item { ArsipDetailRow(stringResource(R.string.staging_field_condition_label), document.condition?.label ?: unknownLabel) }
                 item {
-                    DetailRow(
-                        label = "Kode Klasifikasi Dokumen",
-                        value = viewModel.getLoadedArchiveClassificationLabel(document.classificationCode)
-                            .ifBlank { document.classificationCode ?: "-" }
-                    )
-                }
-                item { DetailRow("Deskripsi", document.description ?: "-") }
-                item { DetailRow("Jenis Dokumen", document.documentType.label) }
-                item { DetailRow("Tahun", document.year.toString()) }
-                item { DetailRow("Bentuk Fisik", document.physicalForm.label) }
-                item { DetailRow("Kondisi", document.condition?.label ?: "Tidak diketahui") }
-                item {
-                    DetailRow(
-                        "Keaslian",
+                    ArsipDetailRow(
+                        stringResource(R.string.staging_field_copy_label),
                         when (document.isCopy) {
-                            true -> "Kopi"
-                            false -> "Asli"
-                            null -> "Tidak diketahui"
+                            true -> copyLabelTrue
+                            false -> copyLabelFalse
+                            null -> unknownLabel
                         }
                     )
                 }
-                item { DetailRow("Jumlah Salinan", document.copyCount.toString()) }
-                item { DetailRow("Status", document.status.label) }
-                item { DetailRow("Asal Instansi", document.originInstance ?: "-") }
-                item { DetailRow("Sumber", document.source.label) }
+                item { ArsipDetailRow(stringResource(R.string.staging_field_count_label), document.copyCount.toString()) }
+                item { ArsipDetailRow(stringResource(R.string.staging_field_status_label), document.status.label) }
+                item { ArsipDetailRow(stringResource(R.string.staging_field_origin_label), document.originInstance ?: "-") }
+                item { ArsipDetailRow("Sumber", document.source.label) }
             }
 
             item {
-                Row(
-                    modifier = Modifier.fillMaxWidth(),
-                    horizontalArrangement = Arrangement.spacedBy(12.dp)
-                ) {
+                Row(modifier = Modifier.fillMaxWidth(), horizontalArrangement = Arrangement.spacedBy(12.dp)) {
                     if (isEditMode) {
                         OutlinedButton(
                             onClick = {
@@ -843,72 +516,23 @@ private fun StagingDocumentDetailSheet(
                                 showClassificationSheet = false
                                 classificationKeyword = ""
                             },
-                            modifier = Modifier
-                                .weight(1f)
-                                .height(48.dp),
+                            modifier = Modifier.weight(1f).height(48.dp),
                             shape = RoundedCornerShape(9999.dp),
                             border = BorderStroke(1.dp, Color(0xFF0D631B))
                         ) {
-                            Text(
-                                text = "Batal",
-                                color = Color(0xFF0D631B)
-                            )
+                            Text(text = stringResource(R.string.dashboard_cancel_button), color = Color(0xFF0D631B))
                         }
-
-                        Button(
-                            onClick = {
-                                showSaveConfirmDialog = true
-                            },
-                            modifier = Modifier
-                                .weight(1f)
-                                .height(48.dp),
-                            colors = ButtonDefaults.buttonColors(containerColor = Color(0xFF0D631B)),
-                            shape = RoundedCornerShape(9999.dp)
-                        ) {
-                            Text(
-                                text = "Simpan",
-                                color = Color.White
-                            )
+                        Button(onClick = { showSaveConfirmDialog = true }, modifier = Modifier.weight(1f).height(48.dp), colors = ButtonDefaults.buttonColors(containerColor = Color(0xFF0D631B)), shape = RoundedCornerShape(9999.dp)) {
+                            Text(text = stringResource(R.string.dashboard_add_button), color = Color.White)
                         }
                     } else {
-                        OutlinedButton(
-                            onClick = {
-                                showDeleteDialog = true
-                            },
-                            modifier = Modifier
-                                .weight(1f)
-                                .height(48.dp),
-                            shape = RoundedCornerShape(9999.dp),
-                            border = BorderStroke(1.dp, Color(0xFFBA1A1A))
-                        ) {
-                            Text(
-                                text = "Hapus",
-                                color = Color(0xFFBA1A1A)
-                            )
+                        OutlinedButton(onClick = { showDeleteDialog = true }, modifier = Modifier.weight(1f).height(48.dp), shape = RoundedCornerShape(9999.dp), border = BorderStroke(1.dp, Color(0xFFBA1A1A))) {
+                            Text(text = stringResource(R.string.staging_delete_label), color = Color(0xFFBA1A1A))
                         }
-
-                        Button(
-                            onClick = {
-                                isEditMode = true
-                            },
-                            modifier = Modifier
-                                .weight(1f)
-                                .height(48.dp),
-                            colors = ButtonDefaults.buttonColors(containerColor = Color(0xFF0D631B)),
-                            shape = RoundedCornerShape(9999.dp)
-                        ) {
-                            Icon(
-                                imageVector = Icons.Outlined.Edit,
-                                contentDescription = null,
-                                tint = Color.White
-                            )
-
+                        Button(onClick = { isEditMode = true }, modifier = Modifier.weight(1f).height(48.dp), colors = ButtonDefaults.buttonColors(containerColor = Color(0xFF0D631B)), shape = RoundedCornerShape(9999.dp)) {
+                            Icon(imageVector = Icons.Outlined.Edit, contentDescription = null, tint = Color.White)
                             Spacer(modifier = Modifier.width(6.dp))
-
-                            Text(
-                                text = "Edit",
-                                color = Color.White
-                            )
+                            Text(text = "Edit", color = Color.White)
                         }
                     }
                 }
@@ -931,204 +555,37 @@ private fun StagingDocumentDetailSheet(
             classificationKeyword = ""
             showClassificationSheet = false
         },
-        onDismiss = {
-            showClassificationSheet = false
-        }
+        onDismiss = { showClassificationSheet = false }
     )
 
     if (showSaveConfirmDialog) {
-        AlertDialog(
-            onDismissRequest = {
+        ArsipConfirmDialog(
+            onDismissRequest = { showSaveConfirmDialog = false },
+            onConfirm = {
+                onSave(selectedType, documentNumber.takeIf { it.isNotBlank() }, documentCode.takeIf { it.isNotBlank() }, title, description.takeIf { it.isNotBlank() }, year.toIntOrNull() ?: document.year, selectedPhysicalForm, selectedCondition, copyCount.toIntOrNull() ?: document.copyCount, isCopy, selectedStatus, originInstance.takeIf { it.isNotBlank() })
+                isEditMode = false
                 showSaveConfirmDialog = false
             },
-            title = {
-                Text("Simpan Perubahan")
-            },
-            text = {
-                Text("Simpan perubahan pada dokumen staging ini?")
-            },
-            confirmButton = {
-                TextButton(
-                    onClick = {
-                        onSave(
-                            selectedType,
-                            documentNumber.takeIf { it.isNotBlank() },
-                            documentCode.takeIf { it.isNotBlank() },
-                            title,
-                            description.takeIf { it.isNotBlank() },
-                            year.toIntOrNull() ?: document.year,
-                            selectedPhysicalForm,
-                            selectedCondition,
-                            copyCount.toIntOrNull() ?: document.copyCount,
-                            isCopy,
-                            selectedStatus,
-                            originInstance.takeIf { it.isNotBlank() }
-                        )
-                        isEditMode = false
-                        showSaveConfirmDialog = false
-                    }
-                ) {
-                    Text(
-                        text = "Simpan",
-                        color = Color(0xFF0D631B)
-                    )
-                }
-            },
-            dismissButton = {
-                TextButton(
-                    onClick = {
-                        showSaveConfirmDialog = false
-                    }
-                ) {
-                    Text("Batal")
-                }
-            }
+            title = stringResource(R.string.staging_save_confirm_title),
+            message = stringResource(R.string.staging_save_confirm_message),
+            confirmText = stringResource(R.string.dashboard_add_button),
+            dismissText = stringResource(R.string.dashboard_cancel_button)
         )
     }
 
     if (showDeleteDialog) {
-        AlertDialog(
-            onDismissRequest = {
+        ArsipConfirmDialog(
+            onDismissRequest = { showDeleteDialog = false },
+            onConfirm = {
                 showDeleteDialog = false
+                onDelete()
             },
-            title = {
-                Text("Hapus dari Staging")
-            },
-            text = {
-                Text("Hapus dokumen ini dari staging? Data belum masuk ke arsip utama.")
-            },
-            confirmButton = {
-                TextButton(
-                    onClick = {
-                        showDeleteDialog = false
-                        onDelete()
-                    }
-                ) {
-                    Text(
-                        text = "Hapus",
-                        color = Color(0xFFBA1A1A)
-                    )
-                }
-            },
-            dismissButton = {
-                TextButton(
-                    onClick = {
-                        showDeleteDialog = false
-                    }
-                ) {
-                    Text("Batal")
-                }
-            }
+            title = stringResource(R.string.staging_delete_dialog_title),
+            message = stringResource(R.string.staging_delete_confirm_message),
+            confirmText = stringResource(R.string.staging_delete_label),
+            dismissText = stringResource(R.string.dashboard_cancel_button),
+            isDanger = true
         )
-    }
-}
-
-@OptIn(ExperimentalMaterial3Api::class)
-@Composable
-private fun <T> StagingDropdownField(
-    label: String,
-    value: T?,
-    options: List<T>,
-    optionLabel: (T) -> String,
-    onValueChange: (T?) -> Unit,
-    allowNull: Boolean = false,
-    nullLabel: String = "Tidak diketahui"
-) {
-    var expanded by remember { mutableStateOf(false) }
-
-    ExposedDropdownMenuBox(
-        expanded = expanded,
-        onExpandedChange = {
-            expanded = !expanded
-        },
-        modifier = Modifier.fillMaxWidth()
-    ) {
-        OutlinedTextField(
-            value = value?.let { optionLabel(it) } ?: nullLabel,
-            onValueChange = {},
-            readOnly = true,
-            label = {
-                Text(
-                    text = label,
-                    color = Color.Black
-                )
-            },
-            trailingIcon = {
-                ExposedDropdownMenuDefaults.TrailingIcon(
-                    expanded = expanded
-                )
-            },
-            modifier = Modifier
-                .menuAnchor()
-                .fillMaxWidth(),
-            shape = RoundedCornerShape(16.dp),
-            textStyle = LocalTextStyle.current.copy(
-                color = Color.Black
-            ),
-            colors = OutlinedTextFieldDefaults.colors(
-                focusedTextColor = Color.Black,
-                unfocusedTextColor = Color.Black,
-                disabledTextColor = Color.Black,
-
-                focusedLabelColor = Color.Black,
-                unfocusedLabelColor = Color.Black,
-                disabledLabelColor = Color.Black,
-
-                focusedPlaceholderColor = Color.Black,
-                unfocusedPlaceholderColor = Color.Black,
-                disabledPlaceholderColor = Color.Black,
-
-                focusedBorderColor = Color.Black,
-                unfocusedBorderColor = Color.Black,
-                disabledBorderColor = Color.Black,
-
-                cursorColor = Color.Black,
-
-                focusedContainerColor = Color.Transparent,
-                unfocusedContainerColor = Color.Transparent,
-                disabledContainerColor = Color.Transparent
-            )
-        )
-
-        ExposedDropdownMenu(
-            expanded = expanded,
-            onDismissRequest = {
-                expanded = false
-            },
-            containerColor = Color.White,
-        ) {
-            if (allowNull) {
-                DropdownMenuItem(
-                    text = {
-                        Text(
-                            text = nullLabel,
-                            color = Color.Black,
-                            fontFamily = PoppinsFont
-                        )
-                    },
-                    onClick = {
-                        onValueChange(null)
-                        expanded = false
-                    }
-                )
-            }
-
-            options.forEach { option ->
-                DropdownMenuItem(
-                    text = {
-                        Text(
-                            text = optionLabel(option),
-                            color = Color.Black,
-                            fontFamily = PoppinsFont
-                        )
-                    },
-                    onClick = {
-                        onValueChange(option)
-                        expanded = false
-                    }
-                )
-            }
-        }
     }
 }
 
@@ -1140,78 +597,28 @@ private fun StagingFabMenu(
     onScanClick: () -> Unit,
     onImportClick: () -> Unit
 ) {
-    Column(
-        horizontalAlignment = Alignment.End,
-        verticalArrangement = Arrangement.spacedBy(12.dp)
-    ) {
-        AnimatedVisibility(
-            visible = isExpanded,
-            enter = fadeIn() + expandVertically(),
-            exit = fadeOut() + shrinkVertically()
-        ) {
-            Column(
-                horizontalAlignment = Alignment.End,
-                verticalArrangement = Arrangement.spacedBy(12.dp)
-            ) {
-                ExtendedFloatingActionButton(
-                    onClick = onManualClick,
-                    containerColor = Color.White,
-                    contentColor = Color(0xFF0D631B)
-                ) {
-                    Icon(
-                        imageVector = Icons.Default.Edit,
-                        contentDescription = null
-                    )
-
+    Column(horizontalAlignment = Alignment.End, verticalArrangement = Arrangement.spacedBy(12.dp)) {
+        AnimatedVisibility(visible = isExpanded, enter = fadeIn() + expandVertically(), exit = fadeOut() + shrinkVertically()) {
+            Column(horizontalAlignment = Alignment.End, verticalArrangement = Arrangement.spacedBy(12.dp)) {
+                ExtendedFloatingActionButton(onClick = onManualClick, containerColor = Color.White, contentColor = Color(0xFF0D631B)) {
+                    Icon(imageVector = Icons.Default.Edit, contentDescription = null)
                     Spacer(modifier = Modifier.width(8.dp))
-
-                    Text("Input Manual")
+                    Text(stringResource(R.string.staging_manual_input))
                 }
-
-                ExtendedFloatingActionButton(
-                    onClick = onScanClick,
-                    containerColor = Color.White,
-                    contentColor = Color(0xFF0D631B)
-                ) {
-                    Icon(
-                        imageVector = Icons.Default.Search,
-                        contentDescription = null
-                    )
-
+                ExtendedFloatingActionButton(onClick = onScanClick, containerColor = Color.White, contentColor = Color(0xFF0D631B)) {
+                    Icon(imageVector = Icons.Default.Search, contentDescription = null)
                     Spacer(modifier = Modifier.width(8.dp))
-
-                    Text("Scan")
+                    Text(stringResource(R.string.staging_scan))
                 }
-
-                ExtendedFloatingActionButton(
-                    onClick = onImportClick,
-                    containerColor = Color.White,
-                    contentColor = Color(0xFF0D631B)
-                ) {
-                    Icon(
-                        imageVector = Icons.Default.Add,
-                        contentDescription = null
-                    )
-
+                ExtendedFloatingActionButton(onClick = onImportClick, containerColor = Color.White, contentColor = Color(0xFF0D631B)) {
+                    Icon(imageVector = Icons.Default.Add, contentDescription = null)
                     Spacer(modifier = Modifier.width(8.dp))
-
-                    Text("Import")
+                    Text(stringResource(R.string.staging_import))
                 }
             }
         }
-
-        FloatingActionButton(
-            onClick = {
-                onExpandedChange(!isExpanded)
-            },
-            containerColor = Color(0xFF0D631B),
-            contentColor = Color.White,
-            shape = CircleShape
-        ) {
-            Icon(
-                imageVector = if (isExpanded) Icons.Default.Close else Icons.Default.Add,
-                contentDescription = "Aksi staging"
-            )
+        FloatingActionButton(onClick = { onExpandedChange(!isExpanded) }, containerColor = Color(0xFF0D631B), contentColor = Color.White, shape = CircleShape) {
+            Icon(imageVector = if (isExpanded) Icons.Default.Close else Icons.Default.Add, contentDescription = "Aksi staging")
         }
     }
 }
@@ -1233,25 +640,18 @@ private fun StagingBottomBar(
         verticalArrangement = Arrangement.spacedBy(8.dp)
     ) {
         if (isLoading) {
-            CircularProgressIndicator(
-                modifier = Modifier
-                    .align(Alignment.CenterHorizontally)
-                    .size(24.dp)
-            )
+            LoadingIndicator(modifier = Modifier.align(Alignment.CenterHorizontally).size(24.dp))
         }
-
 
         Button(
             onClick = onPushAllClick,
             enabled = !isLoading && documentCount > 0 && isStorageLocationValid,
-            modifier = Modifier
-                .fillMaxWidth()
-                .height(48.dp),
+            modifier = Modifier.fillMaxWidth().height(48.dp),
             colors = ButtonDefaults.buttonColors(containerColor = Color(0xFF0D631B)),
             shape = RoundedCornerShape(9999.dp)
         ) {
             Text(
-                text = "Simpan Semua ke Arsip",
+                text = stringResource(R.string.staging_push_button),
                 fontSize = 14.sp,
                 fontWeight = FontWeight.SemiBold,
                 fontFamily = PoppinsFont,
@@ -1261,7 +661,7 @@ private fun StagingBottomBar(
 
         if (!isStorageLocationValid) {
             Text(
-                text = "Ruangan dan rak wajib diisi.",
+                text = stringResource(R.string.staging_error_location_invalid),
                 fontSize = 12.sp,
                 fontWeight = FontWeight.Medium,
                 fontFamily = PoppinsFont,
@@ -1271,188 +671,10 @@ private fun StagingBottomBar(
     }
 }
 
-@Composable
-private fun ConfirmPushDialog(
-    documentCount: Int,
-    locationLabel: String,
-    onConfirm: () -> Unit,
-    onDismiss: () -> Unit
-) {
-    AlertDialog(
-        onDismissRequest = onDismiss,
-        title = {
-            Text("Simpan ke Arsip")
-        },
-        text = {
-            Text(
-                text = "Simpan $documentCount dokumen staging ke lokasi:\n\n$locationLabel?"
-            )
-        },
-        confirmButton = {
-            TextButton(onClick = onConfirm) {
-                Text(
-                    text = "Simpan",
-                    color = Color(0xFF0D631B)
-                )
-            }
-        },
-        dismissButton = {
-            TextButton(onClick = onDismiss) {
-                Text("Batal")
-            }
-        }
-    )
-}
-
-@Composable
-private fun ErrorMessageCard(
-    message: String,
-    onDismiss: () -> Unit
-) {
-    Row(
-        modifier = Modifier
-            .fillMaxWidth()
-            .padding(horizontal = 32.dp, vertical = 8.dp)
-            .clip(RoundedCornerShape(16.dp))
-            .background(Color(0xFFFEE2E2))
-            .padding(14.dp),
-        horizontalArrangement = Arrangement.SpaceBetween,
-        verticalAlignment = Alignment.CenterVertically
-    ) {
-        Text(
-            text = message,
-            fontSize = 13.sp,
-            fontWeight = FontWeight.Medium,
-            fontFamily = PoppinsFont,
-            color = Color(0xFF991B1B),
-            modifier = Modifier.weight(1f)
-        )
-
-        Text(
-            text = "Tutup",
-            modifier = Modifier.clickable(onClick = onDismiss),
-            fontSize = 13.sp,
-            fontWeight = FontWeight.Bold,
-            fontFamily = PoppinsFont,
-            color = Color(0xFF991B1B)
-        )
-    }
-}
-
-@Composable
-private fun DetailTextField(
-    label: String,
-    value: String,
-    onValueChange: (String) -> Unit,
-    placeholder: String,
-    modifier: Modifier = Modifier,
-    singleLine: Boolean = true,
-    keyboardType: KeyboardType = KeyboardType.Text
-) {
-    OutlinedTextField(
-        value = value,
-        onValueChange = onValueChange,
-        label = {
-            Text(
-                text = label,
-                color = Color.Black
-            )
-        },
-        placeholder = {
-            Text(
-                text = placeholder,
-                color = Color.Black
-            )
-        },
-        modifier = modifier.fillMaxWidth(),
-        singleLine = singleLine,
-        minLines = if (singleLine) 1 else 3,
-        shape = RoundedCornerShape(16.dp),
-        textStyle = LocalTextStyle.current.copy(
-            color = Color.Black
-        ),
-        keyboardOptions = KeyboardOptions(
-            keyboardType = keyboardType
-        ),
-        colors = OutlinedTextFieldDefaults.colors(
-            focusedTextColor = Color.Black,
-            unfocusedTextColor = Color.Black,
-            disabledTextColor = Color.Black,
-
-            focusedLabelColor = Color.Black,
-            unfocusedLabelColor = Color.Black,
-            disabledLabelColor = Color.Black,
-
-            focusedPlaceholderColor = Color.Black,
-            unfocusedPlaceholderColor = Color.Black,
-            disabledPlaceholderColor = Color.Black,
-
-            focusedBorderColor = Color.Black,
-            unfocusedBorderColor = Color.Black,
-            disabledBorderColor = Color.Black,
-
-            cursorColor = Color.Black,
-
-            focusedContainerColor = Color.Transparent,
-            unfocusedContainerColor = Color.Transparent,
-            disabledContainerColor = Color.Transparent
-        )
-    )
-}
-
-@Composable
-private fun DetailRow(
-    label: String,
-    value: String
-) {
-    Column(verticalArrangement = Arrangement.spacedBy(4.dp)) {
-        Text(
-            text = label.uppercase(),
-            fontSize = 10.sp,
-            fontWeight = FontWeight.Bold,
-            fontFamily = PoppinsFont,
-            color = Color(0xFF707A6C),
-            letterSpacing = 0.48.sp
-        )
-
-        Text(
-            text = value,
-            fontSize = 14.sp,
-            fontWeight = FontWeight.Medium,
-            fontFamily = PoppinsFont,
-            color = Color(0xFF071E27),
-            maxLines = 4,
-            overflow = TextOverflow.Ellipsis
-        )
-    }
-}
-
-@Composable
-private fun SmallBadge(
-    text: String
-) {
-    Box(
-        modifier = Modifier
-            .clip(RoundedCornerShape(9999.dp))
-            .background(Color(0xFFE8F5E9))
-            .padding(horizontal = 10.dp, vertical = 4.dp)
-    ) {
-        Text(
-            text = text,
-            fontSize = 12.sp,
-            fontWeight = FontWeight.SemiBold,
-            fontFamily = PoppinsFont,
-            color = Color(0xFF1B5E20)
-        )
-    }
-}
-
-@Preview(
-    showBackground = true,
-    showSystemUi = true,
-    device = "spec:width=390dp,height=844dp,dpi=420"
-)
+@Preview(showBackground = true, showSystemUi = true, device = "spec:width=390dp,height=844dp,dpi=420")
 @Composable
 fun StagingScreenPreview() {
-    StagingScreen()
+    val context = LocalContext.current
+    val viewModel: StagingViewModel = viewModel(factory = StagingViewModelFactory(context, 2025))
+    StagingScreen(selectedYear = 2025, viewModel = viewModel)
 }

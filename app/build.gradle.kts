@@ -2,7 +2,10 @@ import java.util.Properties
 
 plugins {
     alias(libs.plugins.android.application)
+    alias(libs.plugins.kotlin.android)
     alias(libs.plugins.kotlin.compose)
+    alias(libs.plugins.kotlin.serialization)
+    alias(libs.plugins.ksp)
 }
 
 val localProperties = Properties().apply {
@@ -36,18 +39,14 @@ fun buildConfigString(
 android {
     namespace = "com.bpkpad.arsipnonkeu"
 
-    compileSdk {
-        version = release(36) {
-            minorApiLevel = 1
-        }
-    }
+    compileSdk = 35
 
     defaultConfig {
         applicationId = "com.bpkpad.arsipnonkeu"
         minSdk = 24
-        targetSdk = 36
+        targetSdk = 35
         versionCode = 1
-        versionName = "1.0"
+        versionName = "1.9"
 
         testInstrumentationRunner = "androidx.test.runner.AndroidJUnitRunner"
 
@@ -92,6 +91,21 @@ android {
             name = "GEMINI_API_KEY",
             value = buildConfigString(geminiApiKey)
         )
+
+        val supabaseUrl = localProperty("SUPABASE_URL")
+        val supabaseAnonKey = localProperty("SUPABASE_ANON_KEY")
+
+        buildConfigField(
+            type = "String",
+            name = "SUPABASE_URL",
+            value = buildConfigString(supabaseUrl)
+        )
+
+        buildConfigField(
+            type = "String",
+            name = "SUPABASE_ANON_KEY",
+            value = buildConfigString(supabaseAnonKey)
+        )
     }
 
     buildTypes {
@@ -111,6 +125,10 @@ android {
         isCoreLibraryDesugaringEnabled = true
     }
 
+    kotlinOptions {
+        jvmTarget = "17"
+    }
+
     buildFeatures {
         compose = true
         buildConfig = true
@@ -121,6 +139,7 @@ dependencies {
     implementation(platform(libs.androidx.compose.bom))
 
     implementation(libs.androidx.activity.compose)
+    implementation(libs.androidx.core.splashscreen)
     implementation(libs.androidx.compose.material3)
     implementation(libs.androidx.compose.ui)
     implementation(libs.androidx.compose.ui.graphics)
@@ -128,6 +147,15 @@ dependencies {
     implementation(libs.androidx.compose.ui.tooling.preview)
     implementation(libs.androidx.core.ktx)
     implementation(libs.androidx.lifecycle.runtime.ktx)
+
+    implementation(libs.kotlinx.serialization.json)
+
+    // Supabase
+    implementation(platform(libs.supabase.bom))
+    implementation(libs.supabase.postgrest)
+    implementation("io.github.jan-tennert.supabase:auth-kt:3.1.1")
+    implementation(libs.supabase.functions)
+    implementation(libs.ktor.client.android)
 
     implementation("androidx.lifecycle:lifecycle-viewmodel-compose:2.8.7")
     implementation("androidx.compose.material:material-icons-extended:1.7.0")
@@ -146,7 +174,10 @@ dependencies {
 
     // Import Excel sekarang dibaca manual dari ZIP/XML,
     // jadi fastexcel-reader tidak wajib.
-    // implementation("org.dhatim:fastexcel-reader:0.20.1")
+    // Room DB (Untuk Caching & Draft)
+    implementation(libs.room.runtime)
+    implementation(libs.room.ktx)
+    ksp(libs.room.compiler)
 
     coreLibraryDesugaring("com.android.tools:desugar_jdk_libs:2.1.5")
 
